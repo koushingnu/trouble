@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { User } from "./types";
 import { getUsers, createUser } from "./api/users";
 import { toast } from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 export default function Page() {
+  const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
@@ -113,22 +115,30 @@ export default function Page() {
           ) : (
             <div className="space-y-3">
               {users.map((user) => (
-                <div
+                <button
                   key={user.id}
-                  className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  onClick={() => router.push(`/users/${user.id}`)}
+                  className="w-full text-left"
                 >
-                  <div className="flex items-center space-x-3">
-                    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                      <span className="text-blue-600 font-semibold">
-                        {user.name.charAt(0)}
-                      </span>
+                  <div className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className="flex items-center space-x-3">
+                      <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                        <span className="text-blue-600 font-semibold">
+                          {user.name.charAt(0)}
+                        </span>
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-gray-800">
+                          {user.name}
+                        </h3>
+                        <p className="text-sm text-gray-500">{user.email}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-medium text-gray-800">{user.name}</h3>
-                      <p className="text-sm text-gray-500">{user.email}</p>
+                    <div className="hidden md:block text-blue-600">
+                      詳細を見る →
                     </div>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           )}
