@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 
 const API_BASE = "https://ttsv.sakura.ne.jp/api.php";
-const API_AUTH = process.env.API_AUTH;
 
-if (!API_AUTH) {
-  throw new Error("API_AUTH environment variable is not set");
+function getAuthHeader() {
+  const apiAuth = process.env.API_AUTH;
+  if (!apiAuth) {
+    throw new Error("API_AUTH environment variable is not set");
+  }
+  return `Basic ${apiAuth}`;
 }
 
 export async function GET(request: Request) {
@@ -16,7 +19,7 @@ export async function GET(request: Request) {
   try {
     const response = await fetch(url, {
       headers: {
-        Authorization: `Basic ${API_AUTH}`,
+        Authorization: getAuthHeader(),
       },
     });
 
@@ -41,7 +44,7 @@ export async function POST(request: Request) {
     const response = await fetch(API_BASE, {
       method: "POST",
       headers: {
-        Authorization: `Basic ${API_AUTH}`,
+        Authorization: getAuthHeader(),
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: formData,
