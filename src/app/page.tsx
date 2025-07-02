@@ -1,101 +1,139 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-type User = {
-  id: number;
-  name: string;
-  email: string;
-};
+import { User, ApiResponse } from "./types";
+import { getUsers, createUser } from "./api/users";
+import { toast } from "react-hot-toast";
 
 export default function Page() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [result, setResult] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // BASIC認証がある場合
-    const username = "m";
-    const password = "m";
-    const headers = new Headers();
-    headers.set("Authorization", "Basic " + btoa(username + ":" + password));
-
-    fetch("https://ttsv.sakura.ne.jp/get-users.php", { headers })
-      .then((res) => res.json())
-      .then((data) => {
-        setUsers(data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    fetchUsers();
   }, []);
 
-  const handleAdd = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const username = "m";
-    const password = "m";
-    const headers = new Headers();
-    headers.set("Authorization", "Basic " + btoa(username + ":" + password));
-    headers.set("Content-Type", "application/x-www-form-urlencoded");
-    const params = new URLSearchParams();
-    params.append("name", name);
-    params.append("email", email);
+  const fetchUsers = async () => {
+    try {
+      const data = await getUsers();
+      setUsers(data);
+    } catch (error) {
+      toast.error("ユーザー情報の取得に失敗しました");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const res = await fetch("https://ttsv.sakura.ne.jp/add-user.php", {
-      method: "POST",
-      headers,
-      body: params,
-    });
-    const data = await res.json();
-    setResult(JSON.stringify(data));
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const response = await createUser(name, email);
+      if (response.error) {
+        toast.error(response.error);
+      } else {
+        toast.success("ユーザーを追加しました");
+        setName("");
+        setEmail("");
+        fetchUsers();
+      }
+    } catch (error) {
+      toast.error("ユーザーの追加に失敗しました");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <main className="min-h-screen bg-gray-50 flex flex-col items-center py-8">
-      <h1 className="text-2xl font-bold mb-4">ユーザー一覧</h1>
+    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">
+          ユーザー管理システム
+        </h1>
 
-      <form onSubmit={handleAdd} className="mb-8 w-full max-w-lg">
-        <div className="flex gap-2 mb-2">
-          <input
-            className="border rounded px-2 py-1 flex-1"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="名前"
-            required
-          />
-          <input
-            className="border rounded px-2 py-1 flex-1"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="メールアドレス"
-            required
-          />
-        </div>
-        <button
-          className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
-          type="submit"
-        >
-          ユーザーを追加
-        </button>
-        {result && <div className="mt-2 text-sm text-gray-600">{result}</div>}
-      </form>
-
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <ul className="w-full max-w-lg">
-          {users.map((user) => (
-            <li
-              key={user.id}
-              className="bg-white p-4 rounded-xl shadow mb-2 flex justify-between"
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <h2 className="text-xl font-semibold text-gray-700 mb-4">
+            新規ユーザー登録
+          </h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  名前
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="山田 太郎"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  メールアドレス
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="example@email.com"
+                  required
+                />
+              </div>
+            </div>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-400"
             >
-              <span>{user.name}</span>
-              <span className="text-gray-400">{user.email}</span>
-            </li>
-          ))}
-        </ul>
-      )}
+              {isSubmitting ? "登録中..." : "ユーザーを登録"}
+            </button>
+          </form>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h2 className="text-xl font-semibold text-gray-700 mb-4">
+            ユーザー一覧
+          </h2>
+          {loading ? (
+            <div className="flex justify-center items-center h-40">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : users.length === 0 ? (
+            <p className="text-center text-gray-500 py-8">
+              登録されているユーザーはいません
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {users.map((user) => (
+                <div
+                  key={user.id}
+                  className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                      <span className="text-blue-600 font-semibold">
+                        {user.name.charAt(0)}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-gray-800">{user.name}</h3>
+                      <p className="text-sm text-gray-500">{user.email}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </main>
   );
 }
