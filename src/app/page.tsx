@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { User, ApiResponse } from "./types";
+import { User } from "./types";
 import { getUsers, createUser } from "./api/users";
 import { toast } from "react-hot-toast";
 
@@ -20,7 +20,7 @@ export default function Page() {
     try {
       const data = await getUsers();
       setUsers(data);
-    } catch (error) {
+    } catch {
       toast.error("ユーザー情報の取得に失敗しました");
     } finally {
       setLoading(false);
@@ -33,15 +33,15 @@ export default function Page() {
 
     try {
       const response = await createUser(name, email);
-      if (response.error) {
-        toast.error(response.error);
+      if ("error" in response) {
+        toast.error(response.error || "エラーが発生しました");
       } else {
         toast.success("ユーザーを追加しました");
         setName("");
         setEmail("");
         fetchUsers();
       }
-    } catch (error) {
+    } catch {
       toast.error("ユーザーの追加に失敗しました");
     } finally {
       setIsSubmitting(false);
