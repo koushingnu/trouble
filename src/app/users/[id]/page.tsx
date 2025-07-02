@@ -24,7 +24,7 @@ export default function UserDetailPage() {
 
         const userData = await getUser(userId);
         setUser(userData);
-      } catch (error) {
+      } catch {
         toast.error("ユーザー情報の取得に失敗しました");
         router.push("/");
       } finally {
