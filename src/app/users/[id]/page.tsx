@@ -52,7 +52,7 @@ export default function UserDetailPage() {
       <div className="max-w-4xl mx-auto px-4 py-8">
         <button
           onClick={() => router.push("/")}
-          className="mb-6 flex items-center text-blue-600 hover:text-blue-800 transition-colors"
+          className="mb-6 flex items-center text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
         >
           <svg
             className="w-5 h-5 mr-2"

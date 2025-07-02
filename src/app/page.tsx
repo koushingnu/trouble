@@ -93,7 +93,7 @@ export default function Page() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-400"
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-400 cursor-pointer disabled:cursor-not-allowed"
             >
               {isSubmitting ? "登録中..." : "ユーザーを登録"}
             </button>
@@ -118,7 +118,7 @@ export default function Page() {
                 <button
                   key={user.id}
                   onClick={() => router.push(`/users/${user.id}`)}
-                  className="w-full text-left"
+                  className="w-full text-left cursor-pointer hover:opacity-80"
                 >
                   <div className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                     <div className="flex items-center space-x-3">
