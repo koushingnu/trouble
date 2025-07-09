@@ -19,7 +19,7 @@ export async function GET(request: Request) {
 
   try {
     const authHeader = getAuthHeader();
-    console.log("Making request to:", url);
+    console.log("[GET] Making request to:", url);
 
     const response = await fetch(url, {
       headers: {
@@ -27,16 +27,31 @@ export async function GET(request: Request) {
       },
     });
 
+    console.log("[GET] Response status:", response.status);
+    const responseText = await response.text();
+    console.log("[GET] Response body:", responseText);
+
     if (!response.ok) {
-      console.error("API responded with status:", response.status);
-      console.error("API response text:", await response.text());
-      throw new Error(`API responded with status ${response.status}`);
+      throw new Error(
+        `API responded with status ${response.status}: ${responseText}`
+      );
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    // レスポンスが空でないことを確認
+    if (!responseText.trim()) {
+      throw new Error("Empty response from API");
+    }
+
+    // JSONとして解析可能か確認
+    try {
+      const data = JSON.parse(responseText);
+      return NextResponse.json(data);
+    } catch (parseError) {
+      console.error("[GET] JSON parse error:", parseError);
+      throw new Error(`Invalid JSON response: ${responseText}`);
+    }
   } catch (error) {
-    console.error("Detailed API Error:", {
+    console.error("[GET] Detailed API Error:", {
       message: error instanceof Error ? error.message : "Unknown error",
       error,
     });
@@ -54,32 +69,52 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const formData = new URLSearchParams();
-    formData.append("name", body.name);
-    formData.append("email", body.email);
+    console.log("[POST] Request body:", JSON.stringify(body, null, 2));
 
-    const authHeader = getAuthHeader();
-    console.log("Making POST request to:", API_BASE);
+    // 新しいスキーマに合わせてデータを送信
+    const formData = new URLSearchParams();
+    formData.append("email", body.email);
+    formData.append("password", body.password);
+    formData.append("token", body.token);
+
+    const headers = {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: getAuthHeader(),
+    };
+    console.log("[POST] Request headers:", headers);
+    console.log("[POST] Form data:", formData.toString());
 
     const response = await fetch(API_BASE, {
       method: "POST",
-      headers: {
-        Authorization: authHeader,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
+      headers,
       body: formData,
     });
 
+    console.log("[POST] Response status:", response.status);
+    const responseText = await response.text();
+    console.log("[POST] Response body:", responseText);
+
     if (!response.ok) {
-      console.error("API responded with status:", response.status);
-      console.error("API response text:", await response.text());
-      throw new Error(`API responded with status ${response.status}`);
+      throw new Error(
+        `API responded with status ${response.status}: ${responseText}`
+      );
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    // レスポンスが空でないことを確認
+    if (!responseText.trim()) {
+      throw new Error("Empty response from API");
+    }
+
+    // JSONとして解析可能か確認
+    try {
+      const data = JSON.parse(responseText);
+      return NextResponse.json(data);
+    } catch (parseError) {
+      console.error("[POST] JSON parse error:", parseError);
+      throw new Error(`Invalid JSON response: ${responseText}`);
+    }
   } catch (error) {
-    console.error("Detailed API Error:", {
+    console.error("[POST] Detailed API Error:", {
       message: error instanceof Error ? error.message : "Unknown error",
       error,
     });
