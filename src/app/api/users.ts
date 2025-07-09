@@ -7,13 +7,6 @@ export async function getUsers(): Promise<User[]> {
   return res.json();
 }
 
-// 特定のユーザーの取得
-export async function getUser(id: number): Promise<User> {
-  const res = await fetch(`/api/proxy?id=${id}`);
-  if (!res.ok) throw new Error("Failed to fetch user");
-  return res.json();
-}
-
 // 新規ユーザーの作成
 export async function createUser(
   email: string,
