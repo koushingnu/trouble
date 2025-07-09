@@ -10,10 +10,15 @@ function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
 
+interface NavigationItem {
+  name: string;
+  href: string;
+}
+
 export default function ClientNavigation() {
   const pathname = usePathname();
 
-  const navigation = [
+  const navigation: NavigationItem[] = [
     { name: "ホーム", href: "/" },
     { name: "管理画面", href: "/admin" },
   ];
@@ -39,7 +44,7 @@ export default function ClientNavigation() {
                       key={item.name}
                       href={item.href}
                       className={classNames(
-                        item.current
+                        pathname === item.href
                           ? "border-sky-500 text-sky-800"
                           : "border-transparent text-gray-500 hover:border-sky-300 hover:text-sky-700",
                         "inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium transition-colors"
@@ -92,7 +97,7 @@ export default function ClientNavigation() {
                   as={Link}
                   href={item.href}
                   className={classNames(
-                    item.current
+                    pathname === item.href
                       ? "bg-sky-50 border-sky-500 text-sky-700"
                       : "border-transparent text-gray-500 hover:bg-sky-50 hover:border-sky-300 hover:text-sky-700",
                     "block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors"
