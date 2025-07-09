@@ -11,7 +11,7 @@ function getAuthHeader() {
   return `Basic ${apiAuth}`;
 }
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
   try {
     const authHeader = getAuthHeader();
     console.log("[GET] Making request to:", API_BASE);
