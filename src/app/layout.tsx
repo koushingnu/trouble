@@ -1,24 +1,32 @@
-import "./globals.css";
+import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { Toaster } from "react-hot-toast";
+import "./globals.css";
+import Providers from "@/components/Providers";
+import ClientNavigation from "@/components/ClientNavigation";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata = {
-  title: "ユーザー管理システム",
-  description: "シンプルで使いやすいユーザー管理システム",
+export const metadata: Metadata = {
+  title: "トラブル相談",
+  description: "トラブル相談サービス",
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <html lang="ja">
       <body className={inter.className}>
-        <Toaster position="top-right" />
-        {children}
+        <Providers>
+          <div className="min-h-screen bg-sky-50">
+            <ClientNavigation />
+            <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+              {children}
+            </main>
+          </div>
+        </Providers>
       </body>
     </html>
   );
