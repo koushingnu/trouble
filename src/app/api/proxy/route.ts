@@ -12,16 +12,11 @@ function getAuthHeader() {
 }
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const id = searchParams.get("id");
-
-  const url = id ? `${API_BASE}?id=${id}` : API_BASE;
-
   try {
     const authHeader = getAuthHeader();
-    console.log("[GET] Making request to:", url);
+    console.log("[GET] Making request to:", API_BASE);
 
-    const response = await fetch(url, {
+    const response = await fetch(API_BASE, {
       headers: {
         Authorization: authHeader,
       },
