@@ -1,10 +1,10 @@
 "use client";
 
 import { Fragment } from "react";
-import { Disclosure, Menu, Transition } from "@headlessui/react";
+import { Disclosure } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
@@ -13,23 +13,9 @@ function classNames(...classes: string[]) {
 export default function ClientNavigation() {
   const pathname = usePathname();
 
-  // 認証関連のページかどうかを判定
-  const isAuthPage = ["/auth", "/register", "/register/complete"].includes(
-    pathname
-  );
-
   const navigation = [
-    {
-      name: "新規相談",
-      href: "/consultation/new",
-      current: pathname === "/consultation/new",
-    },
-    { name: "相談履歴", href: "/history", current: pathname === "/history" },
-    {
-      name: "お問い合わせ",
-      href: "/contact",
-      current: pathname === "/contact",
-    },
+    { name: "ホーム", href: "/" },
+    { name: "管理画面", href: "/admin" },
   ];
 
   return (

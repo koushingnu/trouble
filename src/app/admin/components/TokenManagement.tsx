@@ -252,7 +252,7 @@ export default function TokenManagement() {
                   <TableCell>
                     <Chip
                       label={getStatusLabel(token.status)}
-                      color={getStatusColor(token.status) as any}
+                      color={getStatusColor(token.status)}
                       size="small"
                     />
                   </TableCell>

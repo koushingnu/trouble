@@ -72,7 +72,8 @@ export async function POST(request: Request) {
     });
 
     let errorMessage = "トークン生成中にエラーが発生しました";
-    let errorDetails = error instanceof Error ? error.message : "Unknown error";
+    const errorDetails =
+      error instanceof Error ? error.message : "Unknown error";
 
     // エラーメッセージがJSON形式の場合、パースを試みる
     if (typeof errorDetails === "string" && errorDetails.includes("{")) {

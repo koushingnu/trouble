@@ -1,18 +1,19 @@
+export interface ApiResponse {
+  message?: string;
+  error?: string;
+  id?: number;
+  success?: boolean;
+  data?: unknown;
+  details?: string;
+}
+
 export interface User {
   id: number;
   email: string;
   token_id: number | null;
-  token_value?: string;
-  status?: string;
+  token_value: string | null;
+  status: string | null;
   created_at: string;
-}
-
-export interface ApiResponse {
-  success?: boolean;
-  message?: string;
-  error?: string;
-  details?: string;
-  data?: any;
 }
 
 export interface Token {

@@ -11,7 +11,7 @@ function getAuthHeader() {
   return `Basic ${apiAuth}`;
 }
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
   try {
     const url = `${API_BASE}?action=list_tokens`;
     const authHeader = getAuthHeader();
