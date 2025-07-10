@@ -33,6 +33,8 @@ declare module "next-auth/jwt" {
   }
 }
 
+const API_BASE = "https://ttsv.sakura.ne.jp/api.php";
+
 const handler = NextAuth({
   providers: [
     CredentialsProvider({
@@ -47,19 +49,17 @@ const handler = NextAuth({
         }
 
         try {
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                email: credentials.email,
-                token: credentials.token,
-              }),
-            }
-          );
+          const response = await fetch(`${API_BASE}?action=login`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+              Authorization: `Basic ${process.env.API_AUTH}`,
+            },
+            body: new URLSearchParams({
+              email: credentials.email,
+              token: credentials.token,
+            }).toString(),
+          });
 
           if (!response.ok) {
             const error = await response.json();
@@ -113,6 +113,7 @@ const handler = NextAuth({
   },
   pages: {
     signIn: "/login",
+    error: "/auth/error",
   },
   session: {
     strategy: "jwt",
