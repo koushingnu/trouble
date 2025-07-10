@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Box, Typography, Tabs, Tab, Container, Paper } from "@mui/material";
 import UserList from "./components/UserList";
 import TokenManagement from "./components/TokenManagement";
 
@@ -22,7 +21,7 @@ function TabPanel(props: TabPanelProps) {
       aria-labelledby={`admin-tab-${index}`}
       {...other}
     >
-      {value === index && <Box>{children}</Box>}
+      {value === index && children}
     </div>
   );
 }
@@ -30,37 +29,54 @@ function TabPanel(props: TabPanelProps) {
 export default function AdminPage() {
   const [value, setValue] = useState(0);
 
-  const handleChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleChange = (newValue: number) => {
     setValue(newValue);
   };
 
   return (
-    <Container maxWidth="xl">
-      <Box sx={{ py: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          管理画面
-        </Typography>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">管理画面</h1>
 
-        <Paper sx={{ width: "100%", mb: 2 }}>
-          <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-            <Tabs
-              value={value}
-              onChange={handleChange}
-              aria-label="管理画面タブ"
+      <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex" aria-label="管理画面タブ">
+            <button
+              onClick={() => handleChange(0)}
+              className={`w-1/2 py-4 px-1 text-center border-b-2 font-medium text-sm ${
+                value === 0
+                  ? "border-sky-500 text-sky-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+              role="tab"
+              aria-selected={value === 0}
+              aria-controls={`admin-tabpanel-0`}
             >
-              <Tab label="ユーザー管理" />
-              <Tab label="トークン管理" />
-            </Tabs>
-          </Box>
+              ユーザー管理
+            </button>
+            <button
+              onClick={() => handleChange(1)}
+              className={`w-1/2 py-4 px-1 text-center border-b-2 font-medium text-sm ${
+                value === 1
+                  ? "border-sky-500 text-sky-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+              role="tab"
+              aria-selected={value === 1}
+              aria-controls={`admin-tabpanel-1`}
+            >
+              認証キー管理
+            </button>
+          </nav>
+        </div>
 
-          <TabPanel value={value} index={0}>
-            <UserList />
-          </TabPanel>
-          <TabPanel value={value} index={1}>
-            <TokenManagement />
-          </TabPanel>
-        </Paper>
-      </Box>
-    </Container>
+        <TabPanel value={value} index={0}>
+          <UserList />
+        </TabPanel>
+        <TabPanel value={value} index={1}>
+          <TokenManagement />
+        </TabPanel>
+      </div>
+    </div>
   );
 }
+ 

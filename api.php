@@ -4,8 +4,8 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Authorization, Content-Type");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(204);
-    exit();
+  http_response_code(204);
+  exit();
 }
 
 header("Content-Type: application/json; charset=UTF-8");
@@ -38,6 +38,91 @@ try {
 $input = json_decode(file_get_contents('php://input'), true);
 if (!$input && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = $_POST; // フォームデータの場合
+}
+
+// 認証エンドポイント（POST /api.php?action=authenticate）
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['action'] === 'authenticate') {
+    // デバッグ: リクエストの内容をログに記録
+    error_log('Raw input: ' . file_get_contents('php://input'));
+    error_log('Content-Type: ' . $_SERVER['CONTENT_TYPE']);
+    
+    $input = json_decode(file_get_contents('php://input'), true);
+    if (!$input && $_SERVER['CONTENT_TYPE'] === 'application/x-www-form-urlencoded') {
+        $input = $_POST;
+    }
+    
+    // デバッグ: 処理後の入力データをログに記録
+    error_log('Processed input: ' . print_r($input, true));
+    
+    $email = $input['email'] ?? '';
+    $password = $input['password'] ?? '';
+
+    if (!$email || !$password) {
+        http_response_code(400);
+        echo json_encode([
+            "success" => false,
+            "error" => "メールアドレスとパスワードは必須です",
+            "debug" => [
+                "input" => $input,
+                "email_exists" => isset($input['email']),
+                "password_exists" => isset($input['password'])
+            ]
+        ]);
+        exit();
+    }
+
+    try {
+        // ユーザー情報を取得
+        $stmt = $pdo->prepare("
+            SELECT u.*, t.token_value, t.status as token_status
+            FROM users u
+            LEFT JOIN tokens t ON u.token_id = t.id
+            WHERE u.email = ?
+        ");
+        $stmt->execute([$email]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user) {
+            http_response_code(401);
+            echo json_encode([
+                "success" => false,
+                "error" => "ユーザーが見つかりません"
+            ]);
+            exit();
+        }
+
+        // パスワードを検証
+        if (!password_verify($password, $user['password'])) {
+            http_response_code(401);
+            echo json_encode([
+                "success" => false,
+                "error" => "パスワードが正しくありません"
+            ]);
+            exit();
+        }
+
+        // アクセスログを記録
+        $logStmt = $pdo->prepare("INSERT INTO access_logs (user_id, event) VALUES (?, ?)");
+        $logStmt->execute([$user['id'], 'user_authenticated']);
+
+        // レスポンスからパスワードハッシュを除外
+        unset($user['password']);
+
+        echo json_encode([
+            "success" => true,
+            "user" => $user
+        ]);
+
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode([
+            "success" => false,
+            "error" => "認証エラー",
+            "message" => $e->getMessage()
+        ]);
+        error_log($e->getMessage());
+    }
+    exit();
 }
 
 // トークン生成（POST /api.php?action=generate_tokens）
@@ -103,7 +188,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['ac
     exit();
 }
 
-// POST（新規登録）の処理
+// 新規ユーザー登録（POST /api.php）
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $input['email'] ?? '';
     $password = $input['password'] ?? '';
@@ -168,8 +253,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo json_encode([
                 "message" => "ユーザーを作成しました",
                 "id" => $userId
-            ]);
-        } else {
+        ]);
+    } else {
             throw new Exception("登録に失敗しました");
         }
     } catch (Exception $e) {
@@ -217,7 +302,7 @@ if (isset($_GET['id'])) {
             LEFT JOIN tokens t ON u.token_id = t.id
             WHERE u.id = ?
         ");
-        $stmt->execute([$id]);
+    $stmt->execute([$id]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($user) {
@@ -226,8 +311,8 @@ if (isset($_GET['id'])) {
             $logStmt->execute([$id, 'user_viewed']);
             
             echo json_encode($user);
-        } else {
-            http_response_code(404);
+    } else {
+        http_response_code(404);
             echo json_encode(["error" => "ユーザーが見つかりません"]);
         }
     } catch (PDOException $e) {

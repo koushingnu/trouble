@@ -40,7 +40,7 @@ export async function GET() {
     // JSONとして解析可能か確認
     try {
       const data = JSON.parse(responseText);
-      return NextResponse.json(data);
+    return NextResponse.json(data);
     } catch (parseError) {
       console.error("[GET] JSON parse error:", parseError);
       throw new Error(`Invalid JSON response: ${responseText}`);
@@ -103,7 +103,7 @@ export async function POST(request: Request) {
     // JSONとして解析可能か確認
     try {
       const data = JSON.parse(responseText);
-      return NextResponse.json(data);
+    return NextResponse.json(data);
     } catch (parseError) {
       console.error("[POST] JSON parse error:", parseError);
       throw new Error(`Invalid JSON response: ${responseText}`);

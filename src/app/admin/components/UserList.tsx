@@ -2,173 +2,121 @@
 
 import { useState, useEffect } from "react";
 import { User } from "../../types";
-import { getUsers, createUser } from "../../api/users";
 import { toast } from "react-hot-toast";
-import {
-  Box,
-  Typography,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Button,
-  TextField,
-  Stack,
-} from "@mui/material";
+import AdminTable from "../../components/AdminTable";
 
 export default function UserList() {
   const [users, setUsers] = useState<User[]>([]);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [token, setToken] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // データ取得
-  const fetchUsers = async (showToast = true) => {
+  const fetchUsers = async () => {
+    setIsLoading(true);
     try {
-      const data = await getUsers();
-      setUsers(data);
-      if (showToast) {
-        toast.success("データを取得しました");
+      const response = await fetch("/api/proxy", {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch users");
       }
-    } catch (error) {
-      toast.error("データの取得に失敗しました");
-      console.error("Error fetching users:", error);
-    }
-  };
 
-  // 新規ユーザー登録
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password || !token) {
-      toast.error("メールアドレス、パスワード、トークンは必須です");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const response = await createUser(email, password, token);
-      if ("error" in response) {
-        toast.error(response.error || "エラーが発生しました");
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        setUsers(data);
       } else {
-        toast.success("ユーザーを追加しました");
-        setEmail("");
-        setPassword("");
-        setToken("");
-        fetchUsers(false);
+        console.error("Unexpected data structure:", data);
+        throw new Error("Invalid data structure");
       }
     } catch (error) {
-      toast.error("ユーザーの追加に失敗しました");
-      console.error("Error creating user:", error);
+      console.error("Error fetching users:", error);
+      toast.error("ユーザー一覧の取得に失敗しました");
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    if (isInitialLoad) {
-      fetchUsers(false);
-      setIsInitialLoad(false);
+    fetchUsers();
+  }, []);
+
+  const getStatusColor = (status: User["status"]) => {
+    switch (status) {
+      case "active":
+        return "bg-green-100 text-green-800";
+      case "inactive":
+        return "bg-yellow-100 text-yellow-800";
+      case "expired":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
-  }, [isInitialLoad]);
+  };
+
+  const getStatusLabel = (status: User["status"]) => {
+    switch (status) {
+      case "active":
+        return "有効";
+      case "inactive":
+        return "無効";
+      case "expired":
+        return "期限切れ";
+      default:
+        return "未設定";
+    }
+  };
+
+  const columns = [
+    { key: "id", label: "ID", width: 80 },
+    { key: "email", label: "メールアドレス" },
+    { key: "token_id", label: "認証キーID", width: 120 },
+    {
+      key: "token_value",
+      label: "認証キー",
+      width: 300,
+      format: (value: string | null) => value || "未設定",
+    },
+    {
+      key: "status",
+      label: "ステータス",
+      width: 120,
+      align: "center" as const,
+      format: (value: User["status"]) => (
+        <span
+          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+            value
+          )}`}
+        >
+          {getStatusLabel(value)}
+        </span>
+      ),
+    },
+    {
+      key: "created_at",
+      label: "登録日時",
+      width: 180,
+      format: (value: string) =>
+        new Date(value).toLocaleString("ja-JP", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+    },
+  ];
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h5" gutterBottom>
-        ユーザー管理
-      </Typography>
-
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          新規ユーザー登録
-        </Typography>
-        <form onSubmit={handleSubmit}>
-          <Stack spacing={2} sx={{ maxWidth: 400 }}>
-            <TextField
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              label="メールアドレス"
-              disabled={isSubmitting}
-              fullWidth
-              required
-            />
-            <TextField
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              label="パスワード"
-              disabled={isSubmitting}
-              fullWidth
-              required
-            />
-            <TextField
-              type="text"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              label="トークン"
-              disabled={isSubmitting}
-              fullWidth
-              required
-              helperText="有効なトークンを入力してください"
-            />
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={isSubmitting}
-              fullWidth
-            >
-              {isSubmitting ? "登録中..." : "登録"}
-            </Button>
-          </Stack>
-        </form>
-      </Paper>
-
-      <Paper sx={{ p: 2 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-          <Typography variant="h6">ユーザー一覧</Typography>
-          <Button variant="outlined" onClick={() => fetchUsers(true)}>
-            更新
-          </Button>
-        </Box>
-
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>メールアドレス</TableCell>
-              <TableCell>トークンID</TableCell>
-              <TableCell>トークン</TableCell>
-              <TableCell>ステータス</TableCell>
-              <TableCell>作成日時</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {users.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell>{user.id}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>{user.token_id || "-"}</TableCell>
-                <TableCell>{user.token_value || "-"}</TableCell>
-                <TableCell>{user.status || "-"}</TableCell>
-                <TableCell>
-                  {new Date(user.created_at).toLocaleString("ja-JP")}
-                </TableCell>
-              </TableRow>
-            ))}
-            {users.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={6} align="center">
-                  ユーザーが見つかりません
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </Paper>
-    </Box>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <AdminTable
+        title="ユーザー一覧"
+        isLoading={isLoading}
+        onRefresh={fetchUsers}
+        columns={columns}
+        data={users}
+        emptyMessage="ユーザーが登録されていません"
+      />
+    </div>
   );
 }

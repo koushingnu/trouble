@@ -1,70 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import {
-  Box,
-  Typography,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Button,
-  TextField,
-  Stack,
-  Chip,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from "@mui/material";
+import { useState } from "react";
 import { toast } from "react-hot-toast";
+import AdminTable from "../../components/AdminTable";
 import { Token } from "../../types";
-
-// トークンのステータスに応じたラベルを返す
-function getStatusLabel(status: string) {
-  const labels: { [key: string]: string } = {
-    unused: "未使用",
-    active: "使用中",
-    inactive: "非アクティブ",
-    expired: "期限切れ",
-    invalid: "無効",
-  };
-  return labels[status] || status;
-}
-
-// トークンのステータスに応じた色を返す
-function getStatusColor(status: string) {
-  const colors: {
-    [key: string]:
-      | "default"
-      | "primary"
-      | "secondary"
-      | "error"
-      | "info"
-      | "success"
-      | "warning";
-  } = {
-    unused: "success",
-    active: "primary",
-    inactive: "default",
-    expired: "error",
-    invalid: "error",
-  };
-  return colors[status] || "default";
-}
 
 export default function TokenManagement() {
   const [tokens, setTokens] = useState<Token[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [generatingCount, setGeneratingCount] = useState<number>(1);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generatingCount, setGeneratingCount] = useState<number>(1);
 
-  // トークン一覧を取得
   const fetchTokens = async () => {
+    setLoading(true);
     try {
       const response = await fetch("/api/proxy/tokens");
       if (!response.ok) {
@@ -74,13 +22,12 @@ export default function TokenManagement() {
       setTokens(data.data || []);
     } catch (error) {
       console.error("Error fetching tokens:", error);
-      toast.error("トークン一覧の取得に失敗しました");
+      toast.error("認証キー一覧の取得に失敗しました");
     } finally {
       setLoading(false);
     }
   };
 
-  // トークンを生成
   const handleGenerateTokens = async () => {
     if (generatingCount < 1 || generatingCount > 10000) {
       toast.error("生成数は1から10000の間で指定してください");
@@ -89,8 +36,6 @@ export default function TokenManagement() {
 
     setIsGenerating(true);
     try {
-      console.log("トークン生成リクエスト:", { count: generatingCount });
-
       const response = await fetch("/api/proxy/admin/tokens", {
         method: "POST",
         headers: {
@@ -99,179 +44,164 @@ export default function TokenManagement() {
         body: JSON.stringify({ count: generatingCount }),
       });
 
-      const responseText = await response.text();
-      console.log("トークン生成レスポンス:", {
-        status: response.status,
-        body: responseText,
-      });
-
       if (!response.ok) {
-        let errorMessage = "トークン生成に失敗しました";
-        try {
-          const errorData = JSON.parse(responseText);
-          errorMessage = errorData.error || errorMessage;
-        } catch (e) {
-          console.error("エラーレスポンスのパースに失敗:", e);
-        }
-        throw new Error(errorMessage);
+        const error = await response.json();
+        throw new Error(error.error || "認証キー生成に失敗しました");
       }
 
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (e) {
-        console.error("レスポンスのパースに失敗:", e);
-        throw new Error("不正なレスポンス形式です");
-      }
-
-      if (!data.success) {
-        throw new Error(data.error || "トークン生成に失敗しました");
-      }
-
-      toast.success(`${generatingCount}個のトークンを生成しました`);
-      fetchTokens(); // 一覧を更新
+      toast.success(`${generatingCount}個の認証キーを生成しました`);
+      fetchTokens();
     } catch (error) {
-      console.error("トークン生成エラー:", error);
+      console.error("Error generating tokens:", error);
       toast.error(
-        error instanceof Error ? error.message : "トークン生成に失敗しました"
+        error instanceof Error ? error.message : "認証キー生成に失敗しました"
       );
     } finally {
       setIsGenerating(false);
     }
   };
 
-  useEffect(() => {
-    fetchTokens();
-  }, []);
+  const getStatusColor = (status: Token["status"]) => {
+    switch (status) {
+      case "active":
+        return "bg-green-100 text-green-800";
+      case "inactive":
+        return "bg-yellow-100 text-yellow-800";
+      case "expired":
+        return "bg-red-100 text-red-800";
+      case "unused":
+        return "bg-gray-100 text-gray-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
 
-  // フィルタリングと検索を適用
-  const filteredTokens = tokens.filter((token) => {
-    const matchesStatus =
-      statusFilter === "all" || token.status === statusFilter;
-    const matchesSearch =
-      searchQuery === "" ||
-      token.token_value.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (token.user_email &&
-        token.user_email.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesStatus && matchesSearch;
-  });
+  const getStatusLabel = (status: Token["status"]) => {
+    switch (status) {
+      case "active":
+        return "有効";
+      case "inactive":
+        return "無効";
+      case "expired":
+        return "期限切れ";
+      case "unused":
+        return "未使用";
+      default:
+        return "未設定";
+    }
+  };
+
+  const columns = [
+    { key: "id", label: "ID", width: 80 },
+    {
+      key: "token_value",
+      label: "認証キー",
+      width: 300,
+      format: (value: string) => value,
+    },
+    {
+      key: "status",
+      label: "ステータス",
+      width: 120,
+      align: "center" as const,
+      format: (value: Token["status"]) => (
+        <span
+          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+            value
+          )}`}
+        >
+          {getStatusLabel(value)}
+        </span>
+      ),
+    },
+    {
+      key: "user_email",
+      label: "使用ユーザー",
+      width: 250,
+      format: (value: string | null) => value || "未割り当て",
+    },
+    {
+      key: "created_at",
+      label: "生成日時",
+      width: 180,
+      format: (value: string) =>
+        new Date(value).toLocaleString("ja-JP", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+    },
+  ];
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h5" gutterBottom>
-        トークン管理
-      </Typography>
-
-      {/* トークン生成フォーム */}
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          トークン生成
-        </Typography>
-        <Stack spacing={2}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <FormControl sx={{ width: 200 }}>
-              <InputLabel>生成数</InputLabel>
-              <Select
-                value={generatingCount}
-                label="生成数"
-                onChange={(e) => setGeneratingCount(Number(e.target.value))}
-              >
-                <MenuItem value={1}>1個</MenuItem>
-                <MenuItem value={5}>5個</MenuItem>
-                <MenuItem value={10}>10個</MenuItem>
-                <MenuItem value={50}>50個</MenuItem>
-                <MenuItem value={100}>100個</MenuItem>
-                <MenuItem value={500}>500個</MenuItem>
-                <MenuItem value={1000}>1,000個</MenuItem>
-              </Select>
-            </FormControl>
-            <Button
-              variant="contained"
-              onClick={handleGenerateTokens}
-              disabled={isGenerating}
-              sx={{ minWidth: 120 }}
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* 認証キー生成フォーム */}
+      <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          認証キー生成
+        </h2>
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <select
+              value={generatingCount}
+              onChange={(e) => setGeneratingCount(Number(e.target.value))}
+              className="block w-48 rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
             >
-              {isGenerating ? "生成中..." : "生成"}
-            </Button>
-          </Box>
-          <Typography variant="caption" color="text.secondary">
-            ※ 生成したトークンは自動的に一覧に追加されます
-          </Typography>
-        </Stack>
-      </Paper>
-
-      {/* フィルターと検索 */}
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <Stack direction="row" spacing={2} alignItems="center">
-          <FormControl sx={{ minWidth: 150 }}>
-            <InputLabel>ステータス</InputLabel>
-            <Select
-              value={statusFilter}
-              label="ステータス"
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <MenuItem value="all">すべて</MenuItem>
-              <MenuItem value="unused">未使用</MenuItem>
-              <MenuItem value="active">使用中</MenuItem>
-              <MenuItem value="inactive">非アクティブ</MenuItem>
-              <MenuItem value="expired">期限切れ</MenuItem>
-              <MenuItem value="invalid">無効</MenuItem>
-            </Select>
-          </FormControl>
-          <TextField
-            label="検索"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="トークンまたはメールアドレスで検索"
-            sx={{ flexGrow: 1 }}
-          />
-          <Button variant="outlined" onClick={() => fetchTokens()}>
-            更新
-          </Button>
-        </Stack>
-      </Paper>
-
-      {/* トークン一覧 */}
-      <Paper>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>トークン</TableCell>
-              <TableCell>ステータス</TableCell>
-              <TableCell>割り当て先</TableCell>
-              <TableCell>作成日時</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredTokens.length > 0 ? (
-              filteredTokens.map((token) => (
-                <TableRow key={token.id}>
-                  <TableCell>{token.id}</TableCell>
-                  <TableCell>{token.token_value}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={getStatusLabel(token.status)}
-                      color={getStatusColor(token.status)}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>{token.user_email || "-"}</TableCell>
-                  <TableCell>
-                    {new Date(token.created_at).toLocaleString("ja-JP")}
-                  </TableCell>
-                </TableRow>
-              ))
+              <option value={1}>1個</option>
+              <option value={5}>5個</option>
+              <option value={10}>10個</option>
+              <option value={50}>50個</option>
+              <option value={100}>100個</option>
+              <option value={500}>500個</option>
+              <option value={1000}>1,000個</option>
+            </select>
+          </div>
+          <button
+            onClick={handleGenerateTokens}
+            disabled={isGenerating}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {isGenerating ? (
+              <>
+                <svg
+                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                生成中...
+              </>
             ) : (
-              <TableRow>
-                <TableCell colSpan={5} align="center">
-                  {loading ? "読み込み中..." : "トークンが見つかりません"}
-                </TableCell>
-              </TableRow>
+              "生成"
             )}
-          </TableBody>
-        </Table>
-      </Paper>
-    </Box>
+          </button>
+        </div>
+      </div>
+
+      <AdminTable
+        title="認証キー一覧"
+        isLoading={loading}
+        onRefresh={fetchTokens}
+        columns={columns}
+        data={tokens}
+        emptyMessage="認証キーが登録されていません"
+      />
+    </div>
   );
 }
