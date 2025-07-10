@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import AdminTable from "../../components/AdminTable";
 import { Token } from "../../types";
@@ -28,6 +28,10 @@ export default function TokenManagement() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchTokens();
+  }, []); // コンポーネントマウント時に1回だけ実行
 
   const handleGenerateTokens = async () => {
     if (generatingCount < 1 || generatingCount > 10000) {

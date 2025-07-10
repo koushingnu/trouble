@@ -1,6 +1,5 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { JWT } from "next-auth/jwt";
 
 interface CustomUser {
   id: string;
@@ -14,17 +13,12 @@ declare module "next-auth" {
   interface Session {
     user: CustomUser;
   }
+  // User interfaceはCustomUserのすべてのプロパティを継承
   interface User extends CustomUser {}
 }
 
 declare module "next-auth/jwt" {
-  interface JWT {
-    id: string;
-    email: string;
-    token: string | null;
-    tokenId: number | null;
-    status: string | null;
-  }
+  interface JWT extends CustomUser {}
 }
 
 const handler = NextAuth({
@@ -93,13 +87,13 @@ const handler = NextAuth({
       return token;
     },
     async session({ session, token }) {
-      if (token) {
+      if (token && token.email) {
         session.user = {
           id: token.id,
           email: token.email,
-          token: token.token,
-          tokenId: token.tokenId,
-          status: token.status,
+          token: token.token ?? null,
+          tokenId: token.tokenId ?? null,
+          status: token.status ?? null,
         };
       }
       return session;
