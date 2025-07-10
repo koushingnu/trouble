@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "react-hot-toast";
 import AdminTable from "../../components/AdminTable";
 import { Token } from "../../types";
+import { Column } from "../../components/AdminTable";
 
 export default function TokenManagement() {
   const [tokens, setTokens] = useState<Token[]>([]);
@@ -91,26 +92,26 @@ export default function TokenManagement() {
     }
   };
 
-  const columns = [
+  const columns: Column<Token>[] = [
     { key: "id", label: "ID", width: 80 },
     {
       key: "token_value",
       label: "認証キー",
       width: 300,
-      format: (value: string) => value,
+      format: (value) => String(value),
     },
     {
       key: "status",
       label: "ステータス",
       width: 120,
-      align: "center" as const,
-      format: (value: Token["status"]) => (
+      align: "center",
+      format: (value) => (
         <span
           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-            value
+            value as Token["status"]
           )}`}
         >
-          {getStatusLabel(value)}
+          {getStatusLabel(value as Token["status"])}
         </span>
       ),
     },
@@ -118,14 +119,14 @@ export default function TokenManagement() {
       key: "user_email",
       label: "使用ユーザー",
       width: 250,
-      format: (value: string | null) => value || "未割り当て",
+      format: (value) => (value as string | null) || "未割り当て",
     },
     {
       key: "created_at",
       label: "生成日時",
       width: 180,
-      format: (value: string) =>
-        new Date(value).toLocaleString("ja-JP", {
+      format: (value) =>
+        new Date(value as string).toLocaleString("ja-JP", {
           year: "numeric",
           month: "2-digit",
           day: "2-digit",

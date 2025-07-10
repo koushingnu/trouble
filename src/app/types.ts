@@ -19,9 +19,8 @@ export interface User {
 export interface Token {
   id: number;
   token_value: string;
-  status: "unused" | "active" | "inactive" | "expired" | "invalid";
-  assigned_to: number | null;
-  user_email?: string;
+  status: "unused" | "active" | "inactive" | "expired";
+  user_email: string | null;
   created_at: string;
 }
 
