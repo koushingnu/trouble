@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
+// 基本的なユーザー情報の型
 interface CustomUser {
   id: string;
   email: string;
@@ -13,12 +14,23 @@ declare module "next-auth" {
   interface Session {
     user: CustomUser;
   }
-  // User interfaceはCustomUserのすべてのプロパティを継承
-  interface User extends CustomUser {}
+  interface User {
+    id: string;
+    email: string;
+    token: string | null;
+    tokenId: number | null;
+    status: string | null;
+  }
 }
 
 declare module "next-auth/jwt" {
-  interface JWT extends CustomUser {}
+  interface JWT {
+    id: string;
+    email: string;
+    token: string | null;
+    tokenId: number | null;
+    status: string | null;
+  }
 }
 
 const handler = NextAuth({
