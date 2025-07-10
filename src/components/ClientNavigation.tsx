@@ -38,7 +38,7 @@ export default function ClientNavigation() {
               <div className="flex h-16 items-center justify-between">
                 <div className="flex items-center">
                   <Link
-                    href="/"
+                    href="/consultation/new"
                     className="text-xl font-bold text-sky-800 hover:text-sky-600 transition-colors"
                   >
                     トラブル相談
