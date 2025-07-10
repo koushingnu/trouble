@@ -18,7 +18,7 @@ interface NavigationItem {
 
 export default function ClientNavigation() {
   const pathname = usePathname();
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
 
   const navigation: NavigationItem[] = session
     ? [

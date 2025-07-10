@@ -23,7 +23,7 @@ export default withAuth(
   },
   {
     callbacks: {
-      authorized: ({ token }) => true, // 認証チェックは上のミドルウェア関数で行う
+      authorized: () => true, // 認証チェックは上のミドルウェア関数で行う
     },
   }
 );
@@ -32,4 +32,3 @@ export default withAuth(
 export const config = {
   matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };
- 
