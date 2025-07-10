@@ -1,89 +1,86 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { JWT } from "next-auth/jwt";
+
+interface CustomUser {
+  id: string;
+  email: string;
+  token: string | null;
+  tokenId: number | null;
+  status: string | null;
+}
+
+declare module "next-auth" {
+  interface Session {
+    user: CustomUser;
+  }
+  interface User extends CustomUser {}
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id: string;
+    email: string;
+    token: string | null;
+    tokenId: number | null;
+    status: string | null;
+  }
+}
 
 const handler = NextAuth({
   providers: [
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        email: { label: "メールアドレス", type: "email" },
-        password: { label: "パスワード", type: "password" },
+        email: { label: "Email", type: "email" },
+        token: { label: "Token", type: "text" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("メールアドレスとパスワードを入力してください");
+        if (!credentials?.email || !credentials?.token) {
+          throw new Error("メールアドレスと認証キーを入力してください");
         }
 
         try {
-          // デバッグ: 認証リクエストの内容をログに出力
-          console.log("Auth request:", {
-            url: `${process.env.NEXT_PUBLIC_API_BASE}?action=authenticate`,
-            credentials: {
-              email: credentials.email,
-              password: "***",
-            },
-          });
-
-          // 認証エンドポイントを呼び出し
-          const authResponse = await fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE}?action=authenticate`,
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`,
             {
               method: "POST",
               headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                Authorization: `Basic ${process.env.API_AUTH}`,
+                "Content-Type": "application/json",
               },
-              body: new URLSearchParams({
+              body: JSON.stringify({
                 email: credentials.email,
-                password: credentials.password,
-              }).toString(),
+                token: credentials.token,
+              }),
             }
           );
 
-          // デバッグ: レスポンスの内容をログに出力
-          const responseText = await authResponse.text();
-          console.log("Auth response:", {
-            status: authResponse.status,
-            headers: Object.fromEntries(authResponse.headers),
-            body: responseText,
-          });
-
-          let data;
-          try {
-            data = JSON.parse(responseText);
-          } catch (e) {
-            console.error("JSON parse error:", e);
-            throw new Error("Invalid JSON response");
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || "認証に失敗しました");
           }
 
-          if (!authResponse.ok || !data.success) {
-            throw new Error(data.error || "認証に失敗しました");
+          const data = await response.json();
+          const user = data.data;
+
+          if (!user) {
+            throw new Error("ユーザー情報の取得に失敗しました");
           }
 
-          const user = data.user;
           return {
-            id: user.id.toString(),
+            id: String(user.id),
             email: user.email,
             token: user.token_value,
-            tokenId: user.token_id,
-            status: user.token_status,
+            tokenId: user.token_id ? Number(user.token_id) : null,
+            status: user.status,
           };
         } catch (error) {
-          console.error("認証エラー:", error);
+          console.error("Authorization error:", error);
           throw error;
         }
       },
     }),
   ],
-  secret: process.env.NEXTAUTH_SECRET,
-  session: {
-    strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30日
-  },
-  pages: {
-    signIn: "/auth",
-    error: "/auth/error",
-  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
@@ -96,15 +93,23 @@ const handler = NextAuth({
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id;
-        session.user.email = token.email;
-        session.user.token = token.token;
-        session.user.tokenId = token.tokenId;
-        session.user.status = token.status;
+      if (token) {
+        session.user = {
+          id: token.id,
+          email: token.email,
+          token: token.token,
+          tokenId: token.tokenId,
+          status: token.status,
+        };
       }
       return session;
     },
+  },
+  pages: {
+    signIn: "/login",
+  },
+  session: {
+    strategy: "jwt",
   },
 });
 

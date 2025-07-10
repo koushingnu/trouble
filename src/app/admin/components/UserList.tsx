@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { User } from "../../types";
+import { useState } from "react";
 import { toast } from "react-hot-toast";
 import AdminTable from "../../components/AdminTable";
+import { User } from "../../types";
+import { Column } from "../../components/AdminTable";
 
 export default function UserList() {
   const [users, setUsers] = useState<User[]>([]);
@@ -12,23 +13,12 @@ export default function UserList() {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/proxy", {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
+      const response = await fetch("/api/proxy/users");
       if (!response.ok) {
         throw new Error("Failed to fetch users");
       }
-
       const data = await response.json();
-      if (Array.isArray(data)) {
-        setUsers(data);
-      } else {
-        console.error("Unexpected data structure:", data);
-        throw new Error("Invalid data structure");
-      }
+      setUsers(data.data || []);
     } catch (error) {
       console.error("Error fetching users:", error);
       toast.error("ユーザー一覧の取得に失敗しました");
@@ -37,11 +27,7 @@ export default function UserList() {
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const getStatusColor = (status: User["status"]) => {
+  const getStatusColor = (status: string | null) => {
     switch (status) {
       case "active":
         return "bg-green-100 text-green-800";
@@ -54,7 +40,7 @@ export default function UserList() {
     }
   };
 
-  const getStatusLabel = (status: User["status"]) => {
+  const getStatusLabel = (status: string | null) => {
     switch (status) {
       case "active":
         return "有効";
@@ -67,37 +53,40 @@ export default function UserList() {
     }
   };
 
-  const columns = [
+  const columns: Column<User>[] = [
     { key: "id", label: "ID", width: 80 },
-    { key: "email", label: "メールアドレス" },
-    { key: "token_id", label: "認証キーID", width: 120 },
     {
-      key: "token_value",
-      label: "認証キー",
+      key: "email",
+      label: "メールアドレス",
       width: 300,
-      format: (value: string | null) => value || "未設定",
     },
     {
       key: "status",
       label: "ステータス",
       width: 120,
-      align: "center" as const,
-      format: (value: User["status"]) => (
+      align: "center",
+      format: (value) => (
         <span
           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-            value
+            value as string | null
           )}`}
         >
-          {getStatusLabel(value)}
+          {getStatusLabel(value as string | null)}
         </span>
       ),
+    },
+    {
+      key: "token_value",
+      label: "認証キー",
+      width: 300,
+      format: (value) => (value as string | null) || "未割り当て",
     },
     {
       key: "created_at",
       label: "登録日時",
       width: 180,
-      format: (value: string) =>
-        new Date(value).toLocaleString("ja-JP", {
+      format: (value) =>
+        new Date(value as string).toLocaleString("ja-JP", {
           year: "numeric",
           month: "2-digit",
           day: "2-digit",
