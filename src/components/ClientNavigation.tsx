@@ -37,7 +37,7 @@ export default function ClientNavigation() {
               <div className="flex h-20 items-center justify-between">
                 <div className="flex items-center">
                   <Link
-                    href="/consultation/new"
+                    href={session ? "/consultation/new" : "/auth"}
                     className="text-2xl font-bold text-sky-800 hover:text-sky-600 transition-colors"
                   >
                     トラブル相談
