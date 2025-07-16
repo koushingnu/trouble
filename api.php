@@ -74,7 +74,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['ac
     try {
         // ユーザー情報を取得
         $stmt = $pdo->prepare("
-            SELECT u.*, t.token_value, t.status as token_status
+            SELECT u.*, t.token_value, t.status as token_status, 
+                   CASE WHEN u.is_admin = 1 THEN true ELSE false END as is_admin
             FROM users u
             LEFT JOIN tokens t ON u.token_id = t.id
             WHERE u.email = ?

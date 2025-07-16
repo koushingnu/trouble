@@ -2,28 +2,34 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { FaEnvelope, FaLock, FaKey } from "react-icons/fa";
+import FullScreenLoading from "@/components/FullScreenLoading";
 import { toast } from "react-hot-toast";
 
-export default function RegisterPage() {
+export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [token, setToken] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setLoading(true);
+    setError("");
 
     if (password !== confirmPassword) {
+      setError("パスワードが一致しません");
       toast.error("パスワードが一致しません");
-      setIsLoading(false);
+      setLoading(false);
       return;
     }
 
     try {
-      const response = await fetch("/api/users", {
+      const res = await fetch("/api/users", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -31,124 +37,126 @@ export default function RegisterPage() {
         body: JSON.stringify({ email, password, token }),
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "登録に失敗しました");
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "登録中にエラーが発生しました");
       }
 
       toast.success("登録が完了しました");
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       router.push("/auth");
     } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message);
-      } else {
-        toast.error("登録に失敗しました");
-      }
-      console.error("Registration error:", error);
-    } finally {
-      setIsLoading(false);
+      setError(
+        error instanceof Error ? error.message : "登録中にエラーが発生しました"
+      );
+      toast.error(
+        error instanceof Error ? error.message : "登録中にエラーが発生しました"
+      );
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-start pt-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md">
-        <div className="bg-white p-8 rounded-lg shadow-sm">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900">アカウント登録</h1>
+    <>
+      {loading && <FullScreenLoading message="登録中..." />}
+      <main className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-gradient-to-br from-gray-50 to-white p-4 -mt-16">
+        <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg border border-gray-100">
+          <div className="text-center mb-6">
+            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-gray-800 to-gray-600 font-noto-sans-jp">
+              新規登録
+            </h1>
+            <div className="mt-2 h-1 w-12 bg-gradient-to-r from-blue-500 to-blue-300 mx-auto rounded-full"></div>
             <p className="mt-2 text-sm text-gray-600">
               認証キーをお持ちの方のみ登録いただけます
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+          {error && (
+            <div className="mb-3 p-2 bg-red-50 border border-red-100 text-red-600 rounded text-sm">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
-              >
-                メールアドレス
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
-              />
+              <div className="relative">
+                <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-11 pr-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 bg-white text-gray-800 placeholder-gray-400 text-base"
+                  placeholder="メールアドレス"
+                  required
+                />
+              </div>
             </div>
 
             <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
-              >
-                パスワード
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
-              />
+              <div className="relative">
+                <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-11 pr-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 bg-white text-gray-800 placeholder-gray-400 text-base"
+                  placeholder="パスワード"
+                  required
+                />
+              </div>
             </div>
 
             <div>
-              <label
-                htmlFor="confirmPassword"
-                className="block text-sm font-medium text-gray-700"
-              >
-                パスワード（確認）
-              </label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
-              />
+              <div className="relative">
+                <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full pl-11 pr-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 bg-white text-gray-800 placeholder-gray-400 text-base"
+                  placeholder="パスワード（確認）"
+                  required
+                />
+              </div>
             </div>
 
             <div>
-              <label
-                htmlFor="token"
-                className="block text-sm font-medium text-gray-700"
-              >
-                認証キー
-              </label>
-              <input
-                id="token"
-                name="token"
-                type="text"
-                required
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
-              />
+              <div className="relative">
+                <FaKey className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
+                <input
+                  type="text"
+                  value={token}
+                  onChange={(e) => setToken(e.target.value)}
+                  className="w-full pl-11 pr-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 bg-white text-gray-800 placeholder-gray-400 text-base"
+                  placeholder="認証キー"
+                  required
+                />
+              </div>
             </div>
 
-            <div>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {isLoading ? "登録中..." : "登録する"}
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-blue-500 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-600 disabled:opacity-50 transition-colors duration-200 text-base mt-4"
+            >
+              {loading ? "登録中..." : "登録する"}
+            </button>
           </form>
+
+          <div className="mt-6 text-center">
+            <p className="text-gray-600 mb-2 text-sm">
+              すでにアカウントをお持ちの方は
+            </p>
+            <Link
+              href="/auth"
+              className="inline-block bg-white text-blue-500 py-1.5 px-6 rounded-lg font-semibold border-2 border-blue-500 hover:bg-blue-50 transition-colors duration-200 text-sm"
+            >
+              ログイン
+            </Link>
+          </div>
         </div>
-      </div>
-    </div>
+      </main>
+    </>
   );
 }

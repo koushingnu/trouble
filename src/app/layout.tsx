@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Murecho } from "next/font/google";
 import "./globals.css";
 import ClientNavigation from "@/components/ClientNavigation";
 import { Providers } from "./providers";
 
-const inter = Inter({ subsets: ["latin"] });
+const murecho = Murecho({
+  weight: ["300", "400", "500", "700"],
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-murecho",
+});
 
 export const metadata: Metadata = {
   title: "トラブル相談",
@@ -17,11 +22,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ja">
-      <body className={inter.className}>
+    <html lang="ja" className={murecho.variable}>
+      <body className={murecho.className}>
         <Providers>
           <ClientNavigation />
-        {children}
+          {children}
         </Providers>
       </body>
     </html>

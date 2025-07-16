@@ -7,6 +7,32 @@
   --foreground: #171717;
 }
 
+/* タイトルのスタイル */
+.page-title {
+  @apply text-2xl font-bold relative text-sky-800;
+  font-family: var(--font-murecho);
+}
+
+.page-title::after {
+  content: "";
+  @apply absolute bottom-0 left-0 w-12 h-0.5 bg-gradient-to-r from-sky-800 to-sky-600;
+  transform: translateY(0.5rem);
+}
+
+.page-title-center {
+  @apply text-3xl font-bold text-center relative;
+  font-family: var(--font-murecho);
+  background: linear-gradient(135deg, #075985, #0284c7);
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.page-title-center::after {
+  content: "";
+  @apply absolute bottom-0 left-1/2 w-12 h-0.5 bg-gradient-to-r from-sky-800 to-sky-600;
+  transform: translateX(-50%) translateY(0.75rem);
+}
+
 /* モダンなスクロールバーのスタイリング */
 html {
   overflow-y: scroll;
@@ -72,5 +98,5 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-murecho);
 }

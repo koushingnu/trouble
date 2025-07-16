@@ -11,7 +11,8 @@ interface TabPanelProps {
 }
 
 function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
+  const { children, value, 
+  index, ...other } = props;
 
   return (
     <div
@@ -35,7 +36,9 @@ export default function AdminPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">管理画面</h1>
+      <div className="mb-8">
+        <h1 className="page-title">管理画面</h1>
+      </div>
 
       <div className="bg-white shadow-sm rounded-lg overflow-hidden">
         <div className="border-b border-gray-200">
@@ -79,4 +82,3 @@ export default function AdminPage() {
     </div>
   );
 }
- 

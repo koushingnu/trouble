@@ -8,6 +8,7 @@ interface CustomUser {
   token: string | null;
   tokenId: number | null;
   status: string | null;
+  isAdmin: boolean;
 }
 
 declare module "next-auth" {
@@ -45,7 +46,6 @@ const handler = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          console.log("Missing credentials");
           throw new Error("メールアドレスとパスワードを入力してください");
         }
 
@@ -55,7 +55,6 @@ const handler = NextAuth({
             passwordLength: credentials.password.length,
           });
 
-          // URLSearchParamsを使用してクエリパラメータとフォームデータを構築
           const url = new URL(API_BASE);
           url.searchParams.append("action", "authenticate");
 
@@ -81,20 +80,24 @@ const handler = NextAuth({
 
           if (!response.ok) {
             throw new Error(
-              `API responded with status ${response.status}: ${responseText}`
+              `認証に失敗しました。メールアドレスまたはパスワードが正しくありません。`
             );
           }
 
           let data;
           try {
             data = JSON.parse(responseText);
+            console.log("Parsed user data:", data);
           } catch (e) {
             console.error("Failed to parse JSON response:", e);
-            throw new Error("Invalid JSON response from API");
+            throw new Error("サーバーからの応答が不正です");
           }
 
           if (!data.success) {
-            throw new Error(data.error || "認証に失敗しました");
+            throw new Error(
+              data.error ||
+                "認証に失敗しました。メールアドレスまたはパスワードが正しくありません。"
+            );
           }
 
           const user = data.user;
@@ -102,7 +105,8 @@ const handler = NextAuth({
             throw new Error("ユーザー情報の取得に失敗しました");
           }
 
-          console.log("Login successful for:", user.email);
+          console.log("User data from API:", user);
+          console.log("Is admin value:", user.is_admin);
 
           return {
             id: String(user.id),
@@ -110,10 +114,14 @@ const handler = NextAuth({
             token: user.token_value || null,
             tokenId: user.token_id ? Number(user.token_id) : null,
             status: user.status || null,
+            isAdmin: user.is_admin === "1" || user.is_admin === true,
           };
         } catch (error) {
           console.error("Authorization error:", error);
-          throw error;
+          // エラーメッセージをそのまま返す
+          throw error instanceof Error
+            ? error
+            : new Error("認証に失敗しました");
         }
       },
     }),
@@ -126,6 +134,7 @@ const handler = NextAuth({
         token.token = user.token;
         token.tokenId = user.tokenId;
         token.status = user.status;
+        token.isAdmin = user.isAdmin;
       }
       return token;
     },
@@ -137,19 +146,26 @@ const handler = NextAuth({
           token: token.token ?? null,
           tokenId: token.tokenId ?? null,
           status: token.status ?? null,
+          isAdmin: token.isAdmin ?? false,
         };
       }
       return session;
     },
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith(baseUrl)) {
+        return `${baseUrl}/consultation/new`;
+      }
+      return url;
+    },
   },
   pages: {
-    signIn: "/login",
+    signIn: "/auth",
     error: "/auth/error",
   },
   session: {
     strategy: "jwt",
   },
-  debug: true,
+  debug: process.env.NODE_ENV === "development",
 });
 
 export { handler as GET, handler as POST };
