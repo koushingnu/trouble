@@ -30,5 +30,20 @@ export default withAuth(
 
 // 保護するパスを指定
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - auth (認証ページ)
+     * - register (登録ページ)
+     */
+    "/((?!api|_next/static|_next/image|favicon.ico|auth|register).*)",
+    "/consultation/:path*",
+    "/history/:path*",
+    "/contact/:path*",
+    "/admin/:path*",
+  ],
 };

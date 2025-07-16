@@ -152,8 +152,16 @@ const handler = NextAuth({
       return session;
     },
     async redirect({ url, baseUrl }) {
+      // ログイン後のリダイレクト
       if (url.startsWith(baseUrl)) {
         return `${baseUrl}/consultation/new`;
+      }
+      // ログイン前のリダイレクト（保護されたページにアクセスした場合）
+      if (url.includes("?callbackUrl=")) {
+        const callbackUrl = new URL(url).searchParams.get("callbackUrl");
+        if (callbackUrl && callbackUrl.startsWith("/")) {
+          return `${baseUrl}/auth?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+        }
       }
       return url;
     },
