@@ -9,7 +9,7 @@ import { ChatCompletionMessageParam } from "openai/resources/chat";
 const API_PHP_URL =
   process.env.NEXT_PUBLIC_API_BASE || "https://ttsv.sakura.ne.jp/api.php";
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const GPT_MODEL = "gpt-3.5-turbo"; // より高性能なモデルに変更
+const GPT_MODEL = "gpt-4.1-nano-2025-04-14"; // より高性能なモデルに変更
 
 // システムプロンプトを定数として定義
 const SYSTEM_PROMPT = `あなたはトラブル相談専門のアドバイザーです。
