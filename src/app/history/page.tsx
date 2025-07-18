@@ -1,55 +1,58 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { ChatRoom } from "@/types/chat";
+import { APIResponse } from "@/types/chat";
 
 export default function HistoryPage() {
-  const consultations = [
-    {
-      id: "1",
-      title: "深夜の騒音トラブルについて",
-      date: "2024年3月15日",
-      status: "対応中",
-      preview:
-        "深夜の騒音問題についてご相談を承りました。状況を詳しく確認させていただきたいのですが...",
-      messages: 5,
-    },
-    {
-      id: "2",
-      title: "不審者の出没について",
-      date: "2024年3月10日",
-      status: "解決済み",
-      preview:
-        "マンション周辺での不審者の出没について、防犯カメラの設置や警察への巡回依頼など、具体的な対策をご提案させていただきます。",
-      messages: 7,
-    },
-    {
-      id: "3",
-      title: "ゴミ出しルール違反の対応",
-      date: "2024年3月5日",
-      status: "解決済み",
-      preview:
-        "近隣住民のゴミ出しルール違反について、管理組合を通じた対応方法をご案内させていただきます。",
-      messages: 4,
-    },
-    {
-      id: "4",
-      title: "迷惑駐車への対処方法",
-      date: "2024年3月1日",
-      status: "解決済み",
-      preview:
-        "マンション敷地内での迷惑駐車について、管理規約に基づいた具体的な対処方法をご案内いたします。",
-      messages: 6,
-    },
-    {
-      id: "5",
-      title: "ストーカー被害の相談",
-      date: "2024年2月28日",
-      status: "対応中",
-      preview:
-        "ストーカー被害についてご相談を承りました。警察への通報方法や証拠の収集方法など、安全を最優先とした対応をご案内いたします。",
-      messages: 8,
-    },
-  ];
+  const { data: session } = useSession();
+  const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchChatRooms = async () => {
+      if (!session?.user) return;
+
+      try {
+        const response = await fetch("/api/proxy/chat/history", {
+          headers: {
+            Authorization: `Bearer ${session.user.token || ""}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch chat rooms");
+        }
+
+        const data: APIResponse<{ chatRooms: ChatRoom[] }> =
+          await response.json();
+        if (data.success && data.data) {
+          setChatRooms(data.data.chatRooms);
+        }
+      } catch (error) {
+        console.error("Error fetching chat rooms:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchChatRooms();
+  }, [session?.user]);
+
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="mb-8">
+          <h1 className="page-title">相談履歴</h1>
+        </div>
+        <div className="bg-white shadow-sm rounded-lg p-6">
+          <p className="text-center text-gray-500">読み込み中...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -59,47 +62,71 @@ export default function HistoryPage() {
 
       <div className="bg-white shadow-sm rounded-lg">
         <div className="divide-y divide-gray-200">
-          {consultations.map((consultation) => (
-            <div
-              key={consultation.id}
-              className="p-6 hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-2">
-                    <h2 className="text-base font-medium text-gray-900 truncate">
-                      {consultation.title}
-                    </h2>
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        consultation.status === "解決済み"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-yellow-100 text-yellow-800"
-                      }`}
-                    >
-                      {consultation.status}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-sm text-gray-500 line-clamp-2">
-                    {consultation.preview}
-                  </p>
-                  <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500">
-                    <span>{consultation.date}</span>
-                    <span>・</span>
-                    <span>{consultation.messages}件のメッセージ</span>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <Link
-                    href={`/consultation/${consultation.id}`}
-                    className="inline-flex items-center px-3 py-1.5 border border-sky-600 text-xs font-medium rounded-md text-sky-600 bg-white hover:bg-sky-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors"
-                  >
-                    詳細を見る
-                  </Link>
-                </div>
-              </div>
+          {chatRooms.length === 0 ? (
+            <div className="p-6">
+              <p className="text-center text-gray-500">相談履歴はありません</p>
             </div>
-          ))}
+          ) : (
+            chatRooms.map((chatRoom) => {
+              const firstMessage = chatRoom.messages[0];
+              const isResolved = chatRoom.messages.some(
+                (msg) =>
+                  msg.sender === "assistant" &&
+                  msg.body.includes("解決いたしました")
+              );
+
+              return (
+                <div
+                  key={chatRoom.id}
+                  className="p-6 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-2">
+                        <h2 className="text-base font-medium text-gray-900 truncate">
+                          {firstMessage?.body || "無題の相談"}
+                        </h2>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            isResolved
+                              ? "bg-green-100 text-green-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
+                          {isResolved ? "解決済み" : "対応中"}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm text-gray-500 line-clamp-2">
+                        {firstMessage?.body || ""}
+                      </p>
+                      <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500">
+                        <span>
+                          {new Date(chatRoom.created_at).toLocaleDateString(
+                            "ja-JP",
+                            {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            }
+                          )}
+                        </span>
+                        <span>・</span>
+                        <span>{chatRoom.messages.length}件のメッセージ</span>
+                      </div>
+                    </div>
+                    <div className="ml-4">
+                      <Link
+                        href={`/consultation/${chatRoom.id}`}
+                        className="inline-flex items-center px-4 py-2 border border-sky-600 text-sm font-medium rounded-md text-sky-600 bg-white hover:bg-sky-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors"
+                      >
+                        チャットを表示
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
     </div>

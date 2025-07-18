@@ -40,6 +40,222 @@ if (!$input && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = $_POST; // フォームデータの場合
 }
 
+// メッセージ保存機能（POST /api.php?action=save_message）
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['action'] === 'save_message') {
+    $message = $_POST['message'] ?? '';
+    $chatRoomId = $_POST['chatRoomId'] ?? null;
+    $userId = $_POST['userId'] ?? null;
+    $sender = $_POST['sender'] ?? 'user';
+
+    if (!$message) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'error' => 'メッセージは必須です'
+        ]);
+        exit();
+    }
+
+    try {
+        $pdo->beginTransaction();
+
+        // チャットルームの作成または取得
+        if (!$chatRoomId) {
+            $stmt = $pdo->prepare('INSERT INTO chat_rooms (user_id) VALUES (?)');
+            $stmt->execute([$userId]);
+            $chatRoomId = $pdo->lastInsertId();
+            error_log(sprintf("Created new chat room: %s for user: %s", $chatRoomId, $userId));
+        } else {
+            // チャットルームの存在確認（アシスタントの場合はユーザーIDチェックをスキップ）
+            if ($sender === 'assistant') {
+                $stmt = $pdo->prepare('SELECT id FROM chat_rooms WHERE id = ?');
+                $stmt->execute([$chatRoomId]);
+            } else {
+                $stmt = $pdo->prepare('SELECT id FROM chat_rooms WHERE id = ? AND user_id = ?');
+                $stmt->execute([$chatRoomId, $userId]);
+            }
+            
+            if (!$stmt->fetch()) {
+                error_log(sprintf(
+                    "Invalid chat room - Room: %s, User: %s, Sender: %s",
+                    $chatRoomId,
+                    $userId,
+                    $sender
+                ));
+                throw new Exception('Invalid chat room');
+            }
+        }
+
+        // メッセージを保存
+        $stmt = $pdo->prepare('INSERT INTO messages (chat_room_id, sender, body) VALUES (?, ?, ?)');
+        $stmt->execute([$chatRoomId, $sender, $message]);
+        $messageId = $pdo->lastInsertId();
+
+        error_log(sprintf(
+            "Message saved - Room: %s, Sender: %s, MessageId: %s",
+            $chatRoomId,
+            $sender,
+            $messageId
+        ));
+
+        $pdo->commit();
+
+        echo json_encode([
+            'success' => true,
+            'data' => [
+                'chatRoomId' => $chatRoomId,
+                'messageId' => $messageId
+            ]
+        ]);
+
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        error_log("Message save error: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'error' => 'メッセージの保存に失敗しました',
+            'message' => $e->getMessage()
+        ]);
+    }
+    exit();
+}
+
+// チャット履歴取得機能
+if (($_SERVER['REQUEST_METHOD'] === 'GET' || $_SERVER['REQUEST_METHOD'] === 'POST') && 
+    ((isset($_GET['action']) && $_GET['action'] === 'get_chat_history') || 
+     (isset($_POST['action']) && $_POST['action'] === 'get_chat_history'))) {
+    
+    // GETとPOSTの両方に対応
+    $params = $_SERVER['REQUEST_METHOD'] === 'GET' ? $_GET : $_POST;
+    $chatRoomId = $params['chatRoomId'] ?? null;
+    $userId = $params['userId'] ?? null;
+
+    if (!$chatRoomId || !$userId) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'error' => 'チャットルームIDとユーザーIDは必須です'
+        ]);
+        exit();
+    }
+
+    try {
+        // チャットルームの存在と権限を確認
+        $stmt = $pdo->prepare('SELECT id FROM chat_rooms WHERE id = ? AND user_id = ?');
+        $stmt->execute([$chatRoomId, $userId]);
+        if (!$stmt->fetch()) {
+            throw new Exception('Invalid chat room');
+        }
+
+        // メッセージを取得
+        $stmt = $pdo->prepare('
+            SELECT id, sender, body, created_at 
+            FROM messages 
+            WHERE chat_room_id = ? 
+            ORDER BY created_at ASC
+        ');
+        $stmt->execute([$chatRoomId]);
+        $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // デバッグ情報を追加
+        error_log(sprintf(
+            "Chat history retrieved - Room: %s, User: %s, Messages: %d",
+            $chatRoomId,
+            $userId,
+            count($messages)
+        ));
+
+        echo json_encode([
+            'success' => true,
+            'data' => [
+                'messages' => $messages,
+                'chatRoomId' => $chatRoomId
+            ]
+        ]);
+
+    } catch (Exception $e) {
+        error_log("Chat history error: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'error' => 'チャット履歴の取得に失敗しました',
+            'message' => $e->getMessage()
+        ]);
+    }
+    exit();
+}
+
+// チャットルーム一覧取得機能
+if (($_SERVER['REQUEST_METHOD'] === 'GET' || $_SERVER['REQUEST_METHOD'] === 'POST') && 
+    ((isset($_GET['action']) && $_GET['action'] === 'get_chat_rooms') || 
+     (isset($_POST['action']) && $_POST['action'] === 'get_chat_rooms'))) {
+    
+    // GETとPOSTの両方に対応
+    $params = $_SERVER['REQUEST_METHOD'] === 'GET' ? $_GET : $_POST;
+    $userId = $params['userId'] ?? null;
+
+    if (!$userId) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'error' => 'ユーザーIDは必須です'
+        ]);
+        exit();
+    }
+
+    try {
+        // チャットルーム一覧を取得
+        $stmt = $pdo->prepare('
+            SELECT 
+                cr.id,
+                cr.user_id,
+                cr.created_at,
+                (
+                    SELECT JSON_ARRAYAGG(
+                        JSON_OBJECT(
+                            "id", m.id,
+                            "chat_room_id", m.chat_room_id,
+                            "sender", m.sender,
+                            "body", m.body,
+                            "created_at", m.created_at
+                        )
+                    )
+                    FROM messages m
+                    WHERE m.chat_room_id = cr.id
+                    ORDER BY m.created_at ASC
+                ) as messages
+            FROM chat_rooms cr
+            WHERE cr.user_id = ?
+            ORDER BY cr.created_at DESC
+        ');
+        $stmt->execute([$userId]);
+        $chatRooms = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // messagesをJSON文字列から配列に変換
+        foreach ($chatRooms as &$chatRoom) {
+            $chatRoom['messages'] = json_decode($chatRoom['messages'] ?? '[]', true) ?? [];
+        }
+
+        echo json_encode([
+            'success' => true,
+            'data' => [
+                'chatRooms' => $chatRooms
+            ]
+        ]);
+
+    } catch (Exception $e) {
+        error_log("Chat rooms fetch error: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'error' => 'チャットルーム一覧の取得に失敗しました',
+            'message' => $e->getMessage()
+        ]);
+    }
+    exit();
+}
+
 // 認証エンドポイント（POST /api.php?action=authenticate）
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['action'] === 'authenticate') {
     // デバッグ: リクエストの内容をログに記録
@@ -190,7 +406,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['ac
 }
 
 // 新規ユーザー登録（POST /api.php）
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_GET['action'])) {
     $email = $input['email'] ?? '';
     $password = $input['password'] ?? '';
     $token = $input['token'] ?? '';
@@ -254,8 +470,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo json_encode([
                 "message" => "ユーザーを作成しました",
                 "id" => $userId
-        ]);
-    } else {
+            ]);
+        } else {
             throw new Exception("登録に失敗しました");
         }
     } catch (Exception $e) {
@@ -303,7 +519,7 @@ if (isset($_GET['id'])) {
             LEFT JOIN tokens t ON u.token_id = t.id
             WHERE u.id = ?
         ");
-    $stmt->execute([$id]);
+        $stmt->execute([$id]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($user) {
@@ -312,8 +528,8 @@ if (isset($_GET['id'])) {
             $logStmt->execute([$id, 'user_viewed']);
             
             echo json_encode($user);
-    } else {
-        http_response_code(404);
+        } else {
+            http_response_code(404);
             echo json_encode(["error" => "ユーザーが見つかりません"]);
         }
     } catch (PDOException $e) {

@@ -5,21 +5,22 @@ export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
+    const response = NextResponse.next();
+
+    // ログイン済みユーザーが/authにアクセスした場合は、常にホームページにリダイレクト
+    if (token && path === "/auth") {
+      return NextResponse.redirect(new URL("/", req.url));
+    }
 
     // 未ログインユーザーは/authと/registerのみアクセス可能
     if (!token) {
       if (path !== "/auth" && path !== "/register") {
         return NextResponse.redirect(new URL("/auth", req.url));
       }
-      return NextResponse.next();
+      return response;
     }
 
-    // ログイン済みユーザーは/authと/register以外にアクセス可能
-    if (token && (path === "/auth" || path === "/register")) {
-      return NextResponse.redirect(new URL("/", req.url));
-    }
-
-    return NextResponse.next();
+    return response;
   },
   {
     callbacks: {
@@ -37,13 +38,7 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - auth (認証ページ)
-     * - register (登録ページ)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|auth|register).*)",
-    "/consultation/:path*",
-    "/history/:path*",
-    "/contact/:path*",
-    "/admin/:path*",
+    "/((?!api|_next/static|_next/image|favicon.ico).*)",
   ],
 };
