@@ -1,22 +1,29 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
+// 公開パスのリスト
+const PUBLIC_PATHS = ["/auth", "/register", "/auth/error"];
+// APIパスのリスト
+const API_PATHS = ["/api/auth", "/api/proxy"];
+// 静的アセットのパス
+const STATIC_PATHS = ["/_next", "/favicon.ico"];
+
 export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
 
-    // 公開パスのリスト
-    const publicPaths = ["/auth", "/register", "/auth/error"];
-
-    // APIルートはスキップ
-    if (path.startsWith("/api/")) {
+    // 静的アセットとAPIパスはスキップ
+    if (
+      STATIC_PATHS.some((p) => path.startsWith(p)) ||
+      API_PATHS.some((p) => path.startsWith(p))
+    ) {
       return NextResponse.next();
     }
 
     // 公開パスへのアクセス
-    if (publicPaths.includes(path)) {
-      // ログイン済みユーザーが認証ページにアクセスした場合
+    if (PUBLIC_PATHS.includes(path)) {
+      // ログイン済みユーザーが認証ページにアクセスした場合はホームにリダイレクト
       if (token) {
         return NextResponse.redirect(new URL("/", req.url));
       }
@@ -27,9 +34,10 @@ export default withAuth(
     // 保護されたパスへのアクセス
     if (!token) {
       // 未ログインユーザーは認証ページへリダイレクト
-      const url = new URL("/auth", req.url);
-      url.searchParams.set("callbackUrl", path);
-      return NextResponse.redirect(url);
+      const callbackUrl = encodeURIComponent(path);
+      return NextResponse.redirect(
+        new URL(`/auth?callbackUrl=${callbackUrl}`, req.url)
+      );
     }
 
     // ログイン済みユーザーの通常アクセス
@@ -44,13 +52,5 @@ export default withAuth(
 
 // 保護するパスを指定
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    "/((?!_next/static|_next/image|favicon.ico).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
