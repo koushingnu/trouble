@@ -9,11 +9,12 @@ module.exports = {
     extend: {
       fontFamily: {
         "noto-sans-jp": ["var(--font-noto-sans-jp)"],
+        murecho: ["var(--font-murecho)"],
       },
       colors: {
-        primary: "#2563eb", // カスタムのプライマリカラー（青色）
+        primary: "#2563eb",
       },
     },
   },
-  plugins: [],
+  plugins: [require("@tailwindcss/forms")],
 };
