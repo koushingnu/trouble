@@ -15,21 +15,6 @@ const nextConfig = {
   env: {
     NEXTAUTH_URL: process.env.NEXTAUTH_URL || "http://localhost:3000",
   },
-  // エラーページの設定
-  onError: (err) => {
-    console.error("Next.js Error:", err);
-  },
-  // 404ページの設定
-  async rewrites() {
-    return {
-      fallback: [
-        {
-          source: "/:path*",
-          destination: "/_error",
-        },
-      ],
-    };
-  },
 };
 
 module.exports = nextConfig;
