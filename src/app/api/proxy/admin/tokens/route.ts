@@ -1,37 +1,39 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-const API_BASE = "https://ttsv.sakura.ne.jp/api.php";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE || "https://ttsv.sakura.ne.jp/api.php";
 
-function getAuthHeader() {
-  const apiAuth = process.env.API_AUTH;
-  if (!apiAuth) {
-    console.error("API_AUTH is not set in environment variables");
-    throw new Error("API_AUTH environment variable is not set");
+// 共通のヘッダー作成関数
+async function getAuthHeaders(request: NextRequest) {
+  const token = await getToken({ req: request });
+  if (!token?.token) {
+    throw new Error("認証が必要です");
   }
-  return `Basic ${apiAuth}`;
+  if (!token.isAdmin) {
+    throw new Error("管理者権限が必要です");
+  }
+  return {
+    Authorization: `Basic ${process.env.API_AUTH}`,
+    "Content-Type": "application/json",
+  };
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     console.log("[POST] Request body:", JSON.stringify(body, null, 2));
 
     // URLにactionパラメータを追加
     const url = `${API_BASE}?action=generate_tokens`;
-    const authHeader = getAuthHeader();
+    const headers = await getAuthHeaders(request);
 
     console.log("[POST] Request URL:", url);
-    console.log("[POST] Headers:", {
-      "Content-Type": "application/json",
-      Authorization: authHeader,
-    });
+    console.log("[POST] Headers:", headers);
 
     const response = await fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: authHeader,
-      },
+      headers,
       body: JSON.stringify(body),
     });
 
