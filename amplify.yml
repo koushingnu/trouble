@@ -4,8 +4,10 @@ frontend:
     preBuild:
       commands:
         - npm ci
+        - node -v
     build:
       commands:
+        - env | grep -e API_AUTH -e NEXTAUTH_SECRET || true
         - npm run build
   artifacts:
     baseDirectory: .next
@@ -15,3 +17,12 @@ frontend:
     paths:
       - node_modules/**/*
       - .next/cache/**/*
+  customHeaders:
+    - pattern: "**/*"
+      headers:
+        - key: "Strict-Transport-Security"
+          value: "max-age=31536000; includeSubDomains"
+        - key: "X-Frame-Options"
+          value: "SAMEORIGIN"
+        - key: "X-XSS-Protection"
+          value: "1; mode=block"
