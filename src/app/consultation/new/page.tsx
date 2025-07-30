@@ -1,6 +1,6 @@
 "use client";
 
-import TroubleChat from "@/components/TroubleChat";
+import TroubleChat from "../../../components/TroubleChat";
 
 export default function NewConsultationPage() {
   return (

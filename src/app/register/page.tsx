@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FaEnvelope, FaLock, FaKey } from "react-icons/fa";
-import FullScreenLoading from "@/components/FullScreenLoading";
+import FullScreenLoading from "../../components/FullScreenLoading";
 import { toast } from "react-hot-toast";
 
 export default function Register() {
