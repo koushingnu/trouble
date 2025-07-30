@@ -1,6 +1,5 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 
 // 認証が不要なパス
 const PUBLIC_PATHS = ["/auth", "/register", "/auth/error"];
@@ -34,13 +33,13 @@ export default withAuth(
         if (PUBLIC_PATHS.includes(path)) {
           return true;
         }
+        // APIルートは許可
+        if (path.startsWith("/api/")) {
+          return true;
+        }
         // それ以外はトークンの有無で判断
         return !!token;
       },
-    },
-    pages: {
-      signIn: "/auth",
-      error: "/auth/error",
     },
   }
 );

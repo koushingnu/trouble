@@ -1,4 +1,4 @@
-import NextAuth from "next-auth";
+import NextAuth, { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
 // 基本的なユーザー情報の型
@@ -42,11 +42,8 @@ declare module "next-auth/jwt" {
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE || "https://ttsv.sakura.ne.jp/api.php";
 
-if (!process.env.NEXTAUTH_SECRET) {
-  throw new Error("Please provide process.env.NEXTAUTH_SECRET");
-}
-
-const handler = NextAuth({
+// NextAuth設定
+export const authOptions: AuthOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -162,6 +159,9 @@ const handler = NextAuth({
     },
   },
   debug: process.env.NODE_ENV === "development",
-});
+};
+
+// NextAuthハンドラーの作成
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
