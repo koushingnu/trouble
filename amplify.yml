@@ -4,12 +4,13 @@ frontend:
     preBuild:
       commands:
         - nvm use 18
+        - env | grep -e NEXTAUTH -e API_ -e AWS_BRANCH_URL || true
         - npm ci
-        - node -v
     build:
       commands:
-        - env | grep -e API_AUTH -e NEXTAUTH_SECRET || true
-        - npm run build
+        - echo "NEXTAUTH_URL=$AWS_BRANCH_URL"
+        - echo "NEXT_PUBLIC_BASE_URL=$AWS_BRANCH_URL"
+        - NEXTAUTH_URL=$AWS_BRANCH_URL NEXT_PUBLIC_BASE_URL=$AWS_BRANCH_URL npm run build
   artifacts:
     baseDirectory: .next
     files:
