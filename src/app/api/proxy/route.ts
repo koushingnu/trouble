@@ -1,37 +1,36 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-const API_BASE = "https://ttsv.sakura.ne.jp/api.php";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE || "https://ttsv.sakura.ne.jp/api.php";
 
-function getAuthHeader() {
-  const apiAuth = process.env.API_AUTH;
-  if (!apiAuth) {
-    console.error("API_AUTH is not set in environment variables");
-    throw new Error("API_AUTH environment variable is not set");
-  }
-  return `Basic ${apiAuth}`;
-}
-
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // セッショントークンを取得
+    const token = await getToken({ req: request });
+    if (!token?.token) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
+
     const response = await fetch(API_BASE, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token.token}`,
       },
       cache: "no-store",
     });
 
-    const responseText = await response.text();
-
     if (!response.ok) {
-      throw new Error(`Failed to fetch data: ${responseText}`);
+      return NextResponse.json(
+        { error: "APIリクエストに失敗しました" },
+        { status: response.status }
+      );
     }
 
-    return NextResponse.json(JSON.parse(responseText));
+    const data = await response.json();
+    return NextResponse.json(data);
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 }
-    );
+    console.error("Proxy error:", error);
+    return NextResponse.json({ error: "内部サーバーエラー" }, { status: 500 });
   }
 }
 
