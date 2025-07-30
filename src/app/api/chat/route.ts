@@ -8,7 +8,7 @@ import { ChatCompletionMessageParam } from "openai/resources/chat";
 // 定数定義
 const API_PHP_URL =
   process.env.NEXT_PUBLIC_API_BASE || "https://ttsv.sakura.ne.jp/api.php";
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const OPENAI_API_KEY = process.env.OPEN_API_KEY; // 環境変数名を修正
 const GPT_MODEL = "gpt-4.1-nano-2025-04-14"; // より高性能なモデルに変更
 
 // システムプロンプトを定数として定義
@@ -66,10 +66,6 @@ if (OPENAI_API_KEY) {
   openai = new OpenAI({
     apiKey: OPENAI_API_KEY,
   });
-} else {
-  console.warn(
-    "[DEBUG] Warning: OPEN_API_KEY is not set. Using fallback response."
-  );
 }
 
 // チャット履歴をOpenAIのメッセージ形式に変換
@@ -136,15 +132,6 @@ ${conversationSummary}
     })
   );
 
-  console.log("[DEBUG] Converting messages:", {
-    isInitialMessage,
-    messageCount: messages.length,
-    currentTopic,
-    lastUserMessage,
-    conversationSummary:
-      conversationSummary.split("\n").slice(0, 3).join("\n") + "...",
-  });
-
   return [systemMessage, contextMessage, ...conversationMessages];
 }
 
@@ -154,15 +141,7 @@ async function getChatHistory(
   userId: string
 ): Promise<Message[]> {
   try {
-    console.log(
-      "[DEBUG] Fetching chat history for room:",
-      chatRoomId,
-      "userId:",
-      userId
-    );
-
     if (!chatRoomId) {
-      console.error("[DEBUG] Chat room ID is missing");
       return [];
     }
 
@@ -182,7 +161,6 @@ async function getChatHistory(
 
     const data = await response.json();
     if (!data.success) {
-      console.error("[DEBUG] Chat history request failed:", data.error);
       return [];
     }
 
@@ -193,10 +171,8 @@ async function getChatHistory(
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     );
 
-    console.log("[DEBUG] Retrieved messages count:", messages.length);
     return messages;
   } catch (error) {
-    console.error("[DEBUG] Error in getChatHistory:", error);
     return [];
   }
 }
@@ -218,11 +194,10 @@ export async function POST(request: NextRequest) {
     }
 
     const { message, chatRoomId } = await request.json();
-    console.log("[DEBUG] Received request:", { message, chatRoomId });
 
     if (!message) {
       return NextResponse.json(
-        { success: false, error: "Message is required" },
+        { success: false, error: "メッセージは必須です" },
         { status: 400 }
       );
     }
@@ -234,16 +209,7 @@ export async function POST(request: NextRequest) {
     formData.append("userId", (token.sub || token.id || "0").toString());
     if (chatRoomId) {
       formData.append("chatRoomId", chatRoomId.toString());
-      console.log("[DEBUG] Using existing chat room:", chatRoomId);
-    } else {
-      console.log("[DEBUG] Creating new chat room");
     }
-
-    console.log("[DEBUG] Saving message to DB:", {
-      message,
-      chatRoomId,
-      userId: token.sub || token.id || "0",
-    });
 
     const dbResponse = await fetch(`${API_PHP_URL}?action=save_message`, {
       method: "POST",
@@ -255,19 +221,22 @@ export async function POST(request: NextRequest) {
 
     if (!dbResponse.ok) {
       const errorText = await dbResponse.text();
-      console.error("[DEBUG] DB Response error:", errorText);
-      throw new Error("Failed to save message to database");
+      throw new Error("メッセージの保存に失敗しました");
     }
 
     const dbData = (await dbResponse.json()) as PHPResponse;
-    console.log("[DEBUG] DB save response:", JSON.stringify(dbData, null, 2));
     const currentChatRoomId = dbData.data.chatRoomId;
 
-    // OpenAI APIが利用可能な場合はAPIを呼び出し、そうでない場合はフォールバック応答を使用
+    // OpenAI APIの呼び出し
     let assistantMessage: string;
-    if (openai) {
+    if (!openai || !OPENAI_API_KEY) {
+      throw new Error(
+        "OpenAI APIの設定が正しくありません。環境変数 OPENAI_API_KEY を確認してください。"
+      );
+    }
+
+    try {
       // チャット履歴を取得（新しいチャットルームIDを使用）
-      console.log("[DEBUG] Fetching chat history for room:", currentChatRoomId);
       const history = await getChatHistory(
         currentChatRoomId,
         token.sub || token.id || "0"
@@ -275,18 +244,6 @@ export async function POST(request: NextRequest) {
 
       // 初回メッセージの場合は履歴チェックをスキップ
       const messages = convertHistoryToMessages(history);
-
-      console.log(
-        "[DEBUG] Messages to be sent to OpenAI:",
-        messages.map((m) => ({
-          role: m.role,
-          content:
-            typeof m.content === "string"
-              ? m.content.substring(0, 50) +
-                (m.content.length > 50 ? "..." : "")
-              : "Non-string content",
-        }))
-      );
 
       const completion = await openai.chat.completions.create({
         model: GPT_MODEL,
@@ -297,26 +254,15 @@ export async function POST(request: NextRequest) {
         frequency_penalty: 0.3,
       });
 
-      console.log(
-        "[DEBUG] OpenAI response:",
-        JSON.stringify(
-          {
-            content:
-              completion.choices[0].message.content?.substring(0, 100) + "...",
-            finish_reason: completion.choices[0].finish_reason,
-          },
-          null,
-          2
-        )
-      );
-
       assistantMessage = formatAssistantMessage(
         completion.choices[0].message.content ??
-          "申し訳ございません。現在システムメンテナンス中のため、後ほど再度お試しください。"
+          "申し訳ございません。応答の生成に失敗しました。"
       );
-    } else {
-      assistantMessage =
-        "申し訳ございません。\n現在システムメンテナンス中のため、後ほど再度お試しください。";
+    } catch (apiError) {
+      console.error("OpenAI API Error:", apiError);
+      throw new Error(
+        "チャットボットの応答生成に失敗しました。しばらく時間をおいて再度お試しください。"
+      );
     }
 
     // アシスタントの応答をDBに保存
@@ -343,15 +289,10 @@ export async function POST(request: NextRequest) {
 
     if (!assistantResponse.ok) {
       const errorText = await assistantResponse.text();
-      console.error("[DEBUG] Assistant response save error:", errorText);
-      throw new Error("Failed to save assistant response");
+      throw new Error("アシスタントの応答の保存に失敗しました");
     }
 
     const assistantData = (await assistantResponse.json()) as PHPResponse;
-    console.log(
-      "[DEBUG] Assistant save response:",
-      JSON.stringify(assistantData, null, 2)
-    );
 
     return NextResponse.json({
       success: true,
@@ -361,12 +302,13 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("[DEBUG] Error in chat endpoint:", error);
     return NextResponse.json(
       {
         success: false,
         error:
-          error instanceof Error ? error.message : "Unknown error occurred",
+          error instanceof Error
+            ? error.message
+            : "予期せぬエラーが発生しました",
       },
       { status: 500 }
     );

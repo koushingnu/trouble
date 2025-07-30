@@ -17,6 +17,7 @@ interface AdminTableProps<T> {
   isLoading?: boolean;
   onRefresh?: () => void;
   emptyMessage?: string;
+  actionButton?: ReactNode;
 }
 
 export default function AdminTable<T>({
@@ -26,12 +27,15 @@ export default function AdminTable<T>({
   isLoading = false,
   onRefresh,
   emptyMessage = "データがありません",
+  actionButton,
 }: AdminTableProps<T>) {
   return (
     <div className="bg-white rounded-lg shadow-sm overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+          <div className="flex items-center space-x-4">
+            {actionButton}
           {onRefresh && (
             <button
               onClick={onRefresh}
@@ -57,6 +61,7 @@ export default function AdminTable<T>({
               更新
             </button>
           )}
+          </div>
         </div>
       </div>
       <div className="overflow-x-auto">

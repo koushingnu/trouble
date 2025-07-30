@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_PHP_URL || "https://ttsv.sakura.ne.jp/api.php";
 
 function getAuthHeader() {
   const apiAuth = process.env.API_AUTH;
@@ -14,31 +15,22 @@ function getAuthHeader() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    console.log("[POST] Request body:", JSON.stringify(body, null, 2));
+    console.log("[POST] Request body:", body);
 
-    // URLにactionパラメータを追加
-    const url = `${API_BASE}?action=register`;
-    const authHeader = getAuthHeader();
-
+    // action=registerを削除し、直接POSTリクエストを送信
+    const url = API_BASE;
     console.log("[POST] Request URL:", url);
-    console.log("[POST] Headers:", {
-      "Content-Type": "application/x-www-form-urlencoded",
-      Authorization: authHeader,
-    });
 
-    // フォームデータとしてリクエストを送信
-    const formData = new URLSearchParams();
-    formData.append("email", body.email);
-    formData.append("password", body.password);
-    formData.append("token", body.token);
+    const headers = {
+      "Content-Type": "application/json",
+      Authorization: getAuthHeader(),
+    };
+    console.log("[POST] Headers:", headers);
 
     const response = await fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: authHeader,
-      },
-      body: formData,
+      headers: headers,
+      body: JSON.stringify(body),
     });
 
     console.log("[POST] Response status:", response.status);
@@ -46,37 +38,22 @@ export async function POST(request: Request) {
     console.log("[POST] Response body:", responseText);
 
     if (!response.ok) {
-      throw new Error(
-        `API responded with status ${response.status}: ${responseText}`
-      );
+      throw new Error(responseText);
     }
 
-    // レスポンスが空でないことを確認
-    if (!responseText.trim()) {
-      throw new Error("Empty response from API");
-    }
-
-    // JSONとして解析可能か確認
+    // レスポンスがJSONかどうかを確認
     try {
       const data = JSON.parse(responseText);
-      if (!data.success && data.error) {
-        throw new Error(data.error);
-      }
       return NextResponse.json(data);
-    } catch (parseError) {
-      console.error("[POST] JSON parse error:", parseError);
-      throw new Error(`Invalid JSON response: ${responseText}`);
+    } catch {
+      return NextResponse.json({ message: responseText });
     }
   } catch (error) {
-    console.error("[POST] Detailed API Error:", {
-      message: error instanceof Error ? error.message : "Unknown error",
-      error,
-    });
-
+    console.error("[POST] Error:", error);
     return NextResponse.json(
       {
-        success: false,
-        error: error instanceof Error ? error.message : "登録に失敗しました",
+        error:
+          error instanceof Error ? error.message : "Unknown error occurred",
       },
       { status: 500 }
     );

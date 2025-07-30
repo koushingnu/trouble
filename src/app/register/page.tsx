@@ -13,6 +13,7 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [token, setToken] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -20,6 +21,7 @@ export default function Register() {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setSuccess(false);
 
     if (password !== confirmPassword) {
       setError("パスワードが一致しません");
@@ -40,12 +42,21 @@ export default function Register() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || "登録中にエラーが発生しました");
+        throw new Error(data.error || "登録中にエラーが発生しました");
       }
 
+      setSuccess(true);
       toast.success("登録が完了しました");
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      router.push("/auth");
+      // フォームをクリア
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+      setToken("");
+
+      // 3秒後にログインページへリダイレクト
+      setTimeout(() => {
+        router.push("/auth");
+      }, 3000);
     } catch (error) {
       setError(
         error instanceof Error ? error.message : "登録中にエラーが発生しました"
@@ -53,6 +64,7 @@ export default function Register() {
       toast.error(
         error instanceof Error ? error.message : "登録中にエラーが発生しました"
       );
+    } finally {
       setLoading(false);
     }
   };
@@ -75,6 +87,12 @@ export default function Register() {
           {error && (
             <div className="mb-3 p-2 bg-red-50 border border-red-100 text-red-600 rounded text-sm">
               {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="mb-3 p-2 bg-green-50 border border-green-100 text-green-600 rounded text-sm">
+              登録が完了しました。3秒後にログインページへ移動します...
             </div>
           )}
 

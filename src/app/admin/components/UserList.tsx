@@ -5,6 +5,7 @@ import { toast } from "react-hot-toast";
 import AdminTable from "../../components/AdminTable";
 import { User } from "../../types";
 import { Column } from "../../components/AdminTable";
+import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 
 export default function UserList() {
   const [users, setUsers] = useState<User[]>([]);
@@ -57,6 +58,28 @@ export default function UserList() {
     }
   };
 
+  const handleCSVDownload = async () => {
+    try {
+      const response = await fetch("/api/proxy/admin/users/csv");
+      if (!response.ok) {
+        throw new Error("CSVのダウンロードに失敗しました");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "users.csv";
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("CSV download error:", error);
+      toast.error("CSVのダウンロードに失敗しました");
+    }
+  };
+
   const columns: Column<User>[] = [
     { key: "id", label: "ID", width: 80 },
     {
@@ -102,6 +125,7 @@ export default function UserList() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="overflow-x-auto">
       <AdminTable
         title="ユーザー一覧"
         isLoading={isLoading}
@@ -109,7 +133,17 @@ export default function UserList() {
         columns={columns}
         data={users}
         emptyMessage="ユーザーが登録されていません"
+          actionButton={
+            <button
+              onClick={handleCSVDownload}
+              className="inline-flex items-center px-4 py-2 bg-sky-600 text-white rounded-md hover:bg-sky-700 transition-colors"
+            >
+              <ArrowDownTrayIcon className="w-5 h-5 mr-2" />
+              CSVダウンロード
+            </button>
+          }
       />
+      </div>
     </div>
   );
 }

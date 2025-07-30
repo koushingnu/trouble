@@ -9,14 +9,13 @@
 
 /* タイトルのスタイル */
 .page-title {
-  @apply text-2xl font-bold relative text-sky-800;
-  font-family: var(--font-murecho);
+  @apply text-2xl font-bold text-sky-800 relative mb-8;
 }
 
 .page-title::after {
   content: "";
-  @apply absolute bottom-0 left-0 w-12 h-0.5 bg-gradient-to-r from-sky-800 to-sky-600;
-  transform: translateY(0.5rem);
+  @apply absolute bottom-0 left-0 w-12 h-0.5 bg-sky-600;
+  transform: translateY(0.75rem);
 }
 
 .page-title-center {
@@ -99,4 +98,43 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-murecho);
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgb(241 245 249) 1px,
+    transparent 0
+  );
+  background-size: 20px 20px;
+}
+
+/* その他のスタイル */
+.page-container {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8;
+}
+
+.card {
+  @apply bg-white rounded-xl shadow-sm border border-gray-100 p-6;
+}
+
+.card-hover {
+  @apply transition-all duration-200 hover:shadow-md hover:border-gray-200;
+}
+
+.nav-active {
+  @apply border-sky-500 text-sky-800;
+}
+
+.nav-default {
+  @apply border-transparent text-gray-500 hover:border-sky-300 hover:text-sky-700;
+}
+
+.button-primary {
+  @apply inline-flex items-center px-6 py-2.5 border border-transparent text-base font-medium rounded-md text-white bg-sky-600 hover:bg-sky-700 transition-colors active:bg-sky-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500;
+}
+
+.button-secondary {
+  @apply inline-flex items-center px-6 py-2.5 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors active:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500;
+}
+
+.input-field {
+  @apply block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm;
 }

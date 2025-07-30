@@ -24,23 +24,27 @@ export default function ClientNavigation() {
     ? [
         { name: "相談する", href: "/consultation/new" },
         { name: "相談履歴", href: "/history" },
+        { name: "マイページ", href: "/mypage" },
         { name: "お問い合わせ", href: "/contact" },
       ]
     : [];
 
   return (
-    <Disclosure as="nav" className="bg-white shadow-sm">
+    <Disclosure as="nav" className="bg-white shadow-sm sticky top-0 z-50">
       {({ open }) => (
         <>
-          <div className="border-b border-sky-100">
+          <div className="border-b border-gray-100">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex h-20 items-center justify-between">
                 <div className="flex items-center">
                   <Link
                     href={session ? "/consultation/new" : "/auth"}
-                    className="text-2xl font-bold text-sky-800 hover:text-sky-600 transition-colors"
+                    className="text-2xl font-bold text-sky-800 hover:text-sky-600 transition-colors flex items-center space-x-2"
                   >
-                    トラブル相談
+                    {/* <span className="w-8 h-8 bg-sky-600 rounded-lg flex items-center justify-center">
+                      <span className="text-lg text-white">T</span>
+                    </span> */}
+                    <span>トラブル相談</span>
                   </Link>
                   <div className="hidden sm:ml-8 sm:flex sm:space-x-8">
                     {navigation.map((item) => (
@@ -48,9 +52,7 @@ export default function ClientNavigation() {
                         key={item.name}
                         href={item.href}
                         className={classNames(
-                          pathname === item.href
-                            ? "border-sky-500 text-sky-800"
-                            : "border-transparent text-gray-500 hover:border-sky-300 hover:text-sky-700",
+                          pathname === item.href ? "nav-active" : "nav-default",
                           "inline-flex items-center border-b-2 px-2 pt-1 text-base font-medium transition-colors"
                         )}
                       >
@@ -64,14 +66,14 @@ export default function ClientNavigation() {
                     <>
                       <button
                         onClick={() => signOut({ callbackUrl: "/auth" })}
-                        className="inline-flex items-center px-6 py-2.5 border border-transparent text-base font-medium rounded-md text-white bg-sky-600 hover:bg-sky-700 transition-colors"
+                        className="button-primary"
                       >
                         ログアウト
                       </button>
                       {session.user.isAdmin && (
                         <Link
                           href="/admin"
-                          className="text-sky-600 hover:text-sky-700 text-base font-medium ml-2"
+                          className="text-sky-600 hover:text-sky-700 text-base font-medium ml-2 px-4 py-2 rounded-md hover:bg-sky-50 transition-colors"
                         >
                           管理
                         </Link>
@@ -125,7 +127,7 @@ export default function ClientNavigation() {
                     <Disclosure.Button
                       as={Link}
                       href="/admin"
-                      className="block w-full text-left px-4 py-3 text-lg font-medium text-sky-600 hover:text-sky-700 transition-colors"
+                      className="block w-full text-left px-4 py-3 text-lg font-medium text-sky-600 hover:text-sky-700 hover:bg-sky-50 transition-colors"
                     >
                       管理
                     </Disclosure.Button>

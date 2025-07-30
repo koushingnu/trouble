@@ -470,8 +470,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_GET['action'])) {
             echo json_encode([
                 "message" => "ユーザーを作成しました",
                 "id" => $userId
-            ]);
-        } else {
+        ]);
+    } else {
             throw new Exception("登録に失敗しました");
         }
     } catch (Exception $e) {
@@ -519,7 +519,7 @@ if (isset($_GET['id'])) {
             LEFT JOIN tokens t ON u.token_id = t.id
             WHERE u.id = ?
         ");
-        $stmt->execute([$id]);
+    $stmt->execute([$id]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($user) {
@@ -528,8 +528,8 @@ if (isset($_GET['id'])) {
             $logStmt->execute([$id, 'user_viewed']);
             
             echo json_encode($user);
-        } else {
-            http_response_code(404);
+    } else {
+        http_response_code(404);
             echo json_encode(["error" => "ユーザーが見つかりません"]);
         }
     } catch (PDOException $e) {
@@ -554,5 +554,78 @@ try {
     http_response_code(500);
     echo json_encode(["error" => "ユーザー一覧の取得に失敗しました"]);
     error_log($e->getMessage());
+}
+
+// ユーザーデータCSVエクスポート
+if (isset($_GET['action']) && $_GET['action'] === 'get_users_csv') {
+    // 管理者権限チェック
+    // このチェックは、Basic認証で行われているため、ここでは不要かもしれません。
+    // ただし、セキュリティ上の考慮として、ユーザーIDを取得してチェックすることを推奨します。
+    // ここでは、ユーザーIDを取得するために、Basic認証のユーザー情報を再取得するか、
+    // セッションやトークンからユーザーIDを取得する必要があります。
+    // 簡易的に、Basic認証のユーザーIDを使用します。
+    $user_id = $_SERVER['PHP_AUTH_USER']; // Basic認証のユーザーID
+
+    // 管理者権限チェック
+    if (!isAdmin($pdo, $user_id)) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'error' => '権限がありません']);
+        exit;
+    }
+
+    try {
+        $stmt = $pdo->prepare("
+            SELECT 
+                u.id,
+                u.email,
+                CASE WHEN u.is_admin = 1 THEN '管理者' ELSE '一般' END as user_type,
+                t.token_value,
+                t.status as token_status,
+                DATE_FORMAT(u.created_at, '%Y-%m-%d %H:%i:%s') as registration_date,
+                DATE_FORMAT(u.last_login, '%Y-%m-%d %H:%i:%s') as last_login_date
+            FROM users u
+            LEFT JOIN tokens t ON u.token_id = t.id
+            ORDER BY u.id ASC
+        ");
+        $stmt->execute();
+        $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // CSVヘッダー
+        $csvData = [
+            ['ID', 'メールアドレス', 'ユーザー種別', 'トークン', 'トークン状態', '登録日時', '最終ログイン']
+        ];
+
+        // ユーザーデータ
+        foreach ($users as $user) {
+            $csvData[] = [
+                $user['id'],
+                $user['email'],
+                $user['user_type'],
+                $user['token_value'] ?? '',
+                $user['token_status'] ?? '',
+                $user['registration_date'],
+                $user['last_login_date'] ?? ''
+            ];
+        }
+
+        // CSVファイルの出力
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename=users.csv');
+        
+        // BOMを出力（Excel対応）
+        echo "\xEF\xBB\xBF";
+        
+        $fp = fopen('php://output', 'w');
+        foreach ($csvData as $row) {
+            fputcsv($fp, $row);
+        }
+        fclose($fp);
+        exit;
+
+    } catch (PDOException $e) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'error' => 'データベースエラー']);
+        exit;
+    }
 }
 ?>

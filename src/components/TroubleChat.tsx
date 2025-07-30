@@ -36,6 +36,7 @@ export default function TroubleChat() {
   const [isLoading, setIsLoading] = useState(false);
   const [chatRoomId, setChatRoomId] = useState<number | null>(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [isThinking, setIsThinking] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // 新規相談ページマウント時にチャットルームIDをクリア
@@ -151,6 +152,7 @@ export default function TroubleChat() {
     setMessages((prev) => [...prev, newMessage]);
     setInputMessage("");
     setIsLoading(true);
+    setIsThinking(true);
 
     try {
       const response = await fetch("/api/chat", {
@@ -212,250 +214,267 @@ export default function TroubleChat() {
       setMessages((prev) => prev.slice(0, -1)); // 一時的なメッセージを削除
     } finally {
       setIsLoading(false);
+      setIsThinking(false);
     }
   };
 
   return (
-    <div
-      className={`bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 transition-all duration-300 ease-in-out ${
-        isFullScreen
-          ? "fixed inset-0 z-50 rounded-none flex flex-col"
-          : "relative"
-      }`}
-    >
-      {/* チャットヘッダー */}
+    <>
+      <style jsx>{`
+        @keyframes pulse {
+          0%,
+          100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.5;
+          }
+        }
+        @keyframes wave {
+          0% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-2px);
+          }
+          100% {
+            transform: translateY(0px);
+          }
+        }
+        .wave-dot:nth-child(1) {
+          animation-delay: 0s;
+        }
+        .wave-dot:nth-child(2) {
+          animation-delay: 0.1s;
+        }
+        .wave-dot:nth-child(3) {
+          animation-delay: 0.2s;
+        }
+        .wave-dot:nth-child(4) {
+          animation-delay: 0.3s;
+        }
+      `}</style>
       <div
-        className={`bg-sky-600 px-6 py-4 ${isFullScreen ? "shadow-md" : ""}`}
+        className={`bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 transition-all duration-300 ease-in-out ${
+          isFullScreen
+            ? "fixed inset-0 z-50 rounded-none flex flex-col"
+            : "relative"
+        }`}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <ChatBubbleLeftIcon className="h-6 w-6 text-white" />
-            <h2 className="text-xl font-semibold text-white">
-              トラブル相談チャット
-            </h2>
+        {/* チャットヘッダー */}
+        <div
+          className={`bg-sky-600 px-6 py-4 ${isFullScreen ? "shadow-md" : ""}`}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <ChatBubbleLeftIcon className="h-6 w-6 text-white" />
+              <h2 className="text-xl font-semibold text-white">
+                トラブル相談チャット
+              </h2>
+            </div>
+            <button
+              onClick={() => setIsFullScreen(!isFullScreen)}
+              className="text-white hover:text-white/80 transition-colors p-2 hover:bg-sky-500/50 rounded-lg"
+              aria-label={isFullScreen ? "全画面解除" : "全画面表示"}
+            >
+              {isFullScreen ? (
+                <ArrowsPointingInIcon className="h-5 w-5" />
+              ) : (
+                <ArrowsPointingOutIcon className="h-5 w-5" />
+              )}
+            </button>
           </div>
-          <button
-            onClick={() => setIsFullScreen(!isFullScreen)}
-            className="text-white hover:text-white/80 transition-colors p-2 hover:bg-sky-500/50 rounded-lg"
-            aria-label={isFullScreen ? "全画面解除" : "全画面表示"}
-          >
-            {isFullScreen ? (
-              <ArrowsPointingInIcon className="h-5 w-5" />
-            ) : (
-              <ArrowsPointingOutIcon className="h-5 w-5" />
-            )}
-          </button>
+          <p className="mt-1 text-sm text-white/90">
+            {messages.length === 0
+              ? "トラブルの内容を入力してください"
+              : `${messages.length}件のメッセージ`}
+          </p>
         </div>
-        <p className="mt-1 text-sm text-white/90">
-          {messages.length === 0
-            ? "トラブルの内容を入力してください"
-            : `${messages.length}件のメッセージ`}
-        </p>
-      </div>
 
-      {/* メッセージ表示エリア */}
-      <div
-        className={`overflow-y-auto px-4 sm:px-6 py-6 bg-gray-50 ${
-          isFullScreen ? "flex-1" : "h-[500px]"
-        }`}
-      >
-        {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-400 space-y-2">
-            <ChatBubbleLeftIcon className="h-8 w-8" />
-            <p>メッセージはまだありません</p>
-            <p className="text-sm">
-              下のフォームからメッセージを送信してください
-            </p>
-          </div>
-        ) : (
-          <div
-            className={`space-y-12 ${isFullScreen ? "max-w-7xl mx-auto w-full px-4" : ""}`}
-          >
-            {Object.entries(groupMessagesByDate(messages)).map(
-              ([date, dateMessages]) => (
-                <div key={date} className="space-y-8">
-                  <div className="flex justify-center">
-                    <div className="bg-white px-4 py-1.5 rounded-full text-sm text-gray-500 shadow-sm border border-gray-100">
-                      {date}
-                    </div>
-                  </div>
-                  {dateMessages.map((message, index) => (
-                    <div
-                      key={message.id}
-                      className={`space-y-1 ${
-                        isFullScreen &&
-                        index > 0 &&
-                        dateMessages[index - 1]?.sender !== message.sender
-                          ? "mt-12"
-                          : ""
-                      }`}
-                    >
-                      <div
-                        className={`flex items-start ${
-                          message.sender === "user"
-                            ? "flex-row-reverse space-x-reverse"
-                            : "flex-row"
-                        } ${isFullScreen ? "space-x-6" : "space-x-2"}`}
-                      >
-                        {/* アイコン */}
-                        <div className="flex-shrink-0">
-                          {message.sender === "user" ? (
-                            <div
-                              className={`relative ${isFullScreen ? "w-12 h-12" : "w-11 h-11"}`}
-                            >
-                              <div className="absolute inset-0 bg-sky-600 rounded-full shadow-lg"></div>
-                              <div className="absolute inset-[2px] bg-white rounded-full flex items-center justify-center">
-                                <svg
-                                  className={`${isFullScreen ? "w-8 h-8" : "w-7 h-7"} text-sky-600`}
-                                  fill="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                                </svg>
-                              </div>
-                            </div>
-                          ) : (
-                            <div
-                              className={`relative ${isFullScreen ? "w-12 h-12" : "w-11 h-11"}`}
-                            >
-                              <div className="absolute inset-0 bg-sky-500 rounded-full shadow-md"></div>
-                              <div className="absolute inset-[2px] bg-white rounded-full flex items-center justify-center overflow-hidden">
-                                <svg
-                                  className={`${isFullScreen ? "w-8 h-8" : "w-7 h-7"}`}
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  {/* ロボットの頭部 */}
-                                  <path
-                                    d="M12 4C14.8 4 17 6.2 17 9V10.5H7V9C7 6.2 9.2 4 12 4Z"
-                                    fill="currentColor"
-                                    className="text-sky-500"
-                                  />
-                                  {/* アンテナ */}
-                                  <path
-                                    d="M12 1.5V3.5"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    className="text-sky-600"
-                                  />
-                                  {/* 目 */}
-                                  <circle
-                                    cx="9.5"
-                                    cy="7"
-                                    r="1.25"
-                                    fill="currentColor"
-                                    className="text-white"
-                                  />
-                                  <circle
-                                    cx="14.5"
-                                    cy="7"
-                                    r="1.25"
-                                    fill="currentColor"
-                                    className="text-white"
-                                  />
-                                  {/* 本体 */}
-                                  <path
-                                    d="M4.5 11C4.5 10.4477 4.94772 10 5.5 10H18.5C19.0523 10 19.5 10.4477 19.5 11V17.5C19.5 19.1569 18.1569 20.5 16.5 20.5H7.5C5.84315 20.5 4.5 19.1569 4.5 17.5V11Z"
-                                    fill="currentColor"
-                                    className="text-sky-500"
-                                  />
-                                  {/* 口/スピーカー */}
-                                  <path
-                                    d="M8.5 14H15.5"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    className="text-white"
-                                  />
-                                  <path
-                                    d="M8.5 16.5H15.5"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    className="text-white"
-                                  />
-                                </svg>
-                              </div>
-                              <div className="absolute inset-0 bg-sky-100/50 rounded-full animate-pulse"></div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* メッセージ */}
-                        <div
-                          className={`rounded-2xl px-6 py-4 shadow-sm ${
-                            message.sender === "user"
-                              ? "bg-sky-600 text-white rounded-tr-none max-w-[700px]"
-                              : "bg-white border border-gray-100 rounded-tl-none max-w-[700px]"
-                          }`}
-                        >
-                          <p
-                            className={`whitespace-pre-wrap break-words leading-relaxed tracking-wide ${
-                              isFullScreen ? "text-base" : "text-[15px]"
-                            }`}
-                          >
-                            {message.body}
-                          </p>
-                        </div>
-                      </div>
-                      <div
-                        className={`${
-                          message.sender === "user" ? "text-right" : "text-left"
-                        } px-12`}
-                      >
-                        <p className="text-xs text-gray-500">
-                          {new Date(message.created_at).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )
-            )}
-            <div ref={messagesEndRef} className="h-4" />
-          </div>
-        )}
-      </div>
-
-      {/* 入力フォーム */}
-      <div
-        className={`border-t border-gray-100 bg-white ${
-          isFullScreen ? "px-6 py-6 shadow-lg" : "p-4"
-        }`}
-      >
-        <form
-          onSubmit={handleSubmit}
-          className={`flex space-x-4 ${
-            isFullScreen ? "max-w-5xl mx-auto" : ""
+        {/* メッセージ表示エリア */}
+        <div
+          className={`overflow-y-auto px-4 sm:px-6 py-6 bg-gray-50 ${
+            isFullScreen ? "flex-1" : "h-[500px]"
           }`}
         >
-          <input
-            type="text"
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            placeholder="メッセージを入力..."
-            className={`flex-1 rounded-xl border border-gray-200 px-4 ${
-              isFullScreen ? "py-3.5 text-base" : "py-2 text-[15px]"
-            } focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white shadow-sm`}
-            disabled={isLoading}
-          />
-          <button
-            type="submit"
-            disabled={isLoading || !inputMessage.trim()}
-            className={`bg-sky-600 text-white rounded-xl px-8 ${
-              isFullScreen ? "py-3.5 text-base" : "py-2 text-[15px]"
-            } hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 shadow-sm transition-colors duration-200`}
+          {messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-gray-400 space-y-2">
+              <ChatBubbleLeftIcon className="h-8 w-8" />
+              <p>メッセージはまだありません</p>
+              <p className="text-sm">
+                下のフォームからメッセージを送信してください
+              </p>
+            </div>
+          ) : (
+            <div
+              className={`space-y-12 ${isFullScreen ? "max-w-7xl mx-auto w-full px-4" : ""}`}
+            >
+              {Object.entries(groupMessagesByDate(messages)).map(
+                ([date, dateMessages]) => (
+                  <div key={date} className="space-y-8">
+                    <div className="flex justify-center">
+                      <div className="bg-white px-4 py-1.5 rounded-full text-sm text-gray-500 shadow-sm border border-gray-100">
+                        {date}
+                      </div>
+                    </div>
+                    {dateMessages.map((message, index) => (
+                      <div
+                        key={message.id}
+                        className={`space-y-1 ${
+                          isFullScreen &&
+                          index > 0 &&
+                          dateMessages[index - 1]?.sender !== message.sender
+                            ? "mt-12"
+                            : ""
+                        }`}
+                      >
+                        <div
+                          className={`flex items-start ${
+                            message.sender === "user"
+                              ? "flex-row-reverse space-x-reverse"
+                              : "flex-row"
+                          } ${isFullScreen ? "space-x-6" : "space-x-2"}`}
+                        >
+                          {/* アイコン */}
+                          <div className="flex-shrink-0">
+                            {message.sender === "user" ? (
+                              <div
+                                className={`relative ${isFullScreen ? "w-16 h-16" : "w-16 h-16"}`}
+                              >
+                                <div className="absolute inset-0 bg-sky-600 rounded-full shadow-lg"></div>
+                                <div className="absolute inset-[2px] bg-white rounded-full flex items-center justify-center">
+                                  <svg
+                                    className={`${isFullScreen ? "w-12 h-12" : "w-10 h-10"} text-sky-600`}
+                                    fill="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                                  </svg>
+                                </div>
+                              </div>
+                            ) : (
+                              <div
+                                className={`relative ${isFullScreen ? "w-16 h-16" : "w-16 h-16"} bg-gradient-to-br from-sky-100 to-white rounded-full shadow-lg`}
+                              >
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <img
+                                    src="/assistant.png"
+                                    alt="Assistant"
+                                    className={`${isFullScreen ? "w-16 h-16" : "w-16 h-16"} rounded-full object-cover pt-5`}
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          {/* メッセージと時間のコンテナ */}
+                          <div className="flex-1 min-w-0">
+                            {/* メッセージ */}
+                            <div
+                              className={`inline-block rounded-2xl px-6 py-4 shadow-sm max-w-[80%] ${
+                                message.sender === "user"
+                                  ? "bg-sky-600 text-white rounded-tr-none float-right"
+                                  : "bg-white border border-gray-100 rounded-tl-none"
+                              }`}
+                            >
+                              <p
+                                className={`whitespace-pre-wrap break-words leading-relaxed tracking-wide ${
+                                  isFullScreen ? "text-base" : "text-[15px]"
+                                }`}
+                              >
+                                {message.body}
+                              </p>
+                            </div>
+                            {/* 時間 */}
+                            <div
+                              className={`mt-1 clear-both ${
+                                message.sender === "user"
+                                  ? "text-right"
+                                  : "text-left"
+                              }`}
+                            >
+                              <p className="text-xs text-gray-500">
+                                {new Date(
+                                  message.created_at
+                                ).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )
+              )}
+              {/* 思考中インジケーター */}
+              {isThinking && (
+                <div className="flex items-start space-x-2">
+                  <div className="flex-shrink-0">
+                    <div
+                      className={`relative ${isFullScreen ? "w-16 h-16" : "w-16 h-16"} bg-gradient-to-br from-sky-100 to-white rounded-full shadow-lg`}
+                    >
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <img
+                          src="/assistant.png"
+                          alt="Assistant"
+                          className={`${isFullScreen ? "w-16 h-16" : "w-16 h-16"} rounded-full object-cover pt-5`}
+                        />
+                      </div>
+                      <div className="absolute inset-0 bg-sky-100/50 rounded-full animate-pulse"></div>
+                    </div>
+                  </div>
+                  <div className="rounded-2xl px-6 py-4 shadow-sm bg-white border border-gray-100 rounded-tl-none max-w-[700px] min-w-[200px] relative">
+                    <div className="flex items-center justify-center space-x-1">
+                      <div className="wave-dot w-2 h-2 bg-sky-500/80 rounded-full animate-[wave_1s_ease-in-out_infinite]"></div>
+                      <div className="wave-dot w-2 h-2 bg-sky-500/80 rounded-full animate-[wave_1s_ease-in-out_infinite]"></div>
+                      <div className="wave-dot w-2 h-2 bg-sky-500/80 rounded-full animate-[wave_1s_ease-in-out_infinite]"></div>
+                      <div className="wave-dot w-2 h-2 bg-sky-500/80 rounded-full animate-[wave_1s_ease-in-out_infinite]"></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div ref={messagesEndRef} className="h-4" />
+            </div>
+          )}
+        </div>
+
+        {/* 入力フォーム */}
+        <div
+          className={`border-t border-gray-100 bg-white ${
+            isFullScreen ? "px-6 py-6 shadow-lg" : "p-4"
+          }`}
+        >
+          <form
+            onSubmit={handleSubmit}
+            className={`flex space-x-4 ${
+              isFullScreen ? "max-w-5xl mx-auto" : ""
+            }`}
           >
-            <span>送信</span>
-            <PaperAirplaneIcon className="h-5 w-5" />
-          </button>
-        </form>
+            <input
+              type="text"
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              placeholder="メッセージを入力..."
+              className={`flex-1 rounded-xl border border-gray-200 px-4 ${
+                isFullScreen ? "py-3.5 text-base" : "py-2 text-[15px]"
+              } focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white shadow-sm`}
+              disabled={isLoading}
+            />
+            <button
+              type="submit"
+              disabled={isLoading || !inputMessage.trim()}
+              className={`bg-sky-600 text-white rounded-xl px-8 ${
+                isFullScreen ? "py-3.5 text-base" : "py-2 text-[15px]"
+              } hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 shadow-sm transition-colors duration-200`}
+            >
+              <span>送信</span>
+              <PaperAirplaneIcon className="h-5 w-5" />
+            </button>
+          </form>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

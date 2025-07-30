@@ -9,6 +9,7 @@ interface CustomUser {
   tokenId: number | null;
   status: string | null;
   isAdmin: boolean;
+  created_at: string;
 }
 
 declare module "next-auth" {
@@ -21,6 +22,8 @@ declare module "next-auth" {
     token: string | null;
     tokenId: number | null;
     status: string | null;
+    isAdmin: boolean;
+    created_at: string;
   }
 }
 
@@ -31,6 +34,8 @@ declare module "next-auth/jwt" {
     token: string | null;
     tokenId: number | null;
     status: string | null;
+    isAdmin: boolean;
+    created_at: string;
   }
 }
 
@@ -50,20 +55,12 @@ const handler = NextAuth({
         }
 
         try {
-          console.log("Attempting login with:", {
-            email: credentials.email,
-            passwordLength: credentials.password.length,
-          });
-
           const url = new URL(API_BASE);
           url.searchParams.append("action", "authenticate");
 
           const formData = new URLSearchParams();
           formData.append("email", credentials.email);
           formData.append("password", credentials.password);
-
-          console.log("Request URL:", url.toString());
-          console.log("Form data:", formData.toString());
 
           const response = await fetch(url.toString(), {
             method: "POST",
@@ -74,9 +71,8 @@ const handler = NextAuth({
             body: formData.toString(),
           });
 
-          console.log("API Response status:", response.status);
           const responseText = await response.text();
-          console.log("API Response body:", responseText);
+          console.log("API Response:", responseText); // デバッグ用
 
           if (!response.ok) {
             throw new Error(
@@ -87,9 +83,9 @@ const handler = NextAuth({
           let data;
           try {
             data = JSON.parse(responseText);
-            console.log("Parsed user data:", data);
-          } catch (e) {
-            console.error("Failed to parse JSON response:", e);
+            console.log("Parsed user data:", data.user); // デバッグ用
+          } catch (error) {
+            console.error("JSON parse error:", error);
             throw new Error("サーバーからの応答が不正です");
           }
 
@@ -105,20 +101,19 @@ const handler = NextAuth({
             throw new Error("ユーザー情報の取得に失敗しました");
           }
 
-          console.log("User data from API:", user);
-          console.log("Is admin value:", user.is_admin);
+          // デバッグ用
+          console.log("Raw user data:", user);
 
           return {
             id: String(user.id),
             email: user.email,
             token: user.token_value || null,
             tokenId: user.token_id ? Number(user.token_id) : null,
-            status: user.status || null,
+            status: user.token_status || null,
             isAdmin: user.is_admin === "1" || user.is_admin === true,
+            created_at: user.created_at || null,
           };
         } catch (error) {
-          console.error("Authorization error:", error);
-          // エラーメッセージをそのまま返す
           throw error instanceof Error
             ? error
             : new Error("認証に失敗しました");
@@ -135,6 +130,7 @@ const handler = NextAuth({
         token.tokenId = user.tokenId;
         token.status = user.status;
         token.isAdmin = user.isAdmin;
+        token.created_at = user.created_at;
       }
       return token;
     },
@@ -147,6 +143,7 @@ const handler = NextAuth({
           tokenId: token.tokenId ?? null,
           status: token.status ?? null,
           isAdmin: token.isAdmin ?? false,
+          created_at: token.created_at,
         };
       }
       return session;
@@ -173,7 +170,6 @@ const handler = NextAuth({
   session: {
     strategy: "jwt",
   },
-  debug: process.env.NODE_ENV === "development",
 });
 
 export { handler as GET, handler as POST };

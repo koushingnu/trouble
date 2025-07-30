@@ -23,10 +23,19 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja" className={murecho.variable}>
-      <body className={murecho.className}>
+      <body className={`${murecho.className} min-h-screen`}>
         <Providers>
-          <ClientNavigation />
-          {children}
+          <div className="flex flex-col min-h-screen">
+            <ClientNavigation />
+            <main className="flex-1 pb-12">{children}</main>
+            <footer className="bg-white border-t border-gray-100 py-8">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="text-center text-sm text-gray-500">
+                  © {new Date().getFullYear()} トラブル相談サービス
+                </div>
+              </div>
+            </footer>
+          </div>
         </Providers>
       </body>
     </html>
