@@ -1,27 +1,29 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-const API_BASE = "https://ttsv.sakura.ne.jp/api.php";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE || "https://ttsv.sakura.ne.jp/api.php";
 
-function getAuthHeader() {
-  const apiAuth = process.env.API_AUTH;
-  if (!apiAuth) {
-    console.error("API_AUTH is not set in environment variables");
-    throw new Error("API_AUTH environment variable is not set");
+// 共通のヘッダー作成関数
+async function getAuthHeaders(request: NextRequest) {
+  const token = await getToken({ req: request });
+  if (!token?.token) {
+    throw new Error("認証が必要です");
   }
-  return `Basic ${apiAuth}`;
+  return {
+    Authorization: `Basic ${process.env.API_AUTH}`,
+    Accept: "application/json",
+  };
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const url = `${API_BASE}?action=list_users`;
-    const authHeader = getAuthHeader();
+    const headers = await getAuthHeaders(request);
     console.log("[GET] Making request to:", url);
 
     const response = await fetch(url, {
-      headers: {
-        Authorization: authHeader,
-        Accept: "application/json",
-      },
+      headers,
       cache: "no-store",
     });
 
