@@ -73,7 +73,7 @@ const handler = NextAuth({
           });
 
           const responseText = await response.text();
-          console.log("API Response:", responseText); // デバッグ用
+          console.log("API Response:", responseText);
 
           if (!response.ok) {
             throw new Error(
@@ -84,7 +84,7 @@ const handler = NextAuth({
           let data;
           try {
             data = JSON.parse(responseText);
-            console.log("Parsed user data:", data.user); // デバッグ用
+            console.log("Parsed user data:", data.user);
           } catch (error) {
             console.error("JSON parse error:", error);
             throw new Error("サーバーからの応答が不正です");
@@ -112,6 +112,7 @@ const handler = NextAuth({
             created_at: user.created_at || null,
           };
         } catch (error) {
+          console.error("Auth error:", error);
           throw error instanceof Error
             ? error
             : new Error("認証に失敗しました");
@@ -119,6 +120,14 @@ const handler = NextAuth({
       },
     }),
   ],
+  pages: {
+    signIn: "/auth",
+    error: "/auth/error",
+  },
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
@@ -147,23 +156,19 @@ const handler = NextAuth({
       return session;
     },
     async redirect({ url, baseUrl }) {
-      // ログイン後のリダイレクト
+      // 絶対URLの場合はそのまま返す
+      if (url.startsWith("http")) {
+        return url;
+      }
+      // 相対パスの場合はbaseUrlと結合
       if (url.startsWith("/")) {
         return `${baseUrl}${url}`;
       }
-      if (url.startsWith(baseUrl)) {
-        return url;
-      }
+      // デフォルトはbaseUrlに戻る
       return baseUrl;
     },
   },
-  pages: {
-    signIn: "/auth",
-    error: "/auth/error",
-  },
-  session: {
-    strategy: "jwt",
-  },
+  debug: process.env.NODE_ENV === "development",
 });
 
 export { handler as GET, handler as POST };
