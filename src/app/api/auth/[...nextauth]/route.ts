@@ -42,6 +42,10 @@ declare module "next-auth/jwt" {
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE || "https://ttsv.sakura.ne.jp/api.php";
 
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error("Please provide process.env.NEXTAUTH_SECRET");
+}
+
 const handler = NextAuth({
   providers: [
     CredentialsProvider({
@@ -120,13 +124,14 @@ const handler = NextAuth({
       },
     }),
   ],
-  pages: {
-    signIn: "/auth",
-    error: "/auth/error",
-  },
+  secret: process.env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  pages: {
+    signIn: "/auth",
+    error: "/auth/error",
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -154,18 +159,6 @@ const handler = NextAuth({
         };
       }
       return session;
-    },
-    async redirect({ url, baseUrl }) {
-      // 絶対URLの場合はそのまま返す
-      if (url.startsWith("http")) {
-        return url;
-      }
-      // 相対パスの場合はbaseUrlと結合
-      if (url.startsWith("/")) {
-        return `${baseUrl}${url}`;
-      }
-      // デフォルトはbaseUrlに戻る
-      return baseUrl;
     },
   },
   debug: process.env.NODE_ENV === "development",
