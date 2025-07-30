@@ -7,10 +7,12 @@ const nextConfig = {
   env: {
     NEXTAUTH_URL:
       process.env.NEXTAUTH_URL ||
+      process.env.VERCEL_URL ||
       process.env.AWS_BRANCH_URL ||
       "http://localhost:3000",
     NEXT_PUBLIC_BASE_URL:
       process.env.NEXT_PUBLIC_BASE_URL ||
+      process.env.VERCEL_URL ||
       process.env.AWS_BRANCH_URL ||
       "http://localhost:3000",
   },
