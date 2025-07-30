@@ -5,22 +5,35 @@ export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
-    const response = NextResponse.next();
 
-    // ログイン済みユーザーが/authにアクセスした場合は、常にホームページにリダイレクト
-    if (token && path === "/auth") {
-      return NextResponse.redirect(new URL("/", req.url));
+    // 公開パスのリスト
+    const publicPaths = ["/auth", "/register", "/auth/error"];
+
+    // APIルートはスキップ
+    if (path.startsWith("/api/")) {
+      return NextResponse.next();
     }
 
-    // 未ログインユーザーは/authと/registerのみアクセス可能
-    if (!token) {
-      if (path !== "/auth" && path !== "/register") {
-        return NextResponse.redirect(new URL("/auth", req.url));
+    // 公開パスへのアクセス
+    if (publicPaths.includes(path)) {
+      // ログイン済みユーザーが認証ページにアクセスした場合
+      if (token) {
+        return NextResponse.redirect(new URL("/", req.url));
       }
-      return response;
+      // 未ログインユーザーの公開パスへのアクセスは許可
+      return NextResponse.next();
     }
 
-    return response;
+    // 保護されたパスへのアクセス
+    if (!token) {
+      // 未ログインユーザーは認証ページへリダイレクト
+      const url = new URL("/auth", req.url);
+      url.searchParams.set("callbackUrl", path);
+      return NextResponse.redirect(url);
+    }
+
+    // ログイン済みユーザーの通常アクセス
+    return NextResponse.next();
   },
   {
     callbacks: {
@@ -34,11 +47,10 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 };
