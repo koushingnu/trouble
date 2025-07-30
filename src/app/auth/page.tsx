@@ -5,7 +5,7 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FaEnvelope, FaLock } from "react-icons/fa";
-import FullScreenLoading from "@/components/FullScreenLoading";
+import FullScreenLoading from "../../components/FullScreenLoading";
 import { toast } from "react-hot-toast";
 
 export default function Login() {

@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useParams } from "next/navigation";
-import TroubleChat from "@/components/TroubleChat";
+import TroubleChat from "../../../components/TroubleChat";
 
 export default function ConsultationDetailPage() {
   const params = useParams();
