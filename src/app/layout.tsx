@@ -22,14 +22,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ja" className={murecho.variable}>
-      <body className={`${murecho.className} min-h-screen`}>
+    <html lang="ja" className={`${murecho.variable}`}>
+      <body className="min-h-screen bg-slate-50">
         <Providers>
           <div className="flex flex-col min-h-screen">
             <ClientNavigation />
-            <main className="flex-1 pb-12">{children}</main>
+            <main className="flex-1 container mx-auto px-4 py-8">
+              {children}
+            </main>
             <footer className="bg-white border-t border-gray-100 py-8">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="container mx-auto px-4">
                 <div className="text-center text-sm text-gray-500">
                   © {new Date().getFullYear()} トラブル相談サービス
                 </div>
