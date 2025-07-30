@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { FaEnvelope, FaLock } from "react-icons/fa";
 import FullScreenLoading from "../../components/FullScreenLoading";
@@ -12,15 +12,9 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isRedirecting, setIsRedirecting] = useState(false);
   const router = useRouter();
-
-  useEffect(() => {
-    // ブラウザの戻るボタンでこのページに来た場合、ホームページに遷移
-    if (window.performance && window.performance.navigation.type === 2) {
-      router.replace("/");
-    }
-  }, [router]);
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams?.get("callbackUrl") || "/";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +25,10 @@ export default function Login() {
         email,
         password,
         redirect: false,
+        callbackUrl,
       });
+
+      console.log("Sign in result:", result);
 
       if (result?.error) {
         toast.error("メールアドレスまたはパスワードが正しくありません");
@@ -39,11 +36,13 @@ export default function Login() {
         return;
       }
 
-      toast.success("ログインしました");
-      setIsRedirecting(true);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      router.push("/");
-    } catch {
+      if (result?.ok) {
+        toast.success("ログインしました");
+        router.push(callbackUrl);
+        router.refresh();
+      }
+    } catch (error) {
+      console.error("Login error:", error);
       toast.error("ログイン中にエラーが発生しました");
       setLoading(false);
     }
@@ -51,11 +50,7 @@ export default function Login() {
 
   return (
     <>
-      {(loading || isRedirecting) && (
-        <FullScreenLoading
-          message={isRedirecting ? "ページ移動中..." : "ログイン中..."}
-        />
-      )}
+      {loading && <FullScreenLoading message="ログイン中..." />}
       <main className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-gradient-to-br from-gray-50 to-white p-4 -mt-16">
         <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg border border-gray-100">
           <div className="text-center mb-8">
