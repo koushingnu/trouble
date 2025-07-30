@@ -39,7 +39,8 @@ declare module "next-auth/jwt" {
   }
 }
 
-const API_BASE = "https://ttsv.sakura.ne.jp/api.php";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE || "https://ttsv.sakura.ne.jp/api.php";
 
 const handler = NextAuth({
   providers: [
@@ -101,9 +102,6 @@ const handler = NextAuth({
             throw new Error("ユーザー情報の取得に失敗しました");
           }
 
-          // デバッグ用
-          console.log("Raw user data:", user);
-
           return {
             id: String(user.id),
             email: user.email,
@@ -150,17 +148,13 @@ const handler = NextAuth({
     },
     async redirect({ url, baseUrl }) {
       // ログイン後のリダイレクト
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
       if (url.startsWith(baseUrl)) {
-        return `${baseUrl}/consultation/new`;
+        return url;
       }
-      // ログイン前のリダイレクト（保護されたページにアクセスした場合）
-      if (url.includes("?callbackUrl=")) {
-        const callbackUrl = new URL(url).searchParams.get("callbackUrl");
-        if (callbackUrl && callbackUrl.startsWith("/")) {
-          return `${baseUrl}/auth?callbackUrl=${encodeURIComponent(callbackUrl)}`;
-        }
-      }
-      return url;
+      return baseUrl;
     },
   },
   pages: {
