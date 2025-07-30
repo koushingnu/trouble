@@ -43,7 +43,7 @@ const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE || "https://ttsv.sakura.ne.jp/api.php";
 
 // NextAuth設定
-export const authOptions: AuthOptions = {
+const options: AuthOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -162,6 +162,6 @@ export const authOptions: AuthOptions = {
 };
 
 // NextAuthハンドラーの作成
-const handler = NextAuth(authOptions);
+const handler = NextAuth(options);
 
 export { handler as GET, handler as POST };
