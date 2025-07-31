@@ -7,7 +7,7 @@ export default withAuth(
   function middleware(req) {
     // デバッグログを追加
     console.log("Middleware path:", req.nextUrl.pathname);
-    console.log("Has token:", !!req.nextauth.token);
+    console.log("Has token:", !!req.nextauth?.token);
 
     // 静的ファイルとAPIルートはスキップ
     if (
@@ -21,7 +21,7 @@ export default withAuth(
     }
 
     // 認証済みユーザーが/authにアクセスした場合はホームにリダイレクト
-    if (req.nextauth.token && req.nextUrl.pathname.startsWith("/auth")) {
+    if (req.nextauth?.token && req.nextUrl.pathname.startsWith("/auth")) {
       console.log("Authenticated user accessing /auth, redirecting to home");
       return NextResponse.redirect(new URL("/", req.url));
     }
@@ -31,7 +31,7 @@ export default withAuth(
   },
   {
     callbacks: {
-      authorized({ req }) {
+      authorized({ req, token }) {
         console.log("Checking authorization for:", req.nextUrl.pathname);
 
         // 静的ファイルとAPIルートは常に許可
@@ -54,7 +54,7 @@ export default withAuth(
         }
 
         // それ以外はトークンをチェック
-        const hasToken = !!req.nextauth.token;
+        const hasToken = !!token;
         console.log("Token check result:", hasToken);
         return hasToken;
       },
