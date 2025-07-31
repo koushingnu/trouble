@@ -3,12 +3,10 @@ frontend:
   phases:
     preBuild:
       commands:
-        - env | grep -e NEXTAUTH -e DATABASE_URL || true
         - npm ci
     build:
       commands:
-        - echo "NEXTAUTH_URL=https://main.d1rof7j3ceo01r.amplifyapp.com"
-        - NEXTAUTH_URL=https://main.d1rof7j3ceo01r.amplifyapp.com npm run build
+        - npm run build
   artifacts:
     baseDirectory: .next
     files:
