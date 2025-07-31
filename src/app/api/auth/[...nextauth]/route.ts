@@ -41,6 +41,7 @@ declare module "next-auth/jwt" {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
 const API_AUTH = process.env.API_AUTH;
+const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
 
 if (!API_BASE) {
   throw new Error("NEXT_PUBLIC_API_BASE is not defined");
@@ -50,13 +51,12 @@ if (!API_AUTH) {
   throw new Error("API_AUTH is not defined");
 }
 
-if (!process.env.NEXTAUTH_SECRET) {
+if (!NEXTAUTH_SECRET) {
   throw new Error("NEXTAUTH_SECRET is not defined");
 }
 
-if (!process.env.NEXTAUTH_URL) {
-  throw new Error("NEXTAUTH_URL is not defined");
-}
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 // NextAuth設定
 const options: AuthOptions = {
@@ -137,7 +137,7 @@ const options: AuthOptions = {
       },
     }),
   ],
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
