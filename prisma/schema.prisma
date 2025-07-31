@@ -1,0 +1,58 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         Int         @id @default(autoincrement())
+  email      String      @unique
+  password   String
+  token_id   Int?       @unique
+  created_at DateTime    @default(now())
+  token      Token?      @relation(fields: [token_id], references: [id])
+  access_logs AccessLog[]
+  chat_rooms  ChatRoom[]
+  assigned_tokens Token[] @relation("AssignedTokens")
+}
+
+model Token {
+  id          Int      @id @default(autoincrement())
+  token_value String   @unique
+  status      String
+  assigned_to Int?
+  created_at  DateTime @default(now())
+  user        User?
+  assigned_user User?  @relation("AssignedTokens", fields: [assigned_to], references: [id])
+}
+
+model AccessLog {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  event      String   @db.VarChar(100)
+  created_at DateTime @default(now())
+  user       User     @relation(fields: [user_id], references: [id])
+}
+
+model ChatRoom {
+  id         Int       @id @default(autoincrement())
+  user_id    Int
+  created_at DateTime  @default(now())
+  user       User      @relation(fields: [user_id], references: [id])
+  messages   Message[]
+}
+
+model Message {
+  id           Int      @id @default(autoincrement())
+  chat_room_id Int
+  sender       String   @db.VarChar(50)
+  body         String   @db.Text
+  created_at   DateTime @default(now())
+  chat_room    ChatRoom @relation(fields: [chat_room_id], references: [id])
+}

@@ -1,14 +1,15 @@
 import NextAuth, { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { PrismaClient } from "@prisma/client";
+import { compare } from "bcryptjs";
+
+const prisma = new PrismaClient();
 
 // 基本的なユーザー情報の型
 interface CustomUser {
-  id: string;
+  id: number;
   email: string;
-  token: string | null;
-  tokenId: number | null;
-  status: string | null;
-  isAdmin: boolean;
+  token_id: number | null;
   created_at: string;
 }
 
@@ -17,42 +18,20 @@ declare module "next-auth" {
     user: CustomUser;
   }
   interface User {
-    id: string;
+    id: number;
     email: string;
-    token: string | null;
-    tokenId: number | null;
-    status: string | null;
-    isAdmin: boolean;
+    token_id: number | null;
     created_at: string;
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
-    id: string;
+    id: number;
     email: string;
-    token: string | null;
-    tokenId: number | null;
-    status: string | null;
-    isAdmin: boolean;
+    token_id: number | null;
     created_at: string;
   }
-}
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
-const API_AUTH = process.env.API_AUTH;
-const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
-
-if (!API_BASE) {
-  console.error("NEXT_PUBLIC_API_BASE is not defined");
-}
-
-if (!API_AUTH) {
-  console.error("API_AUTH is not defined");
-}
-
-if (!NEXTAUTH_SECRET) {
-  console.error("NEXTAUTH_SECRET is not defined");
 }
 
 export const dynamic = "force-dynamic";
@@ -72,78 +51,53 @@ const options: AuthOptions = {
           throw new Error("メールアドレスとパスワードを入力してください");
         }
 
-        if (!API_BASE || !API_AUTH) {
-          console.error("Required environment variables are missing");
-          throw new Error("サーバーの設定エラー");
-        }
-
         try {
-          const url = new URL(API_BASE);
-          url.searchParams.append("action", "authenticate");
-
-          const formData = new URLSearchParams();
-          formData.append("email", credentials.email);
-          formData.append("password", credentials.password);
-
-          const response = await fetch(url.toString(), {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded",
-              Authorization: `Basic ${API_AUTH}`,
+          // Prismaを使用してユーザーを検索
+          const user = await prisma.user.findUnique({
+            where: {
+              email: credentials.email,
             },
-            body: formData.toString(),
-            cache: "no-store",
+            include: {
+              token: true,
+            },
           });
 
-          const responseText = await response.text();
-          console.log("API Response:", responseText);
-
-          if (!response.ok) {
-            throw new Error(
-              `認証に失敗しました。メールアドレスまたはパスワードが正しくありません。`
-            );
-          }
-
-          let data;
-          try {
-            data = JSON.parse(responseText);
-            console.log("Parsed user data:", data.user);
-          } catch (error) {
-            console.error("JSON parse error:", error);
-            throw new Error("サーバーからの応答が不正です");
-          }
-
-          if (!data.success) {
-            throw new Error(
-              data.error ||
-                "認証に失敗しました。メールアドレスまたはパスワードが正しくありません。"
-            );
-          }
-
-          const user = data.user;
           if (!user) {
-            throw new Error("ユーザー情報の取得に失敗しました");
+            throw new Error("ユーザーが見つかりません");
           }
+
+          // パスワードの検証
+          const isValid = await compare(credentials.password, user.password);
+
+          if (!isValid) {
+            throw new Error("パスワードが正しくありません");
+          }
+
+          // アクセスログの記録
+          await prisma.accessLog.create({
+            data: {
+              user_id: user.id,
+              event: "user_login",
+            },
+          });
 
           return {
-            id: String(user.id),
+            id: user.id,
             email: user.email,
-            token: user.token_value || null,
-            tokenId: user.token_id ? Number(user.token_id) : null,
-            status: user.token_status || null,
-            isAdmin: user.is_admin === "1" || user.is_admin === true,
-            created_at: user.created_at || null,
+            token_id: user.token_id,
+            created_at: user.created_at.toISOString(),
           };
         } catch (error) {
           console.error("Auth error:", error);
           throw error instanceof Error
             ? error
             : new Error("認証に失敗しました");
+        } finally {
+          await prisma.$disconnect();
         }
       },
     }),
   ],
-  secret: NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
@@ -157,23 +111,17 @@ const options: AuthOptions = {
       if (user) {
         token.id = user.id;
         token.email = user.email;
-        token.token = user.token;
-        token.tokenId = user.tokenId;
-        token.status = user.status;
-        token.isAdmin = user.isAdmin;
+        token.token_id = user.token_id;
         token.created_at = user.created_at;
       }
       return token;
     },
     async session({ session, token }) {
-      if (token && token.email) {
+      if (token) {
         session.user = {
           id: token.id,
           email: token.email,
-          token: token.token ?? null,
-          tokenId: token.tokenId ?? null,
-          status: token.status ?? null,
-          isAdmin: token.isAdmin ?? false,
+          token_id: token.token_id,
           created_at: token.created_at,
         };
       }
