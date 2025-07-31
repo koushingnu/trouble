@@ -37,7 +37,7 @@ const options: AuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials): Promise<CustomUser | null> {
+      async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error("メールアドレスとパスワードを入力してください");
         }
@@ -51,14 +51,16 @@ const options: AuthOptions = {
           });
 
           if (!user) {
-            throw new Error("ユーザーが見つかりません");
+            console.error("User not found:", credentials.email);
+            return null;
           }
 
           // パスワードの検証
           const isValid = await compare(credentials.password, user.password);
 
           if (!isValid) {
-            throw new Error("パスワードが正しくありません");
+            console.error("Invalid password for user:", credentials.email);
+            return null;
           }
 
           // アクセスログの記録
@@ -69,18 +71,17 @@ const options: AuthOptions = {
             },
           });
 
+          // 認証成功時のユーザー情報を返す
           return {
             id: user.id,
             email: user.email,
             token_id: user.token_id,
             created_at: user.created_at.toISOString(),
-            is_admin: user.is_admin || false,
+            is_admin: user.is_admin,
           };
         } catch (error) {
           console.error("Auth error:", error);
-          throw error instanceof Error
-            ? error
-            : new Error("認証に失敗しました");
+          return null;
         } finally {
           await prisma.$disconnect();
         }
@@ -119,7 +120,7 @@ const options: AuthOptions = {
       return session;
     },
   },
-  debug: true,
+  debug: process.env.NODE_ENV === "development",
 };
 
 // NextAuthハンドラーの作成
