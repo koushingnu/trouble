@@ -17,8 +17,8 @@ export default withAuth(
       authorized({ req, token }) {
         const path = req.nextUrl.pathname;
 
-        // APIルートはスキップ
-        if (path.startsWith("/api/")) {
+        // APIルートはスキップ（auth関連のエンドポイントは除く）
+        if (path.startsWith("/api/") && !path.startsWith("/api/auth")) {
           return true;
         }
 
@@ -32,7 +32,7 @@ export default withAuth(
         }
 
         // 公開パスは常に許可
-        if (PUBLIC_PATHS.includes(path)) {
+        if (PUBLIC_PATHS.some((publicPath) => path.startsWith(publicPath))) {
           return true;
         }
 
@@ -45,5 +45,14 @@ export default withAuth(
 
 // 保護するパスを指定
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api/auth (auth API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    "/((?!api/auth|_next/static|_next/image|favicon\\.ico).*)",
+  ],
 };
