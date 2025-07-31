@@ -6,15 +6,9 @@ const nextConfig = {
   },
   env: {
     NEXTAUTH_URL:
-      process.env.NEXTAUTH_URL ||
-      process.env.VERCEL_URL ||
-      process.env.AWS_BRANCH_URL ||
-      "http://localhost:3000",
+      process.env.NEXTAUTH_URL || "https://main.d1rof7j3ceo01r.amplifyapp.com",
     NEXT_PUBLIC_BASE_URL:
-      process.env.NEXT_PUBLIC_BASE_URL ||
-      process.env.VERCEL_URL ||
-      process.env.AWS_BRANCH_URL ||
-      "http://localhost:3000",
+      process.env.NEXTAUTH_URL || "https://main.d1rof7j3ceo01r.amplifyapp.com",
   },
   async headers() {
     return [
