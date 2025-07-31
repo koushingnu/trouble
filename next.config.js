@@ -5,7 +5,10 @@ const nextConfig = {
     unoptimized: true,
   },
   env: {
-    NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+    NEXTAUTH_URL:
+      process.env.NODE_ENV === "production"
+        ? "https://main.d1rof7j3ceo01r.amplifyapp.com"
+        : process.env.NEXTAUTH_URL,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
   },
