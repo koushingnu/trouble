@@ -76,8 +76,20 @@ const options: AuthOptions = {
       },
       async authorize(credentials) {
         try {
+          console.log("=== Auth Debug Start ===");
+          console.log("Attempting login for email:", credentials?.email);
+
           if (!credentials?.email || !credentials?.password) {
             console.error("Missing credentials");
+            return null;
+          }
+
+          // データベース接続テスト
+          try {
+            await prisma.$queryRaw`SELECT 1`;
+            console.log("Database connection successful");
+          } catch (dbError) {
+            console.error("Database connection failed:", dbError);
             return null;
           }
 
@@ -90,12 +102,15 @@ const options: AuthOptions = {
             },
           });
 
+          console.log("User lookup result:", user ? "Found" : "Not found");
+
           if (!user) {
             console.error("User not found:", credentials.email);
             return null;
           }
 
           const isValid = await compare(credentials.password, user.password);
+          console.log("Password validation:", isValid ? "Success" : "Failed");
 
           if (!isValid) {
             console.error("Invalid password for user:", credentials.email);
@@ -108,6 +123,9 @@ const options: AuthOptions = {
               event: "user_authenticated",
             },
           });
+
+          console.log("Access log created successfully");
+          console.log("=== Auth Debug End ===");
 
           return {
             id: String(user.id),
