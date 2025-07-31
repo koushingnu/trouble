@@ -3,7 +3,13 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaClient } from "@prisma/client";
 import { compare } from "bcryptjs";
 
-const prisma = new PrismaClient();
+// PrismaClientのインスタンスをグローバルに保持
+declare global {
+  var prisma: PrismaClient | undefined;
+}
+
+const prisma = global.prisma || new PrismaClient();
+if (process.env.NODE_ENV !== "production") global.prisma = prisma;
 
 // カスタムユーザー型
 type AuthUser = {
@@ -58,12 +64,21 @@ const options: AuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials, req): Promise<User | null> {
+        console.log("Starting authorization process");
+        console.log("DATABASE_URL:", process.env.DATABASE_URL);
+
         if (!credentials?.email || !credentials?.password) {
           console.error("Missing credentials");
           return null;
         }
 
         try {
+          console.log("Attempting database connection...");
+          // データベース接続テスト
+          await prisma.$queryRaw`SELECT 1`;
+          console.log("Database connection successful");
+
+          console.log("Looking up user:", credentials.email);
           const user = await prisma.user.findUnique({
             where: {
               email: credentials.email,
@@ -78,6 +93,7 @@ const options: AuthOptions = {
             return null;
           }
 
+          console.log("Verifying password");
           const isValid = await compare(credentials.password, user.password);
 
           if (!isValid) {
@@ -85,6 +101,7 @@ const options: AuthOptions = {
             return null;
           }
 
+          console.log("Creating access log");
           await prisma.accessLog.create({
             data: {
               user_id: user.id,
@@ -92,8 +109,9 @@ const options: AuthOptions = {
             },
           });
 
+          console.log("Authentication successful");
           return {
-            id: String(user.id), // Convert to string for NextAuth User type
+            id: String(user.id),
             email: user.email,
             token_id: user.token_id,
             token_value: user.token?.token_value || null,
@@ -101,7 +119,6 @@ const options: AuthOptions = {
             created_at: user.created_at.toISOString(),
             is_admin: Boolean(user.is_admin),
             name: user.email,
-            // NextAuth User型との互換性のために追加
             token: user.token?.token_value || null,
             tokenId: user.token_id,
             isAdmin: Boolean(user.is_admin),
@@ -110,7 +127,10 @@ const options: AuthOptions = {
           console.error("Auth error:", error);
           return null;
         } finally {
-          await prisma.$disconnect();
+          // 本番環境ではコネクションを切断しない
+          if (process.env.NODE_ENV !== "production") {
+            await prisma.$disconnect();
+          }
         }
       },
     }),
@@ -146,7 +166,7 @@ const options: AuthOptions = {
       return session;
     },
   },
-  debug: process.env.NODE_ENV === "development",
+  debug: true, // デバッグモードを有効化
 };
 
 const handler = NextAuth(options);
