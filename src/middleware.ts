@@ -3,65 +3,47 @@ import { NextResponse } from "next/server";
 
 // 認証が不要なパス
 const PUBLIC_PATHS = ["/auth", "/auth/error", "/register"];
-const STATIC_PATHS = ["/_next", "/static", "/favicon.ico"];
-const AUTH_PATHS = ["/api/auth"];
 
 export default withAuth(
   function middleware(req) {
-    const { pathname } = req.nextUrl;
-
-    // 静的ファイルはスキップ
-    if (STATIC_PATHS.some((path) => pathname.startsWith(path))) {
-      return NextResponse.next();
-    }
-
-    // 認証関連のパスはスキップ
-    if (AUTH_PATHS.some((path) => pathname.startsWith(path))) {
-      return NextResponse.next();
-    }
-
     // 認証済みユーザーが認証ページにアクセスした場合はホームにリダイレクト
-    if (
-      req.nextauth.token &&
-      PUBLIC_PATHS.some((path) => pathname.startsWith(path))
-    ) {
+    if (req.nextauth.token && req.nextUrl.pathname.startsWith("/auth")) {
       return NextResponse.redirect(new URL("/", req.url));
     }
-
     return NextResponse.next();
   },
   {
     callbacks: {
-      authorized({ req, token }) {
-        const { pathname } = req.nextUrl;
-
-        // 静的ファイルは常に許可
-        if (STATIC_PATHS.some((path) => pathname.startsWith(path))) {
-          return true;
-        }
-
-        // 認証関連のパスは常に許可
-        if (AUTH_PATHS.some((path) => pathname.startsWith(path))) {
-          return true;
-        }
-
+      authorized({ req }) {
         // 公開パスは常に許可
-        if (PUBLIC_PATHS.some((path) => pathname.startsWith(path))) {
+        if (
+          PUBLIC_PATHS.some((path) => req.nextUrl.pathname.startsWith(path))
+        ) {
           return true;
         }
 
-        // それ以外はトークンの有無で判断
-        return !!token;
+        // APIルートは常に許可
+        if (req.nextUrl.pathname.startsWith("/api/")) {
+          return true;
+        }
+
+        // それ以外のパスは認証が必要
+        return !!req.nextauth.token;
       },
     },
   }
 );
 
+// 保護するパスを指定
 export const config = {
   matcher: [
     /*
-     * Match all paths except static files and auth paths
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
      */
-    "/((?!_next/static|_next/image|favicon\\.ico).*)",
+    "/((?!api|_next/static|_next/image|favicon\\.ico).*)",
   ],
 };
