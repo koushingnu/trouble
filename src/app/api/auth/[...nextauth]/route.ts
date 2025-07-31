@@ -41,6 +41,8 @@ const options: AuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials, req) {
+        console.log("Authorization attempt for email:", credentials?.email);
+
         if (!credentials?.email || !credentials?.password) {
           console.error("Missing credentials");
           return null;
@@ -48,6 +50,7 @@ const options: AuthOptions = {
 
         try {
           // Prismaを使用してユーザーを検索
+          console.log("Looking up user in database");
           const user = await prisma.user.findUnique({
             where: {
               email: credentials.email,
@@ -62,6 +65,7 @@ const options: AuthOptions = {
             return null;
           }
 
+          console.log("User found, verifying password");
           // パスワードの検証
           const isValid = await compare(credentials.password, user.password);
 
@@ -70,6 +74,7 @@ const options: AuthOptions = {
             return null;
           }
 
+          console.log("Password verified, creating access log");
           // アクセスログの記録
           await prisma.accessLog.create({
             data: {
@@ -89,6 +94,7 @@ const options: AuthOptions = {
             is_admin: Boolean(user.is_admin),
           };
 
+          console.log("Authentication successful for user:", authUser.email);
           return authUser;
         } catch (error) {
           console.error("Auth error:", error);
@@ -111,16 +117,19 @@ const options: AuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        console.log("JWT callback - updating token with user data");
         return { ...token, ...user };
       }
+      console.log("JWT callback - returning existing token");
       return token;
     },
     async session({ session, token }) {
+      console.log("Session callback - updating session with token data");
       session.user = token as AuthUser;
       return session;
     },
   },
-  debug: process.env.NODE_ENV === "development",
+  debug: true, // デバッグモードを有効化
 };
 
 // NextAuthハンドラーの作成
