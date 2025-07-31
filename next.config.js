@@ -4,11 +4,11 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // 環境変数の設定
   env: {
-    NEXTAUTH_URL:
-      process.env.NEXTAUTH_URL || "https://main.d1rof7j3ceo01r.amplifyapp.com",
-    NEXT_PUBLIC_BASE_URL:
-      process.env.NEXTAUTH_URL || "https://main.d1rof7j3ceo01r.amplifyapp.com",
+    NEXTAUTH_URL: "https://main.d1rof7j3ceo01r.amplifyapp.com",
+    NEXTAUTH_URL_INTERNAL: "https://main.d1rof7j3ceo01r.amplifyapp.com",
+    NEXT_PUBLIC_BASE_URL: "https://main.d1rof7j3ceo01r.amplifyapp.com",
   },
   async headers() {
     return [

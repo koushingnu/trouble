@@ -39,8 +39,24 @@ declare module "next-auth/jwt" {
   }
 }
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE || "https://ttsv.sakura.ne.jp/api.php";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
+const API_AUTH = process.env.API_AUTH;
+
+if (!API_BASE) {
+  throw new Error("NEXT_PUBLIC_API_BASE is not defined");
+}
+
+if (!API_AUTH) {
+  throw new Error("API_AUTH is not defined");
+}
+
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error("NEXTAUTH_SECRET is not defined");
+}
+
+if (!process.env.NEXTAUTH_URL) {
+  throw new Error("NEXTAUTH_URL is not defined");
+}
 
 // NextAuth設定
 const options: AuthOptions = {
@@ -68,7 +84,7 @@ const options: AuthOptions = {
             method: "POST",
             headers: {
               "Content-Type": "application/x-www-form-urlencoded",
-              Authorization: `Basic ${process.env.API_AUTH}`,
+              Authorization: `Basic ${API_AUTH}`,
             },
             body: formData.toString(),
           });
