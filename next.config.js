@@ -6,11 +6,9 @@ const nextConfig = {
   },
   // 環境変数の設定
   env: {
-    NEXTAUTH_URL:
-      process.env.NEXTAUTH_URL || "https://main.d1rof7j3ceo01r.amplifyapp.com",
-    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
-    API_AUTH: process.env.API_AUTH,
-    NEXT_PUBLIC_API_BASE: process.env.NEXT_PUBLIC_API_BASE,
+    NEXTAUTH_URL: "https://main.d1rof7j3ceo01r.amplifyapp.com",
+    NEXTAUTH_URL_INTERNAL: "https://main.d1rof7j3ceo01r.amplifyapp.com",
+    NEXT_PUBLIC_BASE_URL: "https://main.d1rof7j3ceo01r.amplifyapp.com",
   },
   async headers() {
     return [
@@ -35,7 +33,16 @@ const nextConfig = {
           },
           {
             key: "Referrer-Policy",
-            value: "same-origin",
+            value: "strict-origin-when-cross-origin",
+          },
+          {
+            key: "X-XSS-Protection",
+            value: "1; mode=block",
+          },
+          {
+            key: "Content-Security-Policy",
+            value:
+              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://ttsv.sakura.ne.jp;",
           },
         ],
       },
