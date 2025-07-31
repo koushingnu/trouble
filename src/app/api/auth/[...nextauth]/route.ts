@@ -1,4 +1,4 @@
-import NextAuth, { AuthOptions, User } from "next-auth";
+import NextAuth, { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaClient } from "@prisma/client";
 import { compare } from "bcryptjs";
@@ -25,33 +25,44 @@ type AuthUser = {
 
 // NextAuthの型拡張
 declare module "next-auth" {
-  interface Session {
-    user: AuthUser;
+  interface User {
+    id: string;
+    email: string;
+    name: string;
+    is_admin: boolean;
   }
-  interface User extends Omit<AuthUser, "name"> {
-    name?: string | null;
+
+  interface Session {
+    user: {
+      id: string;
+      email: string;
+      name: string;
+      is_admin: boolean;
+    };
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
-    id: string | number;
+    id: string;
     email: string;
-    token_id: number | null;
-    token_value: string | null;
-    status: string | null;
-    created_at: string;
+    name: string;
     is_admin: boolean;
-    name?: string | null;
-    sub: string;
   }
 }
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+// 環境変数のチェック
+if (!process.env.NEXTAUTH_URL) {
+  console.error("Warning: NEXTAUTH_URL is", process.env.NEXTAUTH_URL);
+}
 if (!process.env.NEXTAUTH_SECRET) {
   console.error("Warning: NEXTAUTH_SECRET is not set");
+}
+if (!process.env.DATABASE_URL) {
+  console.error("Warning: DATABASE_URL is not set");
 }
 
 // NextAuth設定
@@ -63,22 +74,13 @@ const options: AuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials, req): Promise<User | null> {
-        console.log("Starting authorization process");
-        console.log("DATABASE_URL:", process.env.DATABASE_URL);
-
-        if (!credentials?.email || !credentials?.password) {
-          console.error("Missing credentials");
-          return null;
-        }
-
+      async authorize(credentials) {
         try {
-          console.log("Attempting database connection...");
-          // データベース接続テスト
-          await prisma.$queryRaw`SELECT 1`;
-          console.log("Database connection successful");
+          if (!credentials?.email || !credentials?.password) {
+            console.error("Missing credentials");
+            return null;
+          }
 
-          console.log("Looking up user:", credentials.email);
           const user = await prisma.user.findUnique({
             where: {
               email: credentials.email,
@@ -93,7 +95,6 @@ const options: AuthOptions = {
             return null;
           }
 
-          console.log("Verifying password");
           const isValid = await compare(credentials.password, user.password);
 
           if (!isValid) {
@@ -101,7 +102,6 @@ const options: AuthOptions = {
             return null;
           }
 
-          console.log("Creating access log");
           await prisma.accessLog.create({
             data: {
               user_id: user.id,
@@ -109,28 +109,15 @@ const options: AuthOptions = {
             },
           });
 
-          console.log("Authentication successful");
           return {
             id: String(user.id),
             email: user.email,
-            token_id: user.token_id,
-            token_value: user.token?.token_value || null,
-            status: user.token?.status || null,
-            created_at: user.created_at.toISOString(),
-            is_admin: Boolean(user.is_admin),
             name: user.email,
-            token: user.token?.token_value || null,
-            tokenId: user.token_id,
-            isAdmin: Boolean(user.is_admin),
+            is_admin: Boolean(user.is_admin),
           };
         } catch (error) {
           console.error("Auth error:", error);
           return null;
-        } finally {
-          // 本番環境ではコネクションを切断しない
-          if (process.env.NODE_ENV !== "production") {
-            await prisma.$disconnect();
-          }
         }
       },
     }),
@@ -149,20 +136,18 @@ const options: AuthOptions = {
       if (user) {
         token.id = user.id;
         token.email = user.email;
-        token.token_id = user.token_id;
-        token.token_value = user.token_value;
-        token.status = user.status;
-        token.created_at = user.created_at;
-        token.is_admin = user.is_admin;
         token.name = user.name;
+        token.is_admin = user.is_admin;
       }
       return token;
     },
     async session({ session, token }) {
-      session.user = {
-        ...token,
-        id: Number(token.id),
-      } as AuthUser;
+      if (token) {
+        session.user.id = token.id;
+        session.user.email = token.email;
+        session.user.name = token.name;
+        session.user.is_admin = token.is_admin;
+      }
       return session;
     },
   },

@@ -5,57 +5,71 @@ const PUBLIC_PATHS = ["/auth", "/auth/error", "/register"];
 
 export default withAuth(
   function middleware(req) {
-    // デバッグログを追加
-    console.log("Middleware path:", req.nextUrl.pathname);
-    console.log("Has token:", !!req.nextauth?.token);
+    const { pathname } = req.nextUrl;
+    console.log("\n=== Middleware Execution Start ===");
+    console.log("Current path:", pathname);
+    console.log("Full URL:", req.url);
+    console.log("Token exists:", !!req.nextauth?.token);
+    console.log("Session:", req.nextauth);
 
     // 静的ファイルとAPIルートはスキップ
     if (
-      req.nextUrl.pathname.startsWith("/_next") ||
-      req.nextUrl.pathname.startsWith("/static") ||
-      req.nextUrl.pathname.startsWith("/favicon.ico") ||
-      req.nextUrl.pathname.startsWith("/api")
+      pathname.startsWith("/_next") ||
+      pathname.startsWith("/static") ||
+      pathname.startsWith("/favicon.ico") ||
+      pathname.startsWith("/api")
     ) {
-      console.log("Skipping middleware for:", req.nextUrl.pathname);
+      console.log("→ Skipping middleware (static/api)");
+      return NextResponse.next();
+    }
+
+    // パブリックパスはスキップ
+    if (PUBLIC_PATHS.some((path) => pathname.startsWith(path))) {
+      console.log("→ Public path, proceeding");
+      return NextResponse.next();
+    }
+
+    // ルートパスの場合
+    if (pathname === "/") {
+      if (!req.nextauth?.token) {
+        console.log("→ No token at root, redirecting to /auth");
+        return NextResponse.redirect(new URL("/auth", req.url));
+      }
+      console.log("→ Token exists at root, proceeding");
       return NextResponse.next();
     }
 
     // 認証済みユーザーが/authにアクセスした場合はホームにリダイレクト
-    if (req.nextauth?.token && req.nextUrl.pathname.startsWith("/auth")) {
-      console.log("Authenticated user accessing /auth, redirecting to home");
+    if (req.nextauth?.token && pathname.startsWith("/auth")) {
+      console.log("→ Authenticated user at /auth, redirecting to root");
       return NextResponse.redirect(new URL("/", req.url));
     }
 
-    console.log("Proceeding with request");
+    console.log("→ Default case, proceeding");
     return NextResponse.next();
   },
   {
     callbacks: {
       authorized({ req, token }) {
-        console.log("Checking authorization for:", req.nextUrl.pathname);
+        const { pathname } = req.nextUrl;
+        console.log("\n=== Authorization Check ===");
+        console.log("Path:", pathname);
+        console.log("Token exists:", !!token);
 
-        // 静的ファイルとAPIルートは常に許可
+        // 静的ファイル、APIルート、パブリックパスは常に許可
         if (
-          req.nextUrl.pathname.startsWith("/_next") ||
-          req.nextUrl.pathname.startsWith("/static") ||
-          req.nextUrl.pathname.startsWith("/favicon.ico") ||
-          req.nextUrl.pathname.startsWith("/api")
+          pathname.startsWith("/_next") ||
+          pathname.startsWith("/static") ||
+          pathname.startsWith("/favicon.ico") ||
+          pathname.startsWith("/api") ||
+          PUBLIC_PATHS.some((path) => pathname.startsWith(path))
         ) {
-          console.log("Authorized: static or API route");
+          console.log("→ Authorized: public resource");
           return true;
         }
 
-        // パブリックパスは常に許可
-        if (
-          PUBLIC_PATHS.some((path) => req.nextUrl.pathname.startsWith(path))
-        ) {
-          console.log("Authorized: public path");
-          return true;
-        }
-
-        // それ以外はトークンをチェック
         const hasToken = !!token;
-        console.log("Token check result:", hasToken);
+        console.log("→ Authorization result:", hasToken);
         return hasToken;
       },
     },
