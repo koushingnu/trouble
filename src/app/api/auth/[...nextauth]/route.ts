@@ -11,27 +11,18 @@ interface CustomUser {
   email: string;
   token_id: number | null;
   created_at: string;
+  is_admin: boolean;
 }
 
 declare module "next-auth" {
   interface Session {
     user: CustomUser;
   }
-  interface User {
-    id: number;
-    email: string;
-    token_id: number | null;
-    created_at: string;
-  }
+  interface User extends CustomUser {}
 }
 
 declare module "next-auth/jwt" {
-  interface JWT {
-    id: number;
-    email: string;
-    token_id: number | null;
-    created_at: string;
-  }
+  interface JWT extends CustomUser {}
 }
 
 export const dynamic = "force-dynamic";
@@ -46,7 +37,7 @@ const options: AuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials): Promise<CustomUser | null> {
         if (!credentials?.email || !credentials?.password) {
           throw new Error("メールアドレスとパスワードを入力してください");
         }
@@ -56,9 +47,6 @@ const options: AuthOptions = {
           const user = await prisma.user.findUnique({
             where: {
               email: credentials.email,
-            },
-            include: {
-              token: true,
             },
           });
 
@@ -77,7 +65,7 @@ const options: AuthOptions = {
           await prisma.accessLog.create({
             data: {
               user_id: user.id,
-              event: "user_login",
+              event: "user_authenticated",
             },
           });
 
@@ -86,6 +74,7 @@ const options: AuthOptions = {
             email: user.email,
             token_id: user.token_id,
             created_at: user.created_at.toISOString(),
+            is_admin: user.is_admin || false,
           };
         } catch (error) {
           console.error("Auth error:", error);
@@ -113,6 +102,7 @@ const options: AuthOptions = {
         token.email = user.email;
         token.token_id = user.token_id;
         token.created_at = user.created_at;
+        token.is_admin = user.is_admin;
       }
       return token;
     },
@@ -123,6 +113,7 @@ const options: AuthOptions = {
           email: token.email,
           token_id: token.token_id,
           created_at: token.created_at,
+          is_admin: token.is_admin,
         };
       }
       return session;

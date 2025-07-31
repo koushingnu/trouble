@@ -16,20 +16,21 @@ model User {
   password   String
   token_id   Int?       @unique
   created_at DateTime    @default(now())
-  token      Token?      @relation(fields: [token_id], references: [id])
+  is_admin   Boolean     @default(false)
+  token      Token?      @relation("UserToken", fields: [token_id], references: [id])
   access_logs AccessLog[]
   chat_rooms  ChatRoom[]
-  assigned_tokens Token[] @relation("AssignedTokens")
+  tokens_assigned Token[] @relation("AssignedTokens")
 }
 
 model Token {
   id          Int      @id @default(autoincrement())
   token_value String   @unique
-  status      String
+  status      String   @db.VarChar(50)
   assigned_to Int?
   created_at  DateTime @default(now())
-  user        User?
   assigned_user User?  @relation("AssignedTokens", fields: [assigned_to], references: [id])
+  user_token   User?   @relation("UserToken")
 }
 
 model AccessLog {
