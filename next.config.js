@@ -6,9 +6,7 @@ const nextConfig = {
   },
   env: {
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
-    DATABASE_URL:
-      process.env.DATABASE_URL ||
-      "mysql://admin:Koushin1022@database-1.cjo806iq4azh.ap-northeast-1.rds.amazonaws.com:3306/database-1",
+    DATABASE_URL: process.env.DATABASE_URL,
   },
   async headers() {
     return [
