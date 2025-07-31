@@ -4,6 +4,7 @@ frontend:
     preBuild:
       commands:
         - echo "DATABASE_URL=$DATABASE_URL" > .env
+        - echo "NEXTAUTH_URL=https://main.d1rof7j3ceo01r.amplifyapp.com" >> .env
         - npm ci
     build:
       commands:

@@ -56,7 +56,13 @@ export const runtime = "nodejs";
 
 // 環境変数のチェック
 if (!process.env.NEXTAUTH_URL) {
-  console.error("Warning: NEXTAUTH_URL is", process.env.NEXTAUTH_URL);
+  // 本番環境の場合はAmplifyのURLを使用
+  if (process.env.NODE_ENV === "production") {
+    process.env.NEXTAUTH_URL = "https://main.d1rof7j3ceo01r.amplifyapp.com";
+    console.log("Set NEXTAUTH_URL to:", process.env.NEXTAUTH_URL);
+  } else {
+    console.error("Warning: NEXTAUTH_URL is not set in development");
+  }
 }
 if (!process.env.NEXTAUTH_SECRET) {
   console.error("Warning: NEXTAUTH_SECRET is not set");
