@@ -39,7 +39,8 @@ const options: AuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("メールアドレスとパスワードを入力してください");
+          console.error("Missing credentials");
+          return null;
         }
 
         try {
@@ -77,7 +78,7 @@ const options: AuthOptions = {
             email: user.email,
             token_id: user.token_id,
             created_at: user.created_at.toISOString(),
-            is_admin: user.is_admin,
+            is_admin: user.is_admin || false,
           };
         } catch (error) {
           console.error("Auth error:", error);
@@ -88,6 +89,7 @@ const options: AuthOptions = {
       },
     }),
   ],
+  secret: process.env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
@@ -97,26 +99,27 @@ const options: AuthOptions = {
     error: "/auth/error",
   },
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.email = user.email;
-        token.token_id = user.token_id;
-        token.created_at = user.created_at;
-        token.is_admin = user.is_admin;
+    async jwt({ token, user, account }) {
+      if (account && user) {
+        return {
+          ...token,
+          id: user.id,
+          email: user.email,
+          token_id: user.token_id,
+          created_at: user.created_at,
+          is_admin: user.is_admin,
+        };
       }
       return token;
     },
     async session({ session, token }) {
-      if (token) {
-        session.user = {
-          id: token.id,
-          email: token.email,
-          token_id: token.token_id,
-          created_at: token.created_at,
-          is_admin: token.is_admin,
-        };
-      }
+      session.user = {
+        id: token.id,
+        email: token.email,
+        token_id: token.token_id,
+        created_at: token.created_at,
+        is_admin: token.is_admin,
+      };
       return session;
     },
   },
