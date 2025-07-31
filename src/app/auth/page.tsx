@@ -1,140 +1,126 @@
 "use client";
 
+import { useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { FaEnvelope, FaLock } from "react-icons/fa";
+import FullScreenLoading from "../../components/FullScreenLoading";
 
-export default function AuthPage() {
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+function LoginForm() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams?.get("callbackUrl") || "/";
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setLoading(true);
     setError("");
-
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
 
     try {
       const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
+        callbackUrl,
       });
 
       if (result?.error) {
         setError("メールアドレスまたはパスワードが正しくありません");
+        setLoading(false);
         return;
       }
 
       if (result?.ok) {
-        router.push("/");
+        router.push(callbackUrl);
         router.refresh();
       }
     } catch (error) {
-      setError("ログイン処理中にエラーが発生しました");
       console.error("Login error:", error);
-    } finally {
-      setIsLoading(false);
+      setError("ログイン中にエラーが発生しました");
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+    <>
+      {loading && <FullScreenLoading message="ログイン中..." />}
+      <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg border border-gray-100">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-gray-800 to-gray-600 font-noto-sans-jp">
             ログイン
-          </h2>
+          </h1>
+          <div className="mt-2 h-1 w-12 bg-gradient-to-r from-blue-500 to-blue-300 mx-auto rounded-full"></div>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email" className="sr-only">
-                メールアドレス
-              </label>
+
+        {error && (
+          <div className="mb-6 p-4 rounded-lg bg-red-50 border border-red-200">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <div className="relative">
+              <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
-                id="email"
-                name="email"
                 type="email"
-                autoComplete="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full pl-10 pr-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 bg-white text-gray-800 placeholder-gray-400"
                 placeholder="メールアドレス"
-                disabled={isLoading}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                パスワード
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="パスワード"
-                disabled={isLoading}
               />
             </div>
           </div>
-
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="flex">
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">{error}</h3>
-                </div>
-              </div>
-            </div>
-          )}
 
           <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
-                isLoading
-                  ? "bg-indigo-400 cursor-not-allowed"
-                  : "bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              }`}
-            >
-              {isLoading ? (
-                <span className="flex items-center">
-                  <svg
-                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  ログイン中...
-                </span>
-              ) : (
-                "ログイン"
-              )}
-            </button>
+            <div className="relative">
+              <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full pl-10 pr-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 bg-white text-gray-800 placeholder-gray-400"
+                placeholder="パスワード"
+                required
+              />
+            </div>
           </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-600 disabled:opacity-50 transition-colors duration-200"
+          >
+            {loading ? "ログイン中..." : "ログイン"}
+          </button>
         </form>
+
+        <div className="mt-8 text-center">
+          <p className="text-gray-600 mb-2">アカウントをお持ちでない方は</p>
+          <Link
+            href="/register"
+            className="inline-block bg-white text-blue-500 py-2 px-6 rounded-lg font-semibold border-2 border-blue-500 hover:bg-blue-50 transition-colors duration-200"
+          >
+            新規登録
+          </Link>
+        </div>
       </div>
-    </div>
+    </>
+  );
+}
+
+export default function Login() {
+  return (
+    <main className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-gradient-to-br from-gray-50 to-white p-4 -mt-16">
+      <Suspense fallback={<FullScreenLoading message="読み込み中..." />}>
+        <LoginForm />
+      </Suspense>
+    </main>
   );
 }
