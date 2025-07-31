@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { NextRequest } from "next/server";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
 
-export async function PUT(request: Request) {
+export async function PUT(request: NextRequest) {
   try {
     const token = await getToken({ req: request });
     if (!token) {
