@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 // 認証が不要なパス
 const PUBLIC_PATHS = ["/auth", "/auth/error", "/register"];
 const STATIC_PATHS = ["/_next", "/static", "/favicon.ico"];
+const AUTH_PATHS = ["/api/auth"];
 
 export default withAuth(
   function middleware(req) {
@@ -11,6 +12,11 @@ export default withAuth(
 
     // 静的ファイルはスキップ
     if (STATIC_PATHS.some((path) => pathname.startsWith(path))) {
+      return NextResponse.next();
+    }
+
+    // 認証関連のパスはスキップ
+    if (AUTH_PATHS.some((path) => pathname.startsWith(path))) {
       return NextResponse.next();
     }
 
@@ -34,14 +40,9 @@ export default withAuth(
           return true;
         }
 
-        // APIルートの処理
-        if (pathname.startsWith("/api/")) {
-          // auth関連のAPIは認証不要
-          if (pathname.startsWith("/api/auth/")) {
-            return true;
-          }
-          // その他のAPIはトークンチェック
-          return !!token;
+        // 認証関連のパスは常に許可
+        if (AUTH_PATHS.some((path) => pathname.startsWith(path))) {
+          return true;
         }
 
         // 公開パスは常に許可
@@ -59,7 +60,7 @@ export default withAuth(
 export const config = {
   matcher: [
     /*
-     * Match all paths except static files
+     * Match all paths except static files and auth paths
      */
     "/((?!_next/static|_next/image|favicon\\.ico).*)",
   ],

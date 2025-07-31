@@ -44,15 +44,15 @@ const API_AUTH = process.env.API_AUTH;
 const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
 
 if (!API_BASE) {
-  throw new Error("NEXT_PUBLIC_API_BASE is not defined");
+  console.error("NEXT_PUBLIC_API_BASE is not defined");
 }
 
 if (!API_AUTH) {
-  throw new Error("API_AUTH is not defined");
+  console.error("API_AUTH is not defined");
 }
 
 if (!NEXTAUTH_SECRET) {
-  throw new Error("NEXTAUTH_SECRET is not defined");
+  console.error("NEXTAUTH_SECRET is not defined");
 }
 
 export const dynamic = "force-dynamic";
@@ -72,6 +72,11 @@ const options: AuthOptions = {
           throw new Error("メールアドレスとパスワードを入力してください");
         }
 
+        if (!API_BASE || !API_AUTH) {
+          console.error("Required environment variables are missing");
+          throw new Error("サーバーの設定エラー");
+        }
+
         try {
           const url = new URL(API_BASE);
           url.searchParams.append("action", "authenticate");
@@ -87,6 +92,7 @@ const options: AuthOptions = {
               Authorization: `Basic ${API_AUTH}`,
             },
             body: formData.toString(),
+            cache: "no-store",
           });
 
           const responseText = await response.text();
@@ -174,7 +180,7 @@ const options: AuthOptions = {
       return session;
     },
   },
-  debug: process.env.NODE_ENV === "development",
+  debug: true,
 };
 
 // NextAuthハンドラーの作成
