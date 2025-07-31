@@ -1,38 +1,36 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
+const prisma = new PrismaClient();
+
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function GET() {
-  const prisma = new PrismaClient();
-
   try {
+    console.log("=== Database Test Start ===");
     console.log("Testing database connection...");
 
-    // データベース接続テスト
-    const testQuery = await prisma.$queryRaw`SELECT 1 as test`;
-    console.log("Database connection successful:", testQuery);
+    // 基本的な接続テスト
+    await prisma.$queryRaw`SELECT 1`;
+    console.log("Basic connection test: SUCCESS");
 
-    // ユーザー数を取得（追加の接続テスト）
+    // ユーザー数を取得してテスト
     const userCount = await prisma.user.count();
-    console.log("Total users in database:", userCount);
+    console.log("User count:", userCount);
 
     return NextResponse.json({
       status: "success",
       message: "Database connection successful",
-      details: {
-        connection: "OK",
-        userCount,
-      },
+      userCount,
     });
   } catch (error) {
-    console.error("Database connection error:", error);
-
+    console.error("Database test error:", error);
     return NextResponse.json(
       {
         status: "error",
         message: "Database connection failed",
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );
