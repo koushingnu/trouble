@@ -4,18 +4,23 @@ import { getToken } from "next-auth/jwt";
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE || "https://ttsv.sakura.ne.jp/api.php";
 
+// 共通のヘッダー作成関数
+async function getAuthHeaders(request: NextRequest) {
+  const token = await getToken({ req: request });
+  if (!token?.token) {
+    throw new Error("認証が必要です");
+  }
+  return {
+    Authorization: `Basic ${process.env.API_AUTH}`,
+    "Content-Type": "application/x-www-form-urlencoded",
+  };
+}
+
 export async function GET(request: NextRequest) {
   try {
-    // セッショントークンを取得
-    const token = await getToken({ req: request });
-    if (!token?.token) {
-      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
-    }
-
+    const headers = await getAuthHeaders(request);
     const response = await fetch(API_BASE, {
-      headers: {
-        Authorization: `Bearer ${token.token}`,
-      },
+      headers,
       cache: "no-store",
     });
 
@@ -29,39 +34,44 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Proxy error:", error);
-    return NextResponse.json({ error: "内部サーバーエラー" }, { status: 500 });
+    console.error("Proxy GET error:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "内部サーバーエラー" },
+      { status: 500 }
+    );
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const formData = new FormData();
+    const headers = await getAuthHeaders(request);
+    const formData = await request.formData();
+    const body = new URLSearchParams();
 
-    // フォームデータに変換
-    Object.entries(body).forEach(([key, value]) => {
-      formData.append(key, String(value));
+    // FormDataの各フィールドをURLSearchParamsに変換
+    formData.forEach((value, key) => {
+      body.append(key, value.toString());
     });
 
     const response = await fetch(API_BASE, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: formData,
+      headers,
+      body: body.toString(),
     });
 
-    const responseText = await response.text();
-
     if (!response.ok) {
-      throw new Error(`Failed to post data: ${responseText}`);
+      return NextResponse.json(
+        { error: "APIリクエストに失敗しました" },
+        { status: response.status }
+      );
     }
 
-    return NextResponse.json(JSON.parse(responseText));
+    const data = await response.json();
+    return NextResponse.json(data);
   } catch (error) {
+    console.error("Proxy POST error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unknown error" },
+      { error: error instanceof Error ? error.message : "内部サーバーエラー" },
       { status: 500 }
     );
   }
