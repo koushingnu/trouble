@@ -5,24 +5,27 @@ import { compare } from "bcryptjs";
 
 const prisma = new PrismaClient();
 
-// 基本的なユーザー情報の型
-interface CustomUser {
+// カスタムユーザー型
+interface AuthUser {
   id: number;
   email: string;
   token_id: number | null;
+  token_value: string | null;
+  status: string | null;
   created_at: string;
   is_admin: boolean;
 }
 
+// NextAuthの型拡張
 declare module "next-auth" {
   interface Session {
-    user: CustomUser;
+    user: AuthUser;
   }
-  interface User extends CustomUser {}
+  interface User extends AuthUser {}
 }
 
 declare module "next-auth/jwt" {
-  interface JWT extends CustomUser {}
+  interface JWT extends AuthUser {}
 }
 
 export const dynamic = "force-dynamic";
@@ -37,7 +40,7 @@ const options: AuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) {
           console.error("Missing credentials");
           return null;
@@ -48,6 +51,9 @@ const options: AuthOptions = {
           const user = await prisma.user.findUnique({
             where: {
               email: credentials.email,
+            },
+            include: {
+              token: true,
             },
           });
 
@@ -73,13 +79,17 @@ const options: AuthOptions = {
           });
 
           // 認証成功時のユーザー情報を返す
-          return {
+          const authUser: AuthUser = {
             id: user.id,
             email: user.email,
             token_id: user.token_id,
+            token_value: user.token?.token_value || null,
+            status: user.token?.status || null,
             created_at: user.created_at.toISOString(),
-            is_admin: user.is_admin || false,
+            is_admin: Boolean(user.is_admin),
           };
+
+          return authUser;
         } catch (error) {
           console.error("Auth error:", error);
           return null;
@@ -99,27 +109,14 @@ const options: AuthOptions = {
     error: "/auth/error",
   },
   callbacks: {
-    async jwt({ token, user, account }) {
-      if (account && user) {
-        return {
-          ...token,
-          id: user.id,
-          email: user.email,
-          token_id: user.token_id,
-          created_at: user.created_at,
-          is_admin: user.is_admin,
-        };
+    async jwt({ token, user }) {
+      if (user) {
+        return { ...token, ...user };
       }
       return token;
     },
     async session({ session, token }) {
-      session.user = {
-        id: token.id,
-        email: token.email,
-        token_id: token.token_id,
-        created_at: token.created_at,
-        is_admin: token.is_admin,
-      };
+      session.user = token as AuthUser;
       return session;
     },
   },
