@@ -1,8 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE || "https://ttsv.sakura.ne.jp/api.php";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
+const API_AUTH = process.env.API_AUTH;
+
+if (!API_BASE) {
+  throw new Error("NEXT_PUBLIC_API_BASE is not defined");
+}
+
+if (!API_AUTH) {
+  throw new Error("API_AUTH is not defined");
+}
 
 // 共通のヘッダー作成関数
 async function getAuthHeaders(request: NextRequest) {
@@ -11,10 +19,13 @@ async function getAuthHeaders(request: NextRequest) {
     throw new Error("認証が必要です");
   }
   return {
-    Authorization: `Basic ${process.env.API_AUTH}`,
+    Authorization: `Basic ${API_AUTH}`,
     Accept: "application/json",
   };
 }
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,6 +36,7 @@ export async function GET(request: NextRequest) {
     const response = await fetch(url, {
       headers,
       cache: "no-store",
+      next: { revalidate: 0 },
     });
 
     console.log("[GET] Response status:", response.status);
