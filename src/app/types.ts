@@ -12,7 +12,7 @@ export interface User {
   email: string;
   token_id: number | null;
   token_value: string | null;
-  status: string | null;
+  status: string | null;　
   created_at: string;
 }
 
