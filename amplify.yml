@@ -4,7 +4,8 @@ frontend:
     preBuild:
       commands:
         - echo "DATABASE_URL=$DATABASE_URL" > .env
-        - echo "NEXTAUTH_URL=https://main.d1rof7j3ceo01r.amplifyapp.com" >> .env
+        - echo "NEXTAUTH_URL=$NEXTAUTH_URL" >> .env
+        - echo "NEXTAUTH_SECRET=$NEXTAUTH_SECRET" >> .env
         - npm ci
     build:
       commands:
@@ -24,7 +25,7 @@ frontend:
         - key: "Strict-Transport-Security"
           value: "max-age=31536000; includeSubDomains"
         - key: "X-Frame-Options"
-          value: "SAMEORIGIN"
+          value: "DENY"
         - key: "X-Content-Type-Options"
           value: "nosniff"
         - key: "X-XSS-Protection"
@@ -34,12 +35,13 @@ frontend:
         - key: "Content-Security-Policy"
           value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://ttsv.sakura.ne.jp;"
   logging:
-    level: debug
-    format: combined
+    level: info
+    format: json
     storage:
       cloudWatch:
         region: ap-northeast-1
-        logGroup: /aws/amplify/trouble
+        logGroup: /aws/amplify/trouble-production
         logStreams:
-          - name: server-logs
-            pattern: "**/*"
+          - name: application-logs
+          - name: access-logs
+          - name: error-logs
