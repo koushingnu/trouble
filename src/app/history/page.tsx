@@ -30,7 +30,8 @@ export default function HistoryPage() {
         if (data.success && data.data) {
           const sortedChatRooms = data.data.sort(
             (a, b) =>
-              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+              new Date(b.created_at).getTime() -
+              new Date(a.created_at).getTime()
           );
           setChatRooms(sortedChatRooms);
         }

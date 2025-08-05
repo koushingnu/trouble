@@ -3,6 +3,7 @@ import { getToken } from "next-auth/jwt";
 import { NextRequest } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import OpenAI from "openai";
+import { ChatCompletionMessageParam } from "openai/resources/chat";
 
 const prisma = new PrismaClient();
 
@@ -139,7 +140,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const messages = history.map((msg) => ({
+      const messages: ChatCompletionMessageParam[] = history.map((msg) => ({
         role: msg.sender === "user" ? "user" : "assistant",
         content: msg.body,
       }));

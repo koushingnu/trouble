@@ -38,7 +38,9 @@ export default function TroubleChat({
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [chatRoomId, setChatRoomId] = useState<number | null>(initialChatRoomId);
+  const [chatRoomId, setChatRoomId] = useState<number | null>(
+    initialChatRoomId
+  );
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -196,7 +198,10 @@ export default function TroubleChat({
         });
 
         if (!chatRoomId && data.data.chatRoomId) {
-          console.log("[DEBUG] Setting new chat room ID:", data.data.chatRoomId);
+          console.log(
+            "[DEBUG] Setting new chat room ID:",
+            data.data.chatRoomId
+          );
           setChatRoomId(data.data.chatRoomId);
         }
       } else {
@@ -396,13 +401,12 @@ export default function TroubleChat({
                               }`}
                             >
                               <p className="text-xs text-gray-500">
-                                {new Date(message.created_at).toLocaleTimeString(
-                                  [],
-                                  {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  }
-                                )}
+                                {new Date(
+                                  message.created_at
+                                ).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
                               </p>
                             </div>
                           </div>

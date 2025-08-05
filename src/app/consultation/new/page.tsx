@@ -103,7 +103,9 @@ export default function NewConsultationPage() {
         </div>
       </div>
 
-      <TroubleChat initialChatRoomId={isNewChat ? null : latestChatRoom?.id || null} />
+      <TroubleChat
+        initialChatRoomId={isNewChat ? null : latestChatRoom?.id || null}
+      />
     </div>
   );
 }
