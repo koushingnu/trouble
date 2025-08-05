@@ -132,7 +132,7 @@ export default function TroubleChat({
     const newMessage: Message = {
       id: Date.now(),
       chat_room_id: chatRoomId || 0, // Temporary ID
-      sender: "user",
+      sender: "user" as const, // 明示的に "user" | "assistant" 型を指定
       body: inputMessage.trim(),
       created_at: new Date().toISOString(),
     };
@@ -178,7 +178,7 @@ export default function TroubleChat({
       if (data.success) {
         // Replace temporary user message and add assistant response
         setMessages((prev) => {
-          const updatedMessages = [
+          const updatedMessages: Message[] = [
             ...prev.slice(0, -1), // Remove temporary user message
             {
               ...newMessage,
@@ -187,7 +187,7 @@ export default function TroubleChat({
             {
               id: Date.now() + 1,
               chat_room_id: data.data.chatRoomId,
-              sender: "assistant",
+              sender: "assistant" as const, // 明示的に "user" | "assistant" 型を指定
               body: data.data.message,
               created_at: new Date().toISOString(),
             },
