@@ -10,10 +10,9 @@ import {
 } from "@heroicons/react/24/outline";
 import { Message } from "@/types/chat";
 
-// メッセージをグループ化する関数
+// メッセージを日付でグループ化する関数
 function groupMessagesByDate(messages: Message[]) {
   const groups: { [key: string]: Message[] } = {};
-
   messages.forEach((message) => {
     const date = new Date(message.created_at).toLocaleDateString("ja-JP", {
       year: "numeric",
@@ -25,7 +24,6 @@ function groupMessagesByDate(messages: Message[]) {
     }
     groups[date].push(message);
   });
-
   return groups;
 }
 
@@ -40,39 +38,32 @@ export default function TroubleChat({
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [chatRoomId, setChatRoomId] = useState<number | null>(
-    initialChatRoomId
-  );
+  const [chatRoomId, setChatRoomId] = useState<number | null>(initialChatRoomId);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // チャットルームIDの初期化
+  // Initialize chatRoomId based on prop
   useEffect(() => {
-    if (initialChatRoomId !== null) {
-      console.log("[DEBUG] Setting initial chat room ID:", initialChatRoomId);
-      setChatRoomId(initialChatRoomId);
-      localStorage.setItem("currentChatRoomId", initialChatRoomId.toString());
-    } else {
-      const path = window.location.pathname;
-      if (path === "/consultation/new") {
-        console.log("[DEBUG] New consultation page, no initial chat room ID");
-        localStorage.removeItem("currentChatRoomId");
-        setChatRoomId(null);
-        setMessages([]);
-      } else {
-        // 詳細表示の場合はローカルストレージからチャットルームIDを復元
-        const storedChatRoomId = localStorage.getItem("currentChatRoomId");
-        if (storedChatRoomId) {
-          console.log(
-            "[DEBUG] Restored chat room ID from storage:",
-            storedChatRoomId
-          );
-          setChatRoomId(parseInt(storedChatRoomId, 10));
-        }
-      }
+    console.log(
+      "[DEBUG] TroubleChat mounted with initialChatRoomId:",
+      initialChatRoomId
+    );
+    setChatRoomId(initialChatRoomId);
+    if (initialChatRoomId === null) {
+      setMessages([]); // Clear messages if starting a new chat
     }
-  }, [initialChatRoomId]);
+  }, [initialChatRoomId]); // Re-run when initialChatRoomId changes
+
+  // Save chatRoomId to localStorage
+  useEffect(() => {
+    if (chatRoomId) {
+      console.log("[DEBUG] Saving chat room ID to storage:", chatRoomId);
+      localStorage.setItem("currentChatRoomId", chatRoomId.toString());
+    } else {
+      localStorage.removeItem("currentChatRoomId");
+    }
+  }, [chatRoomId]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -82,15 +73,19 @@ export default function TroubleChat({
     scrollToBottom();
   }, [messages]);
 
-  // 全画面モード切り替え時のスクロール位置調整
   useEffect(() => {
     setTimeout(scrollToBottom, 100);
   }, [isFullScreen]);
 
-  // チャットルームIDが変更されたときに履歴を読み込む
+  // Load chat history when chatRoomId changes
   useEffect(() => {
     const loadChatHistory = async () => {
-      if (!chatRoomId || !session?.user) return;
+      if (!chatRoomId || !session?.user) {
+        console.log(
+          "[DEBUG] Skipping chat history load: chatRoomId or session missing."
+        );
+        return;
+      }
 
       try {
         console.log("[DEBUG] Loading chat history for room:", chatRoomId);
@@ -98,7 +93,8 @@ export default function TroubleChat({
           `/api/chat/history?chatRoomId=${chatRoomId}`,
           {
             headers: {
-              Authorization: `Bearer ${session.user.token || ""}`,
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
             },
           }
         );
@@ -111,19 +107,18 @@ export default function TroubleChat({
 
         const data = await response.json();
         console.log("[DEBUG] Chat history loaded:", {
-          messageCount: data.data.messages.length,
-          messages: data.data.messages.map((m: Message) => ({
-            sender: m.sender,
-            body: m.body.substring(0, 50) + (m.body.length > 50 ? "..." : ""),
-            created_at: m.created_at,
-          })),
+          success: data.success,
+          messageCount: data.data?.messages?.length,
         });
 
-        if (data.success && data.data.messages) {
+        if (data.success && data.data?.messages) {
           setMessages(data.data.messages);
+        } else {
+          setMessages([]); // Clear messages if no history found
         }
       } catch (error) {
         console.error("[DEBUG] Error loading chat history:", error);
+        setMessages([]); // Clear messages on error
       }
     };
 
@@ -136,7 +131,7 @@ export default function TroubleChat({
 
     const newMessage: Message = {
       id: Date.now(),
-      chat_room_id: chatRoomId || 0,
+      chat_room_id: chatRoomId || 0, // Temporary ID
       sender: "user",
       body: inputMessage.trim(),
       created_at: new Date().toISOString(),
@@ -146,13 +141,8 @@ export default function TroubleChat({
       message: inputMessage.trim(),
       chatRoomId,
       messageCount: messages.length,
-      currentMessages: messages.map((m) => ({
-        sender: m.sender,
-        body: m.body.substring(0, 30) + "...",
-      })),
     });
 
-    // 一時的にメッセージを表示
     setMessages((prev) => [...prev, newMessage]);
     setInputMessage("");
     setIsLoading(true);
@@ -163,6 +153,8 @@ export default function TroubleChat({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
         },
         body: JSON.stringify({
           message: inputMessage.trim(),
@@ -184,30 +176,27 @@ export default function TroubleChat({
       });
 
       if (data.success) {
-        // 一時的なメッセージを本物に置き換え、アシスタントの応答を追加
-        setMessages((prev) => [
-          ...prev.slice(0, -1), // 一時的なメッセージを除外
-          {
-            id: Date.now(),
-            chat_room_id: chatRoomId || 0,
-            sender: "user",
-            body: inputMessage.trim(),
-            created_at: new Date().toISOString(),
-          },
-          {
-            id: Date.now() + 1,
-            chat_room_id: chatRoomId || 0,
-            sender: "assistant",
-            body: data.data.message,
-            created_at: new Date().toISOString(),
-          },
-        ]);
+        // Replace temporary user message and add assistant response
+        setMessages((prev) => {
+          const updatedMessages = [
+            ...prev.slice(0, -1), // Remove temporary user message
+            {
+              ...newMessage,
+              chat_room_id: data.data.chatRoomId, // Update with actual chatRoomId
+            },
+            {
+              id: Date.now() + 1,
+              chat_room_id: data.data.chatRoomId,
+              sender: "assistant",
+              body: data.data.message,
+              created_at: new Date().toISOString(),
+            },
+          ];
+          return updatedMessages;
+        });
 
         if (!chatRoomId && data.data.chatRoomId) {
-          console.log(
-            "[DEBUG] Setting new chat room ID:",
-            data.data.chatRoomId
-          );
+          console.log("[DEBUG] Setting new chat room ID:", data.data.chatRoomId);
           setChatRoomId(data.data.chatRoomId);
         }
       } else {
@@ -215,7 +204,7 @@ export default function TroubleChat({
       }
     } catch (error) {
       console.error("[DEBUG] Error sending message:", error);
-      setMessages((prev) => prev.slice(0, -1)); // 一時的なメッセージを削除
+      setMessages((prev) => prev.slice(0, -1)); // Remove temporary message on error
     } finally {
       setIsLoading(false);
       setIsThinking(false);
@@ -265,7 +254,7 @@ export default function TroubleChat({
             : "relative"
         }`}
       >
-        {/* チャットヘッダー */}
+        {/* Chat Header */}
         <div
           className={`bg-sky-600 px-6 py-4 ${isFullScreen ? "shadow-md" : ""}`}
         >
@@ -295,13 +284,13 @@ export default function TroubleChat({
           </p>
         </div>
 
-        {/* メッセージ表示エリア */}
+        {/* Message Display Area */}
         <div
           className={`overflow-y-auto px-4 sm:px-6 py-6 bg-gray-50 ${
             isFullScreen ? "flex-1" : "h-[500px]"
           }`}
         >
-          {messages.length === 0 ? (
+          {messages.length === 0 && !isThinking ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-400 space-y-2">
               <ChatBubbleLeftIcon className="h-8 w-8" />
               <p>メッセージはまだありません</p>
@@ -311,7 +300,9 @@ export default function TroubleChat({
             </div>
           ) : (
             <div
-              className={`space-y-12 ${isFullScreen ? "max-w-7xl mx-auto w-full px-4" : ""}`}
+              className={`space-y-12 ${
+                isFullScreen ? "max-w-7xl mx-auto w-full px-4" : ""
+              }`}
             >
               {Object.entries(groupMessagesByDate(messages)).map(
                 ([date, dateMessages]) => (
@@ -339,16 +330,20 @@ export default function TroubleChat({
                               : "flex-row"
                           } ${isFullScreen ? "space-x-6" : "space-x-2"}`}
                         >
-                          {/* アイコン */}
+                          {/* Icon */}
                           <div className="flex-shrink-0">
                             {message.sender === "user" ? (
                               <div
-                                className={`relative ${isFullScreen ? "w-16 h-16" : "w-16 h-16"}`}
+                                className={`relative ${
+                                  isFullScreen ? "w-16 h-16" : "w-16 h-16"
+                                }`}
                               >
                                 <div className="absolute inset-0 bg-sky-600 rounded-full shadow-lg"></div>
                                 <div className="absolute inset-[2px] bg-white rounded-full flex items-center justify-center">
                                   <svg
-                                    className={`${isFullScreen ? "w-12 h-12" : "w-10 h-10"} text-sky-600`}
+                                    className={`${
+                                      isFullScreen ? "w-12 h-12" : "w-10 h-10"
+                                    } text-sky-600`}
                                     fill="currentColor"
                                     viewBox="0 0 24 24"
                                   >
@@ -358,21 +353,25 @@ export default function TroubleChat({
                               </div>
                             ) : (
                               <div
-                                className={`relative ${isFullScreen ? "w-16 h-16" : "w-16 h-16"} bg-gradient-to-br from-sky-100 to-white rounded-full shadow-lg`}
+                                className={`relative ${
+                                  isFullScreen ? "w-16 h-16" : "w-16 h-16"
+                                } bg-gradient-to-br from-sky-100 to-white rounded-full shadow-lg`}
                               >
                                 <div className="absolute inset-0 flex items-center justify-center">
                                   <img
                                     src="/assistant.png"
                                     alt="Assistant"
-                                    className={`${isFullScreen ? "w-16 h-16" : "w-16 h-16"} rounded-full object-cover pt-5`}
+                                    className={`${
+                                      isFullScreen ? "w-16 h-16" : "w-16 h-16"
+                                    } rounded-full object-cover pt-5`}
                                   />
                                 </div>
                               </div>
                             )}
                           </div>
-                          {/* メッセージと時間のコンテナ */}
+                          {/* Message and Time Container */}
                           <div className="flex-1 min-w-0">
-                            {/* メッセージ */}
+                            {/* Message */}
                             <div
                               className={`inline-block rounded-2xl px-6 py-4 shadow-sm max-w-[80%] ${
                                 message.sender === "user"
@@ -388,7 +387,7 @@ export default function TroubleChat({
                                 {message.body}
                               </p>
                             </div>
-                            {/* 時間 */}
+                            {/* Time */}
                             <div
                               className={`mt-1 clear-both ${
                                 message.sender === "user"
@@ -397,12 +396,13 @@ export default function TroubleChat({
                               }`}
                             >
                               <p className="text-xs text-gray-500">
-                                {new Date(
-                                  message.created_at
-                                ).toLocaleTimeString([], {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
+                                {new Date(message.created_at).toLocaleTimeString(
+                                  [],
+                                  {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  }
+                                )}
                               </p>
                             </div>
                           </div>
@@ -412,18 +412,22 @@ export default function TroubleChat({
                   </div>
                 )
               )}
-              {/* 思考中インジケーター */}
+              {/* Thinking Indicator */}
               {isThinking && (
                 <div className="flex items-start space-x-2">
                   <div className="flex-shrink-0">
                     <div
-                      className={`relative ${isFullScreen ? "w-16 h-16" : "w-16 h-16"} bg-gradient-to-br from-sky-100 to-white rounded-full shadow-lg`}
+                      className={`relative ${
+                        isFullScreen ? "w-16 h-16" : "w-16 h-16"
+                      } bg-gradient-to-br from-sky-100 to-white rounded-full shadow-lg`}
                     >
                       <div className="absolute inset-0 flex items-center justify-center">
                         <img
                           src="/assistant.png"
                           alt="Assistant"
-                          className={`${isFullScreen ? "w-16 h-16" : "w-16 h-16"} rounded-full object-cover pt-5`}
+                          className={`${
+                            isFullScreen ? "w-16 h-16" : "w-16 h-16"
+                          } rounded-full object-cover pt-5`}
                         />
                       </div>
                       <div className="absolute inset-0 bg-sky-100/50 rounded-full animate-pulse"></div>
@@ -444,7 +448,7 @@ export default function TroubleChat({
           )}
         </div>
 
-        {/* 入力フォーム */}
+        {/* Input Form */}
         <div
           className={`border-t border-gray-100 bg-white ${
             isFullScreen ? "px-6 py-6 shadow-lg" : "p-4"
@@ -452,9 +456,7 @@ export default function TroubleChat({
         >
           <form
             onSubmit={handleSubmit}
-            className={`flex space-x-4 ${
-              isFullScreen ? "max-w-5xl mx-auto" : ""
-            }`}
+            className={`flex space-x-4 ${isFullScreen ? "max-w-5xl mx-auto" : ""}`}
           >
             <input
               type="text"
