@@ -1,65 +1,93 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { getToken } from "next-auth/jwt";
 
 const prisma = new PrismaClient();
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    // データベース接続テスト
+    console.log("\n=== DB Status Check Start ===");
+
+    // 1. データベース接続テスト
+    console.log("Testing database connection...");
     await prisma.$queryRaw`SELECT 1`;
     console.log("Database connection successful");
 
-    // 各テーブルのレコード数を取得
+    // 2. 環境変数確認
+    console.log("Environment variables:");
+    console.log("NODE_ENV:", process.env.NODE_ENV);
+    console.log("DATABASE_URL:", process.env.DATABASE_URL?.replace(/:[^:@]+@/, ':***@'));
+    console.log("NEXTAUTH_URL:", process.env.NEXTAUTH_URL);
+
+    // 3. 認証状態確認
+    const token = await getToken({ req: request });
+    console.log("Auth token:", token ? "Present" : "Not present");
+    if (token) {
+      console.log("Token user ID:", token.id);
+    }
+
+    // 4. テーブル情報取得
     const userCount = await prisma.user.count();
     const tokenCount = await prisma.token.count();
-    const accessLogCount = await prisma.accessLog.count();
+    const chatRoomCount = await prisma.chatRoom.count();
+    const messageCount = await prisma.message.count();
 
-    // トークンの状態を確認
-    const tokenStatuses = await prisma.token.groupBy({
-      by: ["status"],
-      _count: true,
+    console.log("Table counts:", {
+      users: userCount,
+      tokens: tokenCount,
+      chatRooms: chatRoomCount,
+      messages: messageCount,
     });
 
-    // 最新のトークンを5件取得
-    const latestTokens = await prisma.token.findMany({
-      take: 5,
-      orderBy: {
-        created_at: "desc",
-      },
+    // 5. チャットルーム詳細
+    const chatRooms = await prisma.chatRoom.findMany({
       include: {
-        assigned_user: {
-          select: {
-            email: true,
+        messages: {
+          orderBy: {
+            created_at: "desc",
           },
+          take: 1,
         },
       },
     });
+
+    const chatRoomDetails = chatRooms.map(room => ({
+      id: room.id,
+      user_id: room.user_id,
+      created_at: room.created_at,
+      message_count: room.messages.length,
+      latest_message: room.messages[0]?.body || null,
+    }));
+
+    console.log("=== DB Status Check End ===");
 
     return NextResponse.json({
       success: true,
       data: {
+        database_connected: true,
+        environment: process.env.NODE_ENV,
+        auth_status: {
+          token_present: !!token,
+          user_id: token?.id,
+        },
         counts: {
           users: userCount,
           tokens: tokenCount,
-          accessLogs: accessLogCount,
+          chatRooms: chatRoomCount,
+          messages: messageCount,
         },
-        tokenStatuses,
-        latestTokens,
-        databaseUrl: process.env.DATABASE_URL?.replace(/:.*@/, ':****@'), // パスワードを隠す
+        chat_rooms: chatRoomDetails,
       },
     });
   } catch (error) {
-    console.error("Database status check error:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 }
-    );
+    console.error("Error checking DB status:", error);
+    return NextResponse.json({
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    }, { status: 500 });
   } finally {
     await prisma.$disconnect();
   }
