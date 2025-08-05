@@ -15,11 +15,18 @@ export default function TokenManagement() {
   const fetchTokens = async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/tokens");
+      const response = await fetch("/api/tokens", {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache",
+          "Pragma": "no-cache"
+        }
+      });
       if (!response.ok) {
         throw new Error("Failed to fetch tokens");
       }
       const data = await response.json();
+      console.log("Fetched tokens:", data);  // デバッグログを追加
       setTokens(data.data || []);
     } catch (error) {
       console.error("Error fetching tokens:", error);
@@ -32,39 +39,6 @@ export default function TokenManagement() {
   useEffect(() => {
     fetchTokens();
   }, []); // コンポーネントマウント時に1回だけ実行
-
-  const handleGenerateTokens = async () => {
-    if (generatingCount < 1 || generatingCount > 10000) {
-      toast.error("生成数は1から10000の間で指定してください");
-      return;
-    }
-
-    setIsGenerating(true);
-    try {
-      const response = await fetch("/api/tokens", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ count: generatingCount }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "認証キー生成に失敗しました");
-      }
-
-      toast.success(`${generatingCount}個の認証キーを生成しました`);
-      fetchTokens();
-    } catch (error) {
-      console.error("Error generating tokens:", error);
-      toast.error(
-        error instanceof Error ? error.message : "認証キー生成に失敗しました"
-      );
-    } finally {
-      setIsGenerating(false);
-    }
-  };
 
   const getStatusColor = (status: Token["status"]) => {
     switch (status) {
@@ -93,6 +67,44 @@ export default function TokenManagement() {
         return "未使用";
       default:
         return "未設定";
+    }
+  };
+
+  const handleGenerateTokens = async () => {
+    if (generatingCount < 1 || generatingCount > 10000) {
+      toast.error("生成数は1から10000の間で指定してください");
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const response = await fetch("/api/tokens", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-cache",
+          "Pragma": "no-cache"
+        },
+        body: JSON.stringify({ count: generatingCount }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "認証キー生成に失敗しました");
+      }
+
+      const result = await response.json();
+      console.log("Token generation result:", result);  // デバッグログを追加
+
+      toast.success(`${generatingCount}個の認証キーを生成しました`);
+      await fetchTokens();  // 即座に一覧を更新
+    } catch (error) {
+      console.error("Error generating tokens:", error);
+      toast.error(
+        error instanceof Error ? error.message : "認証キー生成に失敗しました"
+      );
+    } finally {
+      setIsGenerating(false);
     }
   };
 
