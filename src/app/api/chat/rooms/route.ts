@@ -13,16 +13,22 @@ export async function POST(request: NextRequest) {
   try {
     console.log("\n=== Create Chat Room API Start ===");
     const token = await getToken({ req: request });
-    if (!token) {
-      console.log("Unauthorized access attempt");
+    if (!token || !token.id) {
+      console.log("Unauthorized access attempt or missing user ID in token");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    console.log("User ID:", token.id);
+
+    const userId = parseInt(token.id, 10);
+    if (isNaN(userId)) {
+      console.log("Invalid user ID in token:", token.id);
+      return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
+    }
+    console.log("User ID:", userId);
 
     // 新しいチャットルームを作成
     const chatRoom = await prisma.chatRoom.create({
       data: {
-        user_id: parseInt(token.id, 10),
+        user_id: userId,
       },
     });
 
@@ -58,29 +64,17 @@ export async function GET(request: NextRequest) {
   try {
     console.log("\n=== Get Chat Rooms API Start ===");
     const token = await getToken({ req: request });
-    if (!token) {
-      console.log("Unauthorized access attempt");
+    if (!token || !token.id) {
+      console.log("Unauthorized access attempt or missing user ID in token");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // トークンからユーザーIDを取得
     const userId = parseInt(token.id, 10);
-    console.log("User ID:", userId);
-
-    // ユーザー情報を確認
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, email: true },
-    });
-    console.log("Found user:", user);
-
-    if (!user) {
-      console.log("User not found in database");
-      return NextResponse.json(
-        { success: false, error: "User not found" },
-        { status: 404 }
-      );
+    if (isNaN(userId)) {
+      console.log("Invalid user ID in token:", token.id);
+      return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
     }
+    console.log("User ID:", userId);
 
     // ユーザーのチャットルーム一覧を取得
     const chatRooms = await prisma.chatRoom.findMany({
@@ -91,6 +85,7 @@ export async function GET(request: NextRequest) {
         created_at: "desc",
       },
     });
+
     console.log("Found chat rooms:", chatRooms.length);
 
     // 各チャットルームの最新メッセージを取得
@@ -145,19 +140,34 @@ export async function DELETE(request: NextRequest) {
   try {
     console.log("\n=== Delete Chat Room API Start ===");
     const token = await getToken({ req: request });
-    if (!token) {
-      console.log("Unauthorized access attempt");
+    if (!token || !token.id) {
+      console.log("Unauthorized access attempt or missing user ID in token");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    console.log("User ID:", token.id);
+
+    const userId = parseInt(token.id, 10);
+    if (isNaN(userId)) {
+      console.log("Invalid user ID in token:", token.id);
+      return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
+    }
+    console.log("User ID:", userId);
 
     const { searchParams } = new URL(request.url);
-    const chatRoomId = searchParams.get("chatRoomId");
+    const chatRoomIdParam = searchParams.get("chatRoomId");
 
-    if (!chatRoomId) {
+    if (!chatRoomIdParam) {
       console.log("Missing chatRoomId");
       return NextResponse.json(
         { success: false, error: "Chat room ID is required" },
+        { status: 400 }
+      );
+    }
+
+    const chatRoomId = parseInt(chatRoomIdParam, 10);
+    if (isNaN(chatRoomId)) {
+      console.log("Invalid chatRoomId:", chatRoomIdParam);
+      return NextResponse.json(
+        { success: false, error: "Invalid chat room ID" },
         { status: 400 }
       );
     }
@@ -167,28 +177,31 @@ export async function DELETE(request: NextRequest) {
       // チャットルームの存在と所有権を確認
       const chatRoom = await tx.chatRoom.findUnique({
         where: {
-          id: parseInt(chatRoomId, 10),
-          user_id: parseInt(token.id, 10),
+          id: chatRoomId,
+          user_id: userId,
         },
       });
 
       if (!chatRoom) {
+        console.log("Chat room not found or unauthorized for deletion:", chatRoomId);
         throw new Error("Chat room not found or unauthorized");
       }
 
       // メッセージを削除
       await tx.message.deleteMany({
         where: {
-          chat_room_id: parseInt(chatRoomId, 10),
+          chat_room_id: chatRoomId,
         },
       });
+      console.log(`Deleted messages for chat room ${chatRoomId}.`);
 
       // チャットルームを削除
       await tx.chatRoom.delete({
         where: {
-          id: parseInt(chatRoomId, 10),
+          id: chatRoomId,
         },
       });
+      console.log(`Deleted chat room ${chatRoomId}.`);
     });
 
     console.log("Chat room deleted successfully");
