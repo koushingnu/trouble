@@ -62,40 +62,40 @@ export async function GET(request: NextRequest) {
       console.log("Unauthorized access attempt");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    console.log("User ID:", token.id);
+
+    // トークンからユーザーIDを取得
+    const userId = parseInt(token.id, 10);
+    console.log("User ID:", userId);
+
+    // ユーザー情報を確認
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true },
+    });
+    console.log("Found user:", user);
+
+    if (!user) {
+      console.log("User not found in database");
+      return NextResponse.json(
+        { success: false, error: "User not found" },
+        { status: 404 }
+      );
+    }
 
     // ユーザーのチャットルーム一覧を取得
     const chatRooms = await prisma.chatRoom.findMany({
       where: {
-        user_id: parseInt(token.id, 10),
-      },
-      include: {
-        messages: {
-          orderBy: {
-            created_at: "desc",
-          },
-          take: 1,
-        },
+        user_id: userId,
       },
       orderBy: {
         created_at: "desc",
       },
     });
+    console.log("Found chat rooms:", chatRooms.length);
 
-    console.log("Raw chat rooms:", chatRooms.map(room => ({
-      id: room.id,
-      messages_count: room.messages.length,
-      first_message: room.messages[0] ? {
-        id: room.messages[0].id,
-        body: room.messages[0].body.substring(0, 50) + "...",
-        created_at: room.messages[0].created_at,
-      } : null,
-    })));
-
-    // レスポンスデータを整形
+    // 各チャットルームの最新メッセージを取得
     const formattedRooms = await Promise.all(
       chatRooms.map(async (room) => {
-        // 各チャットルームの最新のメッセージを取得
         const latestMessage = await prisma.message.findFirst({
           where: {
             chat_room_id: room.id,
@@ -104,6 +104,8 @@ export async function GET(request: NextRequest) {
             created_at: "desc",
           },
         });
+
+        console.log(`Chat room ${room.id} latest message:`, latestMessage);
 
         return {
           id: room.id,
