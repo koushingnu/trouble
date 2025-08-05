@@ -92,7 +92,7 @@ export default function UserList() {
       width: 300,
     },
     {
-      key: "status",
+      key: "id", // ダミーのキーを使用
       label: "ステータス",
       width: 120,
       align: "center",
@@ -107,7 +107,7 @@ export default function UserList() {
       ),
     },
     {
-      key: "token_value",
+      key: "id", // ダミーのキーを使用
       label: "認証キー",
       width: 300,
       format: (_, row) => row.token?.token_value || "未割り当て",
