@@ -2,9 +2,12 @@ import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { NextRequest } from "next/server";
 import { Message } from "@/types/chat";
+import { PrismaClient } from "@prisma/client";
 
-const API_PHP_URL =
-  process.env.NEXT_PUBLIC_API_BASE || "https://ttsv.sakura.ne.jp/api.php";
+const prisma = new PrismaClient();
+
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 interface SortableMessage extends Message {
   created_at: string;
@@ -12,73 +15,60 @@ interface SortableMessage extends Message {
 
 export async function GET(request: NextRequest) {
   try {
+    console.log("\n=== Chat History Prisma API Start ===");
     const token = await getToken({ req: request });
     if (!token) {
+      console.log("Unauthorized access attempt");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    console.log("User ID:", token.id);
 
     const { searchParams } = new URL(request.url);
     const chatRoomId = searchParams.get("chatRoomId");
 
     if (!chatRoomId) {
+      console.log("Missing chatRoomId");
       return NextResponse.json(
         { success: false, error: "Chat room ID is required" },
         { status: 400 }
       );
     }
+    console.log("Chat Room ID:", chatRoomId);
 
-    // チャット履歴を取得
-    const url = new URL(API_PHP_URL);
-    url.searchParams.append("action", "get_chat_history");
-    url.searchParams.append("chatRoomId", chatRoomId);
-    url.searchParams.append(
-      "userId",
-      (token.sub || token.id || "0").toString()
-    );
-
-    const response = await fetch(url.toString(), {
-      method: "GET",
-      headers: {
-        Authorization: "Basic " + process.env.API_AUTH,
+    // チャットルームの存在確認と所有者チェック
+    const chatRoom = await prisma.chatRoom.findUnique({
+      where: {
+        id: parseInt(chatRoomId, 10),
+        user_id: parseInt(token.id, 10),
       },
-      cache: "no-store",
+      include: {
+        messages: {
+          orderBy: {
+            created_at: "asc",
+          },
+        },
+      },
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to fetch chat history: ${errorText}`);
-    }
-
-    const rawResponse = await response.text();
-
-    let data;
-    try {
-      data = JSON.parse(rawResponse);
-    } catch (error) {
-      throw new Error("Invalid JSON response from server");
-    }
-
-    if (!data || typeof data !== "object") {
-      throw new Error("Invalid response format from server");
-    }
-
-    if (!data.success) {
+    if (!chatRoom) {
+      console.log("Chat room not found or unauthorized");
       return NextResponse.json(
-        { success: false, error: data.error || "Failed to fetch chat history" },
-        { status: 500 }
+        { success: false, error: "Chat room not found" },
+        { status: 404 }
       );
     }
 
-    if (!Array.isArray(data.data?.messages)) {
-      throw new Error("Invalid messages format from server");
-    }
+    // メッセージを整形
+    const messages = chatRoom.messages.map((msg) => ({
+      id: msg.id,
+      chat_room_id: msg.chat_room_id,
+      sender: msg.sender,
+      body: msg.body,
+      created_at: msg.created_at.toISOString(),
+    }));
 
-    // メッセージを時系列順にソート
-    const messages = data.data.messages as SortableMessage[];
-    messages.sort(
-      (a, b) =>
-        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-    );
+    console.log("Messages count:", messages.length);
+    console.log("=== Chat History Prisma API End ===");
 
     return NextResponse.json({
       success: true,
@@ -88,6 +78,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
+    console.error("Error in chat history API:", error);
     return NextResponse.json(
       {
         success: false,
@@ -96,6 +87,7 @@ export async function GET(request: NextRequest) {
       },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }
- 

@@ -1,0 +1,52 @@
+// Users table
+Table users {
+  id int [pk, increment]
+  email varchar [unique, not null]
+  token_id int [unique, ref: > tokens.id]
+  created_at datetime [default: `now()`, not null]
+  password varchar [not null]
+  is_admin boolean [default: false, not null]
+}
+
+// Tokens table
+Table tokens {
+  id int [pk, increment]
+  status varchar(50) [not null]
+  created_at datetime [default: `now()`, not null]
+  assigned_to int [ref: > users.id]
+  token_value varchar [unique, not null]
+}
+
+// Access Logs table
+Table access_logs {
+  id int [pk, increment]
+  user_id int [ref: > users.id, not null]
+  event varchar(100) [not null]
+  created_at datetime [default: `now()`, not null]
+}
+
+// Chat Rooms table
+Table chat_rooms {
+  id int [pk, increment]
+  user_id int [ref: > users.id, not null]
+  created_at datetime [default: `now()`, not null]
+}
+
+// Messages table
+Table messages {
+  id int [pk, increment]
+  chat_room_id int [ref: > chat_rooms.id, not null]
+  sender varchar(50) [not null]
+  body text [not null]
+  created_at datetime [default: `now()`, not null]
+}
+
+// Indexes
+Indexes {
+  (email) [unique]
+  (token_id) [unique]
+  (token_value) [unique]
+  (assigned_to)
+  (user_id)
+  (chat_room_id)
+}

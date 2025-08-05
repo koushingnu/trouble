@@ -10,7 +10,9 @@ export interface ChatRoom {
   id: number;
   user_id: number;
   created_at: string;
-  messages: Message[];
+  last_message?: string | null;
+  last_message_at?: string | null;
+  messages?: Message[];
 }
 
 export interface APIResponse<T> {

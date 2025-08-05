@@ -1,15 +1,13 @@
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { NextRequest } from "next/server";
+import { PrismaClient } from "@prisma/client";
 import OpenAI from "openai";
-import { Message } from "@/types/chat";
-import { ChatCompletionMessageParam } from "openai/resources/chat";
 
-// 定数定義
-const API_PHP_URL =
-  process.env.NEXT_PUBLIC_API_BASE || "https://ttsv.sakura.ne.jp/api.php";
-const OPENAI_API_KEY = process.env.OPEN_API_KEY; // 環境変数名を修正
-const GPT_MODEL = "gpt-4.1-nano-2025-04-14"; // より高性能なモデルに変更
+const prisma = new PrismaClient();
+
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 // システムプロンプトを定数として定義
 const SYSTEM_PROMPT = `あなたはトラブル相談専門のアドバイザーです。
@@ -51,6 +49,17 @@ const INITIAL_PROMPT = `これは新しい相談の開始です。
 以下のような簡潔な挨拶から始めてください：
 「こんにちは。トラブルのご相談がありましたら、お気軽にお話しください。」`;
 
+// OpenAIクライアントの設定
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const GPT_MODEL = "gpt-4.1-nano-2025-04-14";
+
+let openai: OpenAI | null = null;
+if (OPENAI_API_KEY) {
+  openai = new OpenAI({
+    apiKey: OPENAI_API_KEY,
+  });
+}
+
 // 応答テキストを整形する関数
 function formatAssistantMessage(text: string): string {
   return text
@@ -60,190 +69,92 @@ function formatAssistantMessage(text: string): string {
     .join("。\n");
 }
 
-// OpenAIクライアントの設定
-let openai: OpenAI | null = null;
-if (OPENAI_API_KEY) {
-  openai = new OpenAI({
-    apiKey: OPENAI_API_KEY,
-  });
-}
-
-// チャット履歴をOpenAIのメッセージ形式に変換
-function convertHistoryToMessages(
-  messages: Message[]
-): ChatCompletionMessageParam[] {
-  const systemMessage: ChatCompletionMessageParam = {
-    role: "system",
-    content: SYSTEM_PROMPT,
-  };
-
-  // 初回メッセージかどうかを判断
-  const isInitialMessage = messages.length <= 1;
-
-  // 会話の要点をまとめる
-  let conversationSummary = "";
-  let currentTopic = "";
-  let lastUserMessage = "";
-
-  for (const msg of messages) {
-    if (msg.sender === "user") {
-      lastUserMessage = msg.body;
-      if (msg.body.trim().length > 0) {
-        conversationSummary += `ユーザー: ${msg.body}\n`;
-      }
-    } else {
-      if (msg.body.trim().length > 0) {
-        conversationSummary += `アシスタント: ${msg.body}\n`;
-      }
-    }
-
-    // 話題を特定
-    const content = msg.body.toLowerCase();
-    if (content.includes("エアコン")) currentTopic = "エアコンの問題";
-    // 他の話題のパターンも必要に応じて追加
-  }
-
-  // 文脈サマリーを作成
-  const contextSummary = isInitialMessage
-    ? INITIAL_PROMPT
-    : `
-現在の会話状況：
-- 話題: ${currentTopic || "未特定"}
-- 最後のユーザー発言: ${lastUserMessage}
-
-これまでの会話：
-${conversationSummary}
-
-注意事項：
-1. 上記の会話履歴を踏まえて、文脈に沿った返答をしてください
-2. 特に最後のユーザー発言に対して適切に応答してください
-3. 初回の挨拶は既にしているので、具体的な対応に集中してください
-4. 同じ質問を繰り返さないでください`;
-
-  const contextMessage: ChatCompletionMessageParam = {
-    role: "system",
-    content: contextSummary,
-  };
-
-  const conversationMessages: ChatCompletionMessageParam[] = messages.map(
-    (msg) => ({
-      role: msg.sender === "user" ? "user" : "assistant",
-      content: msg.body,
-    })
-  );
-
-  return [systemMessage, contextMessage, ...conversationMessages];
-}
-
-// チャット履歴を取得する関数
-async function getChatHistory(
-  chatRoomId: number,
-  userId: string
-): Promise<Message[]> {
-  try {
-    if (!chatRoomId) {
-      return [];
-    }
-
-    const response = await fetch(
-      `${API_PHP_URL}?action=get_chat_history&chatRoomId=${chatRoomId}&userId=${userId}`,
-      {
-        headers: {
-          Authorization: "Basic " + process.env.API_AUTH,
-        },
-        cache: "no-store",
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch chat history: ${await response.text()}`);
-    }
-
-    const data = await response.json();
-    if (!data.success) {
-      return [];
-    }
-
-    // メッセージを時系列順にソート
-    const messages = data.data.messages as Message[];
-    messages.sort(
-      (a, b) =>
-        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-    );
-
-    return messages;
-  } catch (error) {
-    return [];
-  }
-}
-
-interface PHPResponse {
-  success: boolean;
-  error?: string;
-  data: {
-    message: string;
-    chatRoomId: number;
-  };
-}
-
 export async function POST(request: NextRequest) {
   try {
+    console.log("\n=== Chat Prisma API Start ===");
     const token = await getToken({ req: request });
     if (!token) {
+      console.log("Unauthorized access attempt");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    console.log("User ID:", token.id);
 
     const { message, chatRoomId } = await request.json();
+    console.log("Request data:", { message, chatRoomId });
 
     if (!message) {
+      console.log("Missing message");
       return NextResponse.json(
         { success: false, error: "メッセージは必須です" },
         { status: 400 }
       );
     }
 
-    // メッセージをDBに保存
-    const formData = new FormData();
-    formData.append("action", "save_message");
-    formData.append("message", message);
-    formData.append("userId", (token.sub || token.id || "0").toString());
-    if (chatRoomId) {
-      formData.append("chatRoomId", chatRoomId.toString());
-    }
+    // トランザクションでチャットルームとメッセージを保存
+    const result = await prisma.$transaction(async (tx) => {
+      // チャットルームの取得または作成
+      let chatRoom;
+      if (chatRoomId) {
+        chatRoom = await tx.chatRoom.findUnique({
+          where: {
+            id: chatRoomId,
+            user_id: parseInt(token.id, 10),
+          },
+        });
 
-    const dbResponse = await fetch(`${API_PHP_URL}?action=save_message`, {
-      method: "POST",
-      headers: {
-        Authorization: "Basic " + process.env.API_AUTH,
-      },
-      body: formData,
-    });
+        if (!chatRoom) {
+          throw new Error("Chat room not found or unauthorized");
+        }
+      } else {
+        chatRoom = await tx.chatRoom.create({
+          data: {
+            user_id: parseInt(token.id, 10),
+          },
+        });
+      }
 
-    if (!dbResponse.ok) {
-      const errorText = await dbResponse.text();
-      throw new Error("メッセージの保存に失敗しました");
-    }
+      // ユーザーメッセージを保存
+      const userMessage = await tx.message.create({
+        data: {
+          chat_room_id: chatRoom.id,
+          sender: "user",
+          body: message,
+        },
+      });
 
-    const dbData = (await dbResponse.json()) as PHPResponse;
-    const currentChatRoomId = dbData.data.chatRoomId;
+      // チャット履歴を取得
+      const history = await tx.message.findMany({
+        where: {
+          chat_room_id: chatRoom.id,
+        },
+        orderBy: {
+          created_at: "asc",
+        },
+      });
 
-    // OpenAI APIの呼び出し
-    let assistantMessage: string;
-    if (!openai || !OPENAI_API_KEY) {
-      throw new Error(
-        "OpenAI APIの設定が正しくありません。環境変数 OPENAI_API_KEY を確認してください。"
+      // OpenAI APIの呼び出し
+      if (!openai || !OPENAI_API_KEY) {
+        throw new Error(
+          "OpenAI APIの設定が正しくありません。環境変数 OPENAI_API_KEY を確認してください。"
+        );
+      }
+
+      const messages = history.map((msg) => ({
+        role: msg.sender === "user" ? "user" : "assistant",
+        content: msg.body,
+      }));
+
+      // システムメッセージを追加
+      messages.unshift(
+        {
+          role: "system",
+          content: SYSTEM_PROMPT,
+        },
+        {
+          role: "system",
+          content: history.length <= 1 ? INITIAL_PROMPT : "",
+        }
       );
-    }
-
-    try {
-      // チャット履歴を取得（新しいチャットルームIDを使用）
-      const history = await getChatHistory(
-        currentChatRoomId,
-        token.sub || token.id || "0"
-      );
-
-      // 初回メッセージの場合は履歴チェックをスキップ
-      const messages = convertHistoryToMessages(history);
 
       const completion = await openai.chat.completions.create({
         model: GPT_MODEL,
@@ -254,54 +165,35 @@ export async function POST(request: NextRequest) {
         frequency_penalty: 0.3,
       });
 
-      assistantMessage = formatAssistantMessage(
+      const assistantMessage = formatAssistantMessage(
         completion.choices[0].message.content ??
           "申し訳ございません。応答の生成に失敗しました。"
       );
-    } catch (apiError) {
-      console.error("OpenAI API Error:", apiError);
-      throw new Error(
-        "チャットボットの応答生成に失敗しました。しばらく時間をおいて再度お試しください。"
-      );
-    }
 
-    // アシスタントの応答をDBに保存
-    const assistantFormData = new FormData();
-    assistantFormData.append("action", "save_message");
-    assistantFormData.append("message", assistantMessage);
-    assistantFormData.append("sender", "assistant");
-    assistantFormData.append(
-      "userId",
-      (token.sub || token.id || "0").toString()
-    );
-    assistantFormData.append("chatRoomId", currentChatRoomId.toString());
-
-    const assistantResponse = await fetch(
-      `${API_PHP_URL}?action=save_message`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: "Basic " + process.env.API_AUTH,
+      // アシスタントの応答を保存
+      const savedAssistantMessage = await tx.message.create({
+        data: {
+          chat_room_id: chatRoom.id,
+          sender: "assistant",
+          body: assistantMessage,
         },
-        body: assistantFormData,
-      }
-    );
+      });
 
-    if (!assistantResponse.ok) {
-      const errorText = await assistantResponse.text();
-      throw new Error("アシスタントの応答の保存に失敗しました");
-    }
+      return {
+        message: assistantMessage,
+        chatRoomId: chatRoom.id,
+      };
+    });
 
-    const assistantData = (await assistantResponse.json()) as PHPResponse;
+    console.log("Chat completed successfully");
+    console.log("=== Chat Prisma API End ===");
 
     return NextResponse.json({
       success: true,
-      data: {
-        message: assistantMessage,
-        chatRoomId: currentChatRoomId,
-      },
+      data: result,
     });
   } catch (error) {
+    console.error("Error in chat API:", error);
     return NextResponse.json(
       {
         success: false,
@@ -312,5 +204,7 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }
