@@ -58,7 +58,7 @@ export default function UserList() {
       case "unused":
         return "未使用";
       default:
-        return "未割り当て";
+        return "未設定";
     }
   };
 
@@ -92,25 +92,25 @@ export default function UserList() {
       width: 300,
     },
     {
-      key: "token",
+      key: "status",
       label: "ステータス",
       width: 120,
       align: "center",
-      format: (token) => (
+      format: (_, row) => (
         <span
           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-            token?.status || null
+            row.token?.status || null
           )}`}
         >
-          {getStatusLabel(token?.status || null)}
+          {getStatusLabel(row.token?.status || null)}
         </span>
       ),
     },
     {
-      key: "token",
+      key: "token_value",
       label: "認証キー",
       width: 300,
-      format: (token) => token?.token_value || "未割り当て",
+      format: (_, row) => row.token?.token_value || "未割り当て",
     },
     {
       key: "created_at",
