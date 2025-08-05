@@ -29,46 +29,50 @@ function groupMessagesByDate(messages: Message[]) {
   return groups;
 }
 
-export default function TroubleChat() {
+interface TroubleChatProps {
+  initialChatRoomId?: number | null;
+}
+
+export default function TroubleChat({
+  initialChatRoomId = null,
+}: TroubleChatProps) {
   const { data: session } = useSession();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [chatRoomId, setChatRoomId] = useState<number | null>(null);
+  const [chatRoomId, setChatRoomId] = useState<number | null>(
+    initialChatRoomId
+  );
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // 新規相談ページマウント時にチャットルームIDをクリア
+  // チャットルームIDの初期化
   useEffect(() => {
-    const path = window.location.pathname;
-    if (path === "/consultation/new") {
-      console.log(
-        "[DEBUG] Clearing chat room ID on new consultation page mount"
-      );
-      localStorage.removeItem("currentChatRoomId");
-      setChatRoomId(null);
-      setMessages([]);
+    if (initialChatRoomId !== null) {
+      console.log("[DEBUG] Setting initial chat room ID:", initialChatRoomId);
+      setChatRoomId(initialChatRoomId);
+      localStorage.setItem("currentChatRoomId", initialChatRoomId.toString());
     } else {
-      // 詳細表示の場合はローカルストレージからチャットルームIDを復元
-      const storedChatRoomId = localStorage.getItem("currentChatRoomId");
-      if (storedChatRoomId) {
-        console.log(
-          "[DEBUG] Restored chat room ID from storage:",
-          storedChatRoomId
-        );
-        setChatRoomId(parseInt(storedChatRoomId, 10));
+      const path = window.location.pathname;
+      if (path === "/consultation/new") {
+        console.log("[DEBUG] New consultation page, no initial chat room ID");
+        localStorage.removeItem("currentChatRoomId");
+        setChatRoomId(null);
+        setMessages([]);
+      } else {
+        // 詳細表示の場合はローカルストレージからチャットルームIDを復元
+        const storedChatRoomId = localStorage.getItem("currentChatRoomId");
+        if (storedChatRoomId) {
+          console.log(
+            "[DEBUG] Restored chat room ID from storage:",
+            storedChatRoomId
+          );
+          setChatRoomId(parseInt(storedChatRoomId, 10));
+        }
       }
     }
-  }, []); // 空の依存配列でマウント時のみ実行
-
-  // チャットルームIDが変更されたらローカルストレージに保存
-  useEffect(() => {
-    if (chatRoomId) {
-      console.log("[DEBUG] Saving chat room ID to storage:", chatRoomId);
-      localStorage.setItem("currentChatRoomId", chatRoomId.toString());
-    }
-  }, [chatRoomId]);
+  }, [initialChatRoomId]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
