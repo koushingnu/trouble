@@ -14,7 +14,7 @@ export default function UserList() {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/proxy/users");
+      const response = await fetch("/api/users");
       if (!response.ok) {
         throw new Error("Failed to fetch users");
       }
@@ -60,7 +60,7 @@ export default function UserList() {
 
   const handleCSVDownload = async () => {
     try {
-      const response = await fetch("/api/proxy/admin/users/csv");
+      const response = await fetch("/api/users/csv");
       if (!response.ok) {
         throw new Error("CSVのダウンロードに失敗しました");
       }
@@ -126,13 +126,13 @@ export default function UserList() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="overflow-x-auto">
-      <AdminTable
-        title="ユーザー一覧"
-        isLoading={isLoading}
-        onRefresh={fetchUsers}
-        columns={columns}
-        data={users}
-        emptyMessage="ユーザーが登録されていません"
+        <AdminTable
+          title="ユーザー一覧"
+          isLoading={isLoading}
+          onRefresh={fetchUsers}
+          columns={columns}
+          data={users}
+          emptyMessage="ユーザーが登録されていません"
           actionButton={
             <button
               onClick={handleCSVDownload}
@@ -142,7 +142,7 @@ export default function UserList() {
               CSVダウンロード
             </button>
           }
-      />
+        />
       </div>
     </div>
   );
