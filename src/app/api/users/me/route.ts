@@ -10,10 +10,13 @@ export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   try {
+    console.log("\n=== User Details API Start ===");
     const token = await getToken({ req: request });
     if (!token) {
+      console.log("Unauthorized access attempt");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    console.log("User ID:", token.id);
 
     // ユーザー情報を取得
     const user = await prisma.user.findUnique({
@@ -23,40 +26,63 @@ export async function GET(request: NextRequest) {
       include: {
         chat_rooms: {
           include: {
-            messages: true,
+            messages: {
+              orderBy: {
+                created_at: "desc",
+              },
+              take: 1,
+            },
           },
         },
       },
     });
 
     if (!user) {
+      console.log("User not found");
       return NextResponse.json(
         { success: false, error: "User not found" },
         { status: 404 }
       );
     }
 
+    console.log("User found:", {
+      id: user.id,
+      email: user.email,
+      is_admin: user.is_admin,
+      created_at: user.created_at,
+      chat_rooms_count: user.chat_rooms.length,
+    });
+
     // チャットルームの統計を計算
     const chatRoomsCount = user.chat_rooms.length;
     const resolvedCount = user.chat_rooms.filter((room) =>
-      room.messages.some(
-        (msg) =>
-          msg.sender === "assistant" && msg.body.includes("解決いたしました")
-      )
+      room.messages[0]?.body?.includes("解決いたしました") || false
     ).length;
     const inProgressCount = chatRoomsCount - resolvedCount;
 
-    return NextResponse.json({
+    console.log("Chat statistics:", {
+      total: chatRoomsCount,
+      resolved: resolvedCount,
+      inProgress: inProgressCount,
+    });
+
+    const response = {
       success: true,
       data: {
+        id: user.id,
         email: user.email,
         is_admin: user.is_admin,
-        created_at: user.created_at,
+        created_at: user.created_at.toISOString(),
         chat_rooms_count: chatRoomsCount,
         resolved_count: resolvedCount,
         in_progress_count: inProgressCount,
       },
-    });
+    };
+
+    console.log("Response:", response);
+    console.log("=== User Details API End ===");
+
+    return NextResponse.json(response);
   } catch (error) {
     console.error("Error fetching user details:", error);
     return NextResponse.json(
