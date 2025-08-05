@@ -1,51 +1,28 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "standalone",
-  images: {
-    unoptimized: true,
-  },
-  env: {
-    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
-    DATABASE_URL: process.env.DATABASE_URL,
+  reactStrictMode: true,
+  experimental: {
+    serverActions: true,
   },
   async headers() {
     return [
       {
-        source: "/:path*",
+        source: "/api/:path*",
         headers: [
+          { key: "Access-Control-Allow-Credentials", value: "true" },
+          { key: "Access-Control-Allow-Origin", value: "*" },
           {
-            key: "X-DNS-Prefetch-Control",
-            value: "on",
+            key: "Access-Control-Allow-Methods",
+            value: "GET,DELETE,PATCH,POST,PUT",
           },
           {
-            key: "Strict-Transport-Security",
-            value: "max-age=31536000; includeSubDomains",
-          },
-          {
-            key: "X-Frame-Options",
-            value: "SAMEORIGIN",
-          },
-          {
-            key: "X-Content-Type-Options",
-            value: "nosniff",
-          },
-          {
-            key: "Referrer-Policy",
-            value: "strict-origin-when-cross-origin",
-          },
-          {
-            key: "X-XSS-Protection",
-            value: "1; mode=block",
+            key: "Access-Control-Allow-Headers",
+            value:
+              "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
           },
         ],
       },
     ];
-  },
-  experimental: {
-    serverActions: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
   },
 };
 
