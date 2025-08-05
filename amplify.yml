@@ -16,7 +16,14 @@ frontend:
     baseDirectory: .next
     files:
       - "**/*"
+      - "../public/**/*"
     discard-paths: no
+    secondary-artifacts:
+      server:
+        files:
+          - "server/**/*"
+          - "standalone/**/*"
+        discard-paths: no
   cache:
     paths:
       - node_modules/**/*
@@ -44,6 +51,12 @@ frontend:
           value: "no-cache"
         - key: "Expires"
           value: "0"
+        - key: "Access-Control-Allow-Origin"
+          value: "*"
+        - key: "Access-Control-Allow-Methods"
+          value: "GET,DELETE,PATCH,POST,PUT,OPTIONS"
+        - key: "Access-Control-Allow-Headers"
+          value: "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization"
   logging:
     level: info
     format: json
