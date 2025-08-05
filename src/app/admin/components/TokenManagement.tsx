@@ -15,7 +15,7 @@ export default function TokenManagement() {
   const fetchTokens = async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/proxy/tokens");
+      const response = await fetch("/api/tokens");
       if (!response.ok) {
         throw new Error("Failed to fetch tokens");
       }
@@ -41,7 +41,7 @@ export default function TokenManagement() {
 
     setIsGenerating(true);
     try {
-      const response = await fetch("/api/proxy/admin/tokens", {
+      const response = await fetch("/api/tokens", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

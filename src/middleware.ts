@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { withAuth } from "next-auth/middleware";
 
 const PUBLIC_PATHS = ["/auth", "/auth/error", "/register"];
+const ADMIN_PATHS = ["/admin"];
 
 export default withAuth(
   function middleware(req) {
@@ -27,6 +28,14 @@ export default withAuth(
     if (PUBLIC_PATHS.some((path) => pathname.startsWith(path))) {
       console.log("→ Public path, proceeding");
       return NextResponse.next();
+    }
+
+    // 管理者ページのチェック
+    if (ADMIN_PATHS.some((path) => pathname.startsWith(path))) {
+      if (!req.nextauth?.token?.is_admin) {
+        console.log("→ Non-admin user attempting to access admin page");
+        return NextResponse.redirect(new URL("/", req.url));
+      }
     }
 
     // ルートパスの場合
@@ -55,6 +64,7 @@ export default withAuth(
         console.log("\n=== Authorization Check ===");
         console.log("Path:", pathname);
         console.log("Token exists:", !!token);
+        console.log("Is admin:", token?.is_admin);
 
         // 静的ファイル、APIルート、パブリックパスは常に許可
         if (
@@ -66,6 +76,13 @@ export default withAuth(
         ) {
           console.log("→ Authorized: public resource");
           return true;
+        }
+
+        // 管理者ページの権限チェック
+        if (ADMIN_PATHS.some((path) => pathname.startsWith(path))) {
+          const isAdmin = token?.is_admin === true;
+          console.log("→ Admin page access:", isAdmin ? "allowed" : "denied");
+          return isAdmin;
         }
 
         const hasToken = !!token;

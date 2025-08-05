@@ -70,7 +70,7 @@ export default function ClientNavigation() {
                       >
                         ログアウト
                       </button>
-                      {session.user.isAdmin && (
+                      {session.user.is_admin && (
                         <Link
                           href="/admin"
                           className="text-sky-600 hover:text-sky-700 text-base font-medium ml-2 px-4 py-2 rounded-md hover:bg-sky-50 transition-colors"
@@ -123,7 +123,7 @@ export default function ClientNavigation() {
                   >
                     ログアウト
                   </Disclosure.Button>
-                  {session.user.isAdmin && (
+                  {session.user.is_admin && (
                     <Disclosure.Button
                       as={Link}
                       href="/admin"

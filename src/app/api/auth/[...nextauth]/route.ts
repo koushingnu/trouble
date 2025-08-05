@@ -82,8 +82,9 @@ const options: AuthOptions = {
       },
       async authorize(credentials) {
         try {
-          console.log("=== Auth Debug Start ===");
+          console.log("\n=== Auth Debug Start ===");
           console.log("Attempting login for email:", credentials?.email);
+          console.log("Provided password:", credentials?.password);
 
           if (!credentials?.email || !credentials?.password) {
             console.error("Missing credentials");
@@ -108,7 +109,23 @@ const options: AuthOptions = {
             },
           });
 
-          console.log("User lookup result:", user ? "Found" : "Not found");
+          console.log(
+            "User lookup result:",
+            user
+              ? {
+                  id: user.id,
+                  email: user.email,
+                  is_admin: user.is_admin,
+                  hashedPassword: user.password,
+                  token: user.token
+                    ? {
+                        id: user.token.id,
+                        status: user.token.status,
+                      }
+                    : null,
+                }
+              : "Not found"
+          );
 
           if (!user) {
             console.error("User not found:", credentials.email);
@@ -117,6 +134,8 @@ const options: AuthOptions = {
 
           const isValid = await compare(credentials.password, user.password);
           console.log("Password validation:", isValid ? "Success" : "Failed");
+          console.log("Stored hash:", user.password);
+          console.log("Input password:", credentials.password);
 
           if (!isValid) {
             console.error("Invalid password for user:", credentials.email);
@@ -131,6 +150,12 @@ const options: AuthOptions = {
           });
 
           console.log("Access log created successfully");
+          console.log("Returning user data:", {
+            id: String(user.id),
+            email: user.email,
+            name: user.email,
+            is_admin: Boolean(user.is_admin),
+          });
           console.log("=== Auth Debug End ===");
 
           return {

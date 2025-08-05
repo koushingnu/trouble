@@ -22,6 +22,8 @@ function LoginForm() {
     setError("");
 
     try {
+      console.log("Attempting login with:", { email, password });
+
       const result = await signIn("credentials", {
         email,
         password,
@@ -29,13 +31,17 @@ function LoginForm() {
         callbackUrl,
       });
 
+      console.log("Login result:", result);
+
       if (result?.error) {
+        console.error("Login error:", result.error);
         setError("メールアドレスまたはパスワードが正しくありません");
         setLoading(false);
         return;
       }
 
       if (result?.ok) {
+        console.log("Login successful, redirecting to:", callbackUrl);
         router.push(callbackUrl);
         router.refresh();
       }
