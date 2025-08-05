@@ -11,46 +11,6 @@ declare global {
 const prisma = global.prisma || new PrismaClient();
 if (process.env.NODE_ENV !== "production") global.prisma = prisma;
 
-// カスタムユーザー型
-type AuthUser = {
-  id: number;
-  email: string;
-  token_id: number | null;
-  token_value: string | null;
-  status: string | null;
-  created_at: string;
-  is_admin: boolean;
-  name?: string;
-};
-
-// NextAuthの型拡張
-declare module "next-auth" {
-  interface User {
-    id: string;
-    email: string;
-    name: string;
-    is_admin: boolean;
-  }
-
-  interface Session {
-    user: {
-      id: string;
-      email: string;
-      name: string;
-      is_admin: boolean;
-    };
-  }
-}
-
-declare module "next-auth/jwt" {
-  interface JWT {
-    id: string;
-    email: string;
-    name: string;
-    is_admin: boolean;
-  }
-}
-
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
@@ -104,9 +64,6 @@ const options: AuthOptions = {
             where: {
               email: credentials.email,
             },
-            include: {
-              token: true,
-            },
           });
 
           console.log(
@@ -117,12 +74,6 @@ const options: AuthOptions = {
                   email: user.email,
                   is_admin: user.is_admin,
                   hashedPassword: user.password,
-                  token: user.token
-                    ? {
-                        id: user.token.id,
-                        status: user.token.status,
-                      }
-                    : null,
                 }
               : "Not found"
           );
@@ -150,19 +101,13 @@ const options: AuthOptions = {
           });
 
           console.log("Access log created successfully");
-          console.log("Returning user data:", {
-            id: String(user.id),
-            email: user.email,
-            name: user.email,
-            is_admin: Boolean(user.is_admin),
-          });
           console.log("=== Auth Debug End ===");
 
           return {
             id: String(user.id),
             email: user.email,
             name: user.email,
-            is_admin: Boolean(user.is_admin),
+            is_admin: user.is_admin,
           };
         } catch (error) {
           console.error("Auth error:", error);
@@ -200,7 +145,7 @@ const options: AuthOptions = {
       return session;
     },
   },
-  debug: true, // デバッグモードを有効化
+  debug: true,
 };
 
 const handler = NextAuth(options);
