@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getToken } from "next-auth/jwt";
+import { NextRequest } from "next/server";
 
 const prisma = new PrismaClient();
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     console.log("\n=== DB Status Check Start ===");
 
@@ -19,7 +20,10 @@ export async function GET(request: Request) {
     // 2. 環境変数確認
     console.log("Environment variables:");
     console.log("NODE_ENV:", process.env.NODE_ENV);
-    console.log("DATABASE_URL:", process.env.DATABASE_URL?.replace(/:[^:@]+@/, ':***@'));
+    console.log(
+      "DATABASE_URL:",
+      process.env.DATABASE_URL?.replace(/:[^:@]+@/, ":***@")
+    );
     console.log("NEXTAUTH_URL:", process.env.NEXTAUTH_URL);
 
     // 3. 認証状態確認
@@ -54,7 +58,7 @@ export async function GET(request: Request) {
       },
     });
 
-    const chatRoomDetails = chatRooms.map(room => ({
+    const chatRoomDetails = chatRooms.map((room) => ({
       id: room.id,
       user_id: room.user_id,
       created_at: room.created_at,
@@ -84,10 +88,14 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error("Error checking DB status:", error);
-    return NextResponse.json({
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error occurred",
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error:
+          error instanceof Error ? error.message : "Unknown error occurred",
+      },
+      { status: 500 }
+    );
   } finally {
     await prisma.$disconnect();
   }
