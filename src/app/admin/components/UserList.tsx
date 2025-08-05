@@ -40,6 +40,8 @@ export default function UserList() {
         return "bg-yellow-100 text-yellow-800";
       case "expired":
         return "bg-red-100 text-red-800";
+      case "unused":
+        return "bg-gray-100 text-gray-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -53,8 +55,10 @@ export default function UserList() {
         return "無効";
       case "expired":
         return "期限切れ";
+      case "unused":
+        return "未使用";
       default:
-        return "未設定";
+        return "未割り当て";
     }
   };
 
@@ -88,25 +92,25 @@ export default function UserList() {
       width: 300,
     },
     {
-      key: "status",
+      key: "token",
       label: "ステータス",
       width: 120,
       align: "center",
-      format: (value) => (
+      format: (token) => (
         <span
           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-            value as string | null
+            token?.status || null
           )}`}
         >
-          {getStatusLabel(value as string | null)}
+          {getStatusLabel(token?.status || null)}
         </span>
       ),
     },
     {
-      key: "token_value",
+      key: "token",
       label: "認証キー",
       width: 300,
-      format: (value) => (value as string | null) || "未割り当て",
+      format: (token) => token?.token_value || "未割り当て",
     },
     {
       key: "created_at",

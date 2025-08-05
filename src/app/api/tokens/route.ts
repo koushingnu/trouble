@@ -72,9 +72,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 指定された数のトークンを生成
-    const tokens = await Promise.all(
-      Array.from({ length: count }, async () => {
+    // トランザクションでトークンを一括生成
+    const tokens = await prisma.$transaction(
+      Array.from({ length: count }, () => {
         return prisma.token.create({
           data: {
             token_value: crypto.randomUUID(),
