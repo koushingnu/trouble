@@ -8,6 +8,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum TokenStatus {
+  UNUSED    // 未使用（新規生成時）
+  ACTIVE    // アクティブ（ユーザーに紐付けられ、使用中）
+  REVOKED   // 無効化（管理者による手動無効化）
+}
+
 model User {
   id              Int         @id @default(autoincrement())
   email           String      @unique
@@ -22,13 +28,13 @@ model User {
 }
 
 model Token {
-  id            Int      @id @default(autoincrement())
-  status        String   @db.VarChar(50)
-  created_at    DateTime @default(now())
+  id            Int         @id @default(autoincrement())
+  status        TokenStatus @default(UNUSED)
+  created_at    DateTime    @default(now())
   assigned_to   Int?
-  token_value   String   @unique
-  assigned_user User?    @relation("AssignedTokens", fields: [assigned_to], references: [id])
-  user_token    User?    @relation("UserToken")
+  token_value   String      @unique
+  assigned_user User?       @relation("AssignedTokens", fields: [assigned_to], references: [id])
+  user_token    User?       @relation("UserToken")
 
   @@index([assigned_to], map: "Token_assigned_to_fkey")
 }

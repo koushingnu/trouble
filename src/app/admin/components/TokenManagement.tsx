@@ -19,14 +19,14 @@ export default function TokenManagement() {
         cache: "no-store",
         headers: {
           "Cache-Control": "no-cache",
-          "Pragma": "no-cache"
-        }
+          Pragma: "no-cache",
+        },
       });
       if (!response.ok) {
         throw new Error("Failed to fetch tokens");
       }
       const data = await response.json();
-      console.log("Fetched tokens:", data);  // デバッグログを追加
+      console.log("Fetched tokens:", data); // デバッグログを追加
       setTokens(data.data || []);
     } catch (error) {
       console.error("Error fetching tokens:", error);
@@ -42,13 +42,11 @@ export default function TokenManagement() {
 
   const getStatusColor = (status: Token["status"]) => {
     switch (status) {
-      case "active":
+      case "ACTIVE":
         return "bg-green-100 text-green-800";
-      case "inactive":
-        return "bg-yellow-100 text-yellow-800";
-      case "expired":
+      case "REVOKED":
         return "bg-red-100 text-red-800";
-      case "unused":
+      case "UNUSED":
         return "bg-gray-100 text-gray-800";
       default:
         return "bg-gray-100 text-gray-800";
@@ -57,13 +55,11 @@ export default function TokenManagement() {
 
   const getStatusLabel = (status: Token["status"]) => {
     switch (status) {
-      case "active":
-        return "有効";
-      case "inactive":
+      case "ACTIVE":
+        return "使用中";
+      case "REVOKED":
         return "無効";
-      case "expired":
-        return "期限切れ";
-      case "unused":
+      case "UNUSED":
         return "未使用";
       default:
         return "未設定";
@@ -83,7 +79,7 @@ export default function TokenManagement() {
         headers: {
           "Content-Type": "application/json",
           "Cache-Control": "no-cache",
-          "Pragma": "no-cache"
+          Pragma: "no-cache",
         },
         body: JSON.stringify({ count: generatingCount }),
       });
@@ -94,10 +90,10 @@ export default function TokenManagement() {
       }
 
       const result = await response.json();
-      console.log("Token generation result:", result);  // デバッグログを追加
+      console.log("Token generation result:", result); // デバッグログを追加
 
       toast.success(`${generatingCount}個の認証キーを生成しました`);
-      await fetchTokens();  // 即座に一覧を更新
+      await fetchTokens(); // 即座に一覧を更新
     } catch (error) {
       console.error("Error generating tokens:", error);
       toast.error(

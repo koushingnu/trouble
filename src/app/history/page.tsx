@@ -77,9 +77,10 @@ export default function HistoryPage() {
                 lastMessage && lastMessage.includes("解決いたしました");
 
               return (
-                <div
+                <Link
+                  href={`/consultation/${chatRoom.id}`}
                   key={chatRoom.id}
-                  className="p-6 hover:bg-gray-50 transition-colors"
+                  className="block p-6 hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0 pr-4">
@@ -119,15 +120,12 @@ export default function HistoryPage() {
                       </div>
                     </div>
                     <div className="ml-4 shrink-0">
-                      <Link
-                        href={`/consultation/${chatRoom.id}`}
-                        className="inline-flex items-center px-4 py-2 border border-sky-600 text-sm font-medium rounded-md text-sky-600 bg-white hover:bg-sky-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors whitespace-nowrap"
-                      >
+                      <button className="inline-flex items-center px-4 py-2 border border-sky-600 text-sm font-medium rounded-md text-sky-600 bg-white hover:bg-sky-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors whitespace-nowrap">
                         チャットを表示
-                      </Link>
+                      </button>
                     </div>
                   </div>
-                </div>
+                </Link>
               );
             })
           )}

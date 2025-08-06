@@ -24,7 +24,7 @@ export default function ConsultationDetailPage() {
         </p>
       </div>
 
-      <TroubleChat />
+      <TroubleChat initialChatRoomId={parseInt(chatRoomId as string, 10)} />
     </div>
   );
 }

@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
       tokenRecord = await prisma.token.findFirst({
         where: {
           token_value: token,
-          status: "unused",
+          status: "UNUSED",
         },
       });
 
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
         await tx.token.update({
           where: { id: tokenRecord.id },
           data: {
-            status: "used",
+            status: "ACTIVE",
             assigned_to: newUser.id,
           },
         });

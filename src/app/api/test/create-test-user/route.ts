@@ -24,7 +24,7 @@ export async function GET() {
     const token = await prisma.token.create({
       data: {
         token_value: uuidv4(),
-        status: "active",
+        status: "ACTIVE",
       },
     });
 

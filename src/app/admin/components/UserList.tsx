@@ -34,13 +34,11 @@ export default function UserList() {
 
   const getStatusColor = (status: string | null) => {
     switch (status) {
-      case "active":
+      case "ACTIVE":
         return "bg-green-100 text-green-800";
-      case "inactive":
-        return "bg-yellow-100 text-yellow-800";
-      case "expired":
+      case "REVOKED":
         return "bg-red-100 text-red-800";
-      case "unused":
+      case "UNUSED":
         return "bg-gray-100 text-gray-800";
       default:
         return "bg-gray-100 text-gray-800";
@@ -49,13 +47,11 @@ export default function UserList() {
 
   const getStatusLabel = (status: string | null) => {
     switch (status) {
-      case "active":
-        return "有効";
-      case "inactive":
+      case "ACTIVE":
+        return "使用中";
+      case "REVOKED":
         return "無効";
-      case "expired":
-        return "期限切れ";
-      case "unused":
+      case "UNUSED":
         return "未使用";
       default:
         return "未設定";

@@ -35,11 +35,15 @@ export async function GET(request: NextRequest) {
     });
 
     console.log("Fetched tokens count:", tokens.length);
-    console.log("Token status distribution:", 
-      tokens.reduce((acc, token) => {
-        acc[token.status] = (acc[token.status] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>)
+    console.log(
+      "Token status distribution:",
+      tokens.reduce(
+        (acc, token) => {
+          acc[token.status] = (acc[token.status] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>
+      )
     );
 
     // レスポンスデータの整形
@@ -104,7 +108,7 @@ export async function POST(request: NextRequest) {
         return prisma.token.create({
           data: {
             token_value: crypto.randomUUID(),
-            status: "unused",
+            status: "UNUSED",
           },
         });
       })
