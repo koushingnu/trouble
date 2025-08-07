@@ -1,11 +1,12 @@
 version: 1.0
+runtime: nodejs18
 build:
   commands:
     pre-build:
       - npm ci
     build:
       - npm run build
-  runtime-settings:
-    runtime: nodejs18
-    command: npm start
+run:
+  command: npm start
+  network:
     port: 3000
