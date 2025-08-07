@@ -3,10 +3,10 @@ import { Murecho } from "next/font/google";
 import "./globals.css";
 import ClientNavigation from "../components/ClientNavigation";
 import { Providers } from "./providers";
-import { loadEnvironmentVariables } from '../utils/env';
+import { loadEnvironmentVariables } from "../utils/env";
 
 // 環境変数を読み込む
-if (process.env.NODE_ENV === 'production') {
+if (process.env.NODE_ENV === "production") {
   loadEnvironmentVariables().catch(console.error);
 }
 
