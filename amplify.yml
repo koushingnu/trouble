@@ -12,6 +12,7 @@ backend:
       - subnet-0b1d4677a446383e0
       - subnet-08a93f6ea3dfaf3f6
       - subnet-052721e4968659060
+    assignPublicIp: true
 
 frontend:
   phases:
