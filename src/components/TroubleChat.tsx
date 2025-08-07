@@ -381,7 +381,7 @@ export default function TroubleChat({
                               className={`inline-block rounded-2xl px-6 py-4 shadow-sm max-w-[80%] ${
                                 message.sender === "user"
                                   ? "bg-sky-600 text-white rounded-tr-none float-right"
-                                  : "bg-white border border-gray-100 rounded-tl-none"
+                                  : "bg-white border border-gray-100 rounded-tl-none text-gray-900"
                               }`}
                             >
                               <p
