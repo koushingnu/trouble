@@ -2,14 +2,16 @@ version: 1.0
 runtime: nodejs18
 build:
   commands:
-    - npm ci
-    - npx prisma generate
-    - npx prisma migrate deploy
-    - npm run build
+    pre-build:
+      - npm ci
+    build:
+      - npx prisma generate
+      - npx prisma migrate deploy
+      - npm run build
 run:
   command: npm start
   network:
     port: 3000
   env:
     - name: NODE_ENV
-      value: "production"
+      value: production
