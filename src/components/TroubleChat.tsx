@@ -253,7 +253,7 @@ export default function TroubleChat({
         }
       `}</style>
       <div
-        className={`bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 transition-all duration-300 ease-in-out ${
+        className={`bg-white dark:bg-gray-900 rounded-xl shadow-lg overflow-hidden border border-gray-100 dark:border-gray-800 transition-all duration-300 ease-in-out ${
           isFullScreen
             ? "fixed inset-0 z-50 rounded-none flex flex-col"
             : "relative"
@@ -291,7 +291,7 @@ export default function TroubleChat({
 
         {/* Message Display Area */}
         <div
-          className={`overflow-y-auto px-4 sm:px-6 py-6 bg-gray-50 ${
+          className={`overflow-y-auto px-4 sm:px-6 py-6 bg-gray-50 dark:bg-gray-900 ${
             isFullScreen ? "flex-1" : "h-[500px]"
           }`}
         >
@@ -381,7 +381,7 @@ export default function TroubleChat({
                               className={`inline-block rounded-2xl px-6 py-4 shadow-sm max-w-[80%] ${
                                 message.sender === "user"
                                   ? "bg-sky-600 text-white rounded-tr-none float-right"
-                                  : "bg-white border border-gray-100 rounded-tl-none text-gray-900"
+                                  : "bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-tl-none text-gray-900 dark:text-gray-100"
                               }`}
                             >
                               <p
@@ -467,9 +467,9 @@ export default function TroubleChat({
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               placeholder="メッセージを入力..."
-              className={`flex-1 rounded-xl border border-gray-200 px-4 ${
+              className={`flex-1 rounded-xl border border-gray-200 dark:border-gray-700 px-4 ${
                 isFullScreen ? "py-3.5 text-base" : "py-2 text-[15px]"
-              } focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white shadow-sm`}
+              } focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm`}
               disabled={isLoading}
             />
             <button

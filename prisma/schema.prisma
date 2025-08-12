@@ -1,17 +1,11 @@
 generator client {
-  provider        = "prisma-client-js"
-  binaryTargets   = ["native", "rhel-openssl-1.0.x"]
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-1.0.x"]
 }
 
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
-}
-
-enum TokenStatus {
-  UNUSED    // 未使用（新規生成時）
-  ACTIVE    // アクティブ（ユーザーに紐付けられ、使用中）
-  REVOKED   // 無効化（管理者による手動無効化）
 }
 
 model User {
@@ -68,4 +62,10 @@ model Message {
   chat_room    ChatRoom @relation(fields: [chat_room_id], references: [id])
 
   @@index([chat_room_id], map: "Message_chat_room_id_fkey")
+}
+
+enum TokenStatus {
+  UNUSED
+  ACTIVE
+  REVOKED
 }
