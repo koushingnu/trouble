@@ -5,19 +5,10 @@ build:
     pre-build:
       - echo "Node version:" && node -v
       - echo "NPM version:" && npm -v
-      - echo "Installing dependencies..."
       - npm ci
-      - echo "Installing prisma..."
-      - npm install prisma
-      - npm install @prisma/client
     build:
-      - echo "Directory contents:" && ls -la
-      - echo "Generating Prisma Client..."
-      - npx prisma --version
-      - PRISMA_DEBUG=* npx prisma generate
-      - echo "Building Next.js application..."
-      - NODE_ENV=production npm run build
-      - echo "Build completed."
+      - echo "Testing simple build..."
+      - npm run build
 run:
   command: npm start
   network:
