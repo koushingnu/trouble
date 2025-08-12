@@ -13,3 +13,9 @@ run:
   env:
     - name: NODE_ENV
       value: "production"
+    - name: DATABASE_URL
+      value: "mysql://admin:password@database-1.cjo806iq4azh.ap-northeast-1.rds.amazonaws.com:3306/trouble"
+    - name: NEXTAUTH_URL
+      value: "https://${APPRUNNER_SERVICE_URL}"
+    - name: NEXTAUTH_SECRET
+      value: "development_secret_key_for_nextauth_please_change_in_production"
