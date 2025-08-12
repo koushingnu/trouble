@@ -3,13 +3,20 @@ runtime: nodejs18
 build:
   commands:
     pre-build:
+      - echo "Node version:" && node -v
+      - echo "NPM version:" && npm -v
+      - echo "Installing dependencies..."
       - npm ci
-      - npm install prisma --save-dev
+      - echo "Installing prisma..."
+      - npm install prisma
+      - npm install @prisma/client
     build:
+      - echo "Directory contents:" && ls -la
       - echo "Generating Prisma Client..."
-      - npx prisma generate
+      - npx prisma --version
+      - PRISMA_DEBUG=* npx prisma generate
       - echo "Building Next.js application..."
-      - npm run build
+      - NODE_ENV=production npm run build
       - echo "Build completed."
 run:
   command: npm start
