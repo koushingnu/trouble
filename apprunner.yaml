@@ -5,6 +5,7 @@ build:
     pre-build:
       - npm ci
     build:
+      - npx prisma generate
       - npm run build
 run:
   command: npm start
