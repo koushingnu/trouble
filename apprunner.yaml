@@ -4,9 +4,13 @@ build:
   commands:
     pre-build:
       - npm ci
+      - npm install prisma --save-dev
     build:
+      - echo "Generating Prisma Client..."
       - npx prisma generate
+      - echo "Building Next.js application..."
       - npm run build
+      - echo "Build completed."
 run:
   command: npm start
   network:
