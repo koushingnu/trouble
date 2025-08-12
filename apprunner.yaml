@@ -3,12 +3,20 @@ runtime: nodejs18
 build:
   commands:
     pre-build:
+      - echo "=== Environment Info ==="
       - echo "Node version:" && node -v
       - echo "NPM version:" && npm -v
-      - npm ci
+      - echo "Working directory:" && pwd
+      - echo "Directory contents:" && ls -la
+      - echo "=== Installing Dependencies ==="
+      - npm ci --verbose
     build:
-      - echo "Testing simple build..."
-      - npm run build
+      - echo "=== Build Process Start ==="
+      - echo "Checking next.config.js exists:" && ls -la next.config.js
+      - echo "Checking package.json scripts:" && cat package.json | grep scripts -A 5
+      - echo "=== Starting Build ==="
+      - npm run build --verbose
+      - echo "=== Build Process End ==="
 run:
   command: npm start
   network:
