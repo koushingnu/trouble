@@ -9,24 +9,21 @@ build:
       - echo "Working directory:" && pwd
       - echo "Directory contents:" && ls -la
       - echo "=== Installing Dependencies ==="
-      - npm ci --verbose
+      - npm install
     build:
       - echo "=== Build Process Start ==="
-      - echo "Checking next.config.js exists:" && ls -la next.config.js
-      - echo "Checking package.json scripts:" && cat package.json | grep scripts -A 5
-      - echo "=== Starting Build ==="
-      - npm run build --verbose
+      - NODE_ENV=development npm run build
       - echo "=== Build Process End ==="
 run:
-  command: npm start
+  command: npm run dev
   network:
     port: 3000
   env:
     - name: NODE_ENV
-      value: "production"
+      value: "development"
     - name: DATABASE_URL
       value: "mysql://admin:password@database-1.cjo806iq4azh.ap-northeast-1.rds.amazonaws.com:3306/trouble"
     - name: NEXTAUTH_URL
       value: "https://${APPRUNNER_SERVICE_URL}"
     - name: NEXTAUTH_SECRET
-      value: "development_secret_key_for_nextauth_please_change_in_production"
+      value: "development_secret_key_for_nextauth"
