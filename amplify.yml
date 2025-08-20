@@ -1,71 +1,27 @@
 version: 1
-frontend:
-  phases:
-    preBuild:
-      commands:
-        - echo "DATABASE_URL=$DATABASE_URL" > .env
-        - echo "NEXTAUTH_URL=$NEXTAUTH_URL" >> .env
-        - echo "NEXTAUTH_SECRET=$NEXTAUTH_SECRET" >> .env
-        - echo "OPENAI_API_KEY=$OPENAI_API_KEY" >> .env
-        - npm ci
-    build:
-      commands:
-        - npx prisma generate
-        - npx prisma migrate deploy
-        - npm run build
-  artifacts:
-    baseDirectory: .next
-    files:
-      - "**/*"
-      - "../public/**/*"
-    discard-paths: no
-    secondary-artifacts:
-      server:
+applications:
+  - frontend:
+      phases:
+        preBuild:
+          commands:
+            - |
+              if [ "${AWS_BRANCH}" = "production" ]; then
+                echo "DATABASE_URL=\"${DATABASE_URL}\"" > .env
+                echo "NEXTAUTH_URL=\"https://${AWS_BRANCH}.${AWS_APP_ID}.amplifyapp.com\"" >> .env
+                echo "NEXTAUTH_SECRET=\"${NEXTAUTH_SECRET}\"" >> .env
+                echo "OPENAI_API_KEY=\"${OPENAI_API_KEY}\"" >> .env
+              fi
+            - npm ci
+            - npx prisma generate
+        build:
+          commands:
+            - npm run build
+      artifacts:
+        baseDirectory: .next
         files:
-          - "server/**/*"
-          - "standalone/**/*"
-        discard-paths: no
-  cache:
-    paths:
-      - node_modules/**/*
-      - .next/cache/**/*
-  customHeaders:
-    - pattern: "**/*"
-      headers:
-        - key: "Strict-Transport-Security"
-          value: "max-age=31536000; includeSubDomains"
-        - key: "X-Frame-Options"
-          value: "DENY"
-        - key: "X-Content-Type-Options"
-          value: "nosniff"
-        - key: "X-XSS-Protection"
-          value: "1; mode=block"
-        - key: "Referrer-Policy"
-          value: "strict-origin-when-cross-origin"
-        - key: "Content-Security-Policy"
-          value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.amplifyapp.com https://*.amazonaws.com;"
-    - pattern: "/api/*"
-      headers:
-        - key: "Cache-Control"
-          value: "no-store, no-cache, must-revalidate, proxy-revalidate"
-        - key: "Pragma"
-          value: "no-cache"
-        - key: "Expires"
-          value: "0"
-        - key: "Access-Control-Allow-Origin"
-          value: "*"
-        - key: "Access-Control-Allow-Methods"
-          value: "GET,DELETE,PATCH,POST,PUT,OPTIONS"
-        - key: "Access-Control-Allow-Headers"
-          value: "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization"
-  logging:
-    level: info
-    format: json
-    storage:
-      cloudWatch:
-        region: ap-northeast-1
-        logGroup: /aws/amplify/trouble-production
-        logStreams:
-          - name: application-logs
-          - name: access-logs
-          - name: error-logs
+          - "**/*"
+      cache:
+        paths:
+          - node_modules/**/*
+          - .next/cache/**/*
+      appRoot: .
