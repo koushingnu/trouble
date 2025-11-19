@@ -32,7 +32,7 @@ if (!process.env.DATABASE_URL) {
 }
 
 // NextAuth設定
-const options: AuthOptions = {
+export const authOptions: AuthOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -148,5 +148,5 @@ const options: AuthOptions = {
   debug: true,
 };
 
-const handler = NextAuth(options);
+const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };

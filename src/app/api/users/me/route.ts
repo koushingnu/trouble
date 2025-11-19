@@ -55,15 +55,21 @@ export async function GET(request: NextRequest) {
 
     // チャットルームの統計を計算
     const chatRoomsCount = user.chat_rooms.length;
-    const resolvedCount = user.chat_rooms.filter((room) =>
-      room.messages[0]?.body?.includes("解決いたしました") || false
+    const resolvedCount = user.chat_rooms.filter(
+      (room) => room.status === "RESOLVED"
     ).length;
-    const inProgressCount = chatRoomsCount - resolvedCount;
+    const inProgressCount = user.chat_rooms.filter(
+      (room) => room.status === "IN_PROGRESS"
+    ).length;
+    const escalatedCount = user.chat_rooms.filter(
+      (room) => room.status === "ESCALATED"
+    ).length;
 
     console.log("Chat statistics:", {
       total: chatRoomsCount,
       resolved: resolvedCount,
       inProgress: inProgressCount,
+      escalated: escalatedCount,
     });
 
     const response = {
@@ -76,6 +82,7 @@ export async function GET(request: NextRequest) {
         chat_rooms_count: chatRoomsCount,
         resolved_count: resolvedCount,
         in_progress_count: inProgressCount,
+        escalated_count: escalatedCount,
       },
     };
 

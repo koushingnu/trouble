@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
     const chatRoom = await prisma.chatRoom.create({
       data: {
         user_id: userId,
+        status: "IN_PROGRESS", // 明示的に進行中ステータスを設定
       },
     });
 
@@ -105,6 +106,8 @@ export async function GET(request: NextRequest) {
         return {
           id: room.id,
           created_at: room.created_at,
+          status: room.status,
+          resolved_at: room.resolved_at,
           last_message: latestMessage?.body || null,
           last_message_at: latestMessage?.created_at || null,
         };
@@ -183,7 +186,10 @@ export async function DELETE(request: NextRequest) {
       });
 
       if (!chatRoom) {
-        console.log("Chat room not found or unauthorized for deletion:", chatRoomId);
+        console.log(
+          "Chat room not found or unauthorized for deletion:",
+          chatRoomId
+        );
         throw new Error("Chat room not found or unauthorized");
       }
 

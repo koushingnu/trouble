@@ -7,6 +7,7 @@ import {
   PaperAirplaneIcon,
   ArrowsPointingOutIcon,
   ArrowsPointingInIcon,
+  CheckCircleIcon,
 } from "@heroicons/react/24/outline";
 import { Message } from "@/types/chat";
 
@@ -43,6 +44,18 @@ export default function TroubleChat({
   );
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
+  const [showResolveConfirm, setShowResolveConfirm] = useState(false);
+  const [chatStatus, setChatStatus] = useState<
+    "IN_PROGRESS" | "RESOLVED" | "ESCALATED"
+  >("IN_PROGRESS");
+
+  // チャットルームIDがない場合は必ず進行中状態にする
+  useEffect(() => {
+    if (!chatRoomId) {
+      setChatStatus("IN_PROGRESS");
+    }
+  }, [chatRoomId]);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Initialize chatRoomId based on prop
@@ -91,32 +104,46 @@ export default function TroubleChat({
 
       try {
         console.log("[DEBUG] Loading chat history for room:", chatRoomId);
-        const response = await fetch(
-          `/api/chat/history?chatRoomId=${chatRoomId}`,
-          {
+        const [historyResponse, roomResponse] = await Promise.all([
+          fetch(`/api/chat/history?chatRoomId=${chatRoomId}`, {
             headers: {
               "Cache-Control": "no-cache",
               Pragma: "no-cache",
             },
-          }
-        );
+          }),
+          fetch(`/api/chat/rooms/${chatRoomId}`, {
+            headers: {
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
+            },
+          }),
+        ]);
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("[DEBUG] Chat history fetch failed:", errorText);
-          throw new Error(`Failed to load chat history: ${errorText}`);
+        if (!historyResponse.ok || !roomResponse.ok) {
+          const errorText = await historyResponse.text();
+          console.error("[DEBUG] Chat history/room fetch failed:", errorText);
+          throw new Error(`Failed to load chat data: ${errorText}`);
         }
 
-        const data = await response.json();
-        console.log("[DEBUG] Chat history loaded:", {
-          success: data.success,
-          messageCount: data.data?.messages?.length,
+        const [historyData, roomData] = await Promise.all([
+          historyResponse.json(),
+          roomResponse.json(),
+        ]);
+
+        console.log("[DEBUG] Chat data loaded:", {
+          historySuccess: historyData.success,
+          messageCount: historyData.data?.messages?.length,
+          roomStatus: roomData.data?.status,
         });
 
-        if (data.success && data.data?.messages) {
-          setMessages(data.data.messages);
+        if (historyData.success && historyData.data?.messages) {
+          setMessages(historyData.data.messages);
         } else {
           setMessages([]); // Clear messages if no history found
+        }
+
+        if (roomData.success && roomData.data) {
+          setChatStatus(roomData.data.status);
         }
       } catch (error) {
         console.error("[DEBUG] Error loading chat history:", error);
@@ -216,8 +243,77 @@ export default function TroubleChat({
     }
   };
 
+  const handleResolve = async () => {
+    if (!chatRoomId) return;
+
+    try {
+      const response = await fetch(`/api/chat/rooms/${chatRoomId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: "RESOLVED",
+          resolved_at: new Date().toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("[DEBUG] API error response:", errorData);
+        throw new Error(errorData.error || "Failed to update chat status");
+      }
+
+      const data = await response.json();
+      console.log("[DEBUG] API success response:", data);
+
+      setChatStatus("RESOLVED");
+      setShowResolveConfirm(false);
+
+      // 解決メッセージを追加
+      const resolvedMessage: Message = {
+        id: Date.now(),
+        chat_room_id: chatRoomId,
+        sender: "assistant",
+        body: "ご相談ありがとうございました。問題が解決したとのことで安心いたしました。また何かございましたら、お気軽にご相談ください。",
+        created_at: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, resolvedMessage]);
+    } catch (error) {
+      console.error("Error resolving chat:", error);
+      alert("チャットの状態を更新できませんでした。");
+    }
+  };
+
   return (
     <>
+      {showResolveConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">
+              相談を解決済みにしますか？
+            </h3>
+            <p className="text-gray-600 mb-6">
+              解決済みにすると、このチャットは完了としてマークされます。
+              後でまた相談したい場合は、新しいチャットを開始できます。
+            </p>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => setShowResolveConfirm(false)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleResolve}
+                className="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors"
+              >
+                解決済みにする
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <style jsx>{`
         @keyframes pulse {
           0%,
@@ -269,18 +365,34 @@ export default function TroubleChat({
               <h2 className="text-xl font-semibold text-white">
                 トラブル相談チャット
               </h2>
-            </div>
-            <button
-              onClick={() => setIsFullScreen(!isFullScreen)}
-              className="text-white hover:text-white/80 transition-colors p-2 hover:bg-sky-500/50 rounded-lg"
-              aria-label={isFullScreen ? "全画面解除" : "全画面表示"}
-            >
-              {isFullScreen ? (
-                <ArrowsPointingInIcon className="h-5 w-5" />
-              ) : (
-                <ArrowsPointingOutIcon className="h-5 w-5" />
+              {chatStatus === "RESOLVED" && (
+                <span className="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                  解決済み
+                </span>
               )}
-            </button>
+            </div>
+            <div className="flex items-center space-x-2">
+              {chatStatus === "IN_PROGRESS" && messages.length > 0 && (
+                <button
+                  onClick={() => setShowResolveConfirm(true)}
+                  className="text-white hover:text-white/80 transition-colors px-4 py-2 hover:bg-sky-500/50 rounded-lg flex items-center space-x-2"
+                >
+                  <CheckCircleIcon className="h-5 w-5" />
+                  <span>解決済みにする</span>
+                </button>
+              )}
+              <button
+                onClick={() => setIsFullScreen(!isFullScreen)}
+                className="text-white hover:text-white/80 transition-colors p-2 hover:bg-sky-500/50 rounded-lg"
+                aria-label={isFullScreen ? "全画面解除" : "全画面表示"}
+              >
+                {isFullScreen ? (
+                  <ArrowsPointingInIcon className="h-5 w-5" />
+                ) : (
+                  <ArrowsPointingOutIcon className="h-5 w-5" />
+                )}
+              </button>
+            </div>
           </div>
           <p className="mt-1 text-sm text-white/90">
             {messages.length === 0
@@ -466,15 +578,25 @@ export default function TroubleChat({
               type="text"
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              placeholder="メッセージを入力..."
+              placeholder={
+                chatStatus === "RESOLVED"
+                  ? "この相談は解決済みです"
+                  : "メッセージを入力..."
+              }
               className={`flex-1 rounded-xl border border-gray-200 dark:border-gray-700 px-4 ${
                 isFullScreen ? "py-3.5 text-base" : "py-2 text-[15px]"
-              } focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm`}
-              disabled={isLoading}
+              } focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm ${
+                chatStatus === "RESOLVED"
+                  ? "bg-gray-100 cursor-not-allowed"
+                  : ""
+              }`}
+              disabled={isLoading || chatStatus === "RESOLVED"}
             />
             <button
               type="submit"
-              disabled={isLoading || !inputMessage.trim()}
+              disabled={
+                isLoading || !inputMessage.trim() || chatStatus === "RESOLVED"
+              }
               className={`bg-sky-600 text-white rounded-xl px-8 ${
                 isFullScreen ? "py-3.5 text-base" : "py-2 text-[15px]"
               } hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 shadow-sm transition-colors duration-200`}
