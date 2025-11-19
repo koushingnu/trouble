@@ -10,39 +10,51 @@ export default function HistoryPage() {
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchChatRooms = async () => {
-      if (!session?.user) return;
+  const fetchChatRooms = async () => {
+    if (!session?.user) return;
 
-      try {
-        const response = await fetch("/api/chat/rooms", {
-          headers: {
-            "Cache-Control": "no-cache",
-            Pragma: "no-cache",
-          },
-        });
+    try {
+      const response = await fetch("/api/chat/rooms", {
+        headers: {
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
+        },
+      });
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch chat rooms");
-        }
-
-        const data: APIResponse<ChatRoom[]> = await response.json();
-        if (data.success && data.data) {
-          const sortedChatRooms = data.data.sort(
-            (a, b) =>
-              new Date(b.created_at).getTime() -
-              new Date(a.created_at).getTime()
-          );
-          setChatRooms(sortedChatRooms);
-        }
-      } catch (error) {
-        console.error("Error fetching chat rooms:", error);
-      } finally {
-        setIsLoading(false);
+      if (!response.ok) {
+        throw new Error("Failed to fetch chat rooms");
       }
-    };
 
+      const data: APIResponse<ChatRoom[]> = await response.json();
+      if (data.success && data.data) {
+        const sortedChatRooms = data.data.sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        setChatRooms(sortedChatRooms);
+      }
+    } catch (error) {
+      console.error("Error fetching chat rooms:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 初回ロードと定期更新
+  useEffect(() => {
     fetchChatRooms();
+    // 30秒ごとに更新
+    const interval = setInterval(fetchChatRooms, 30000);
+    return () => clearInterval(interval);
+  }, [session?.user]);
+
+  // ページがフォーカスされたときに更新
+  useEffect(() => {
+    const onFocus = () => {
+      fetchChatRooms();
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
   }, [session?.user]);
 
   if (isLoading) {
@@ -73,8 +85,21 @@ export default function HistoryPage() {
           ) : (
             chatRooms.map((chatRoom) => {
               const lastMessage = chatRoom.last_message;
-              const isResolved =
-                lastMessage && lastMessage.includes("解決いたしました");
+              const status = chatRoom.status || "IN_PROGRESS";
+              const statusConfig = {
+                IN_PROGRESS: {
+                  label: "対応中",
+                  className: "bg-yellow-100 text-yellow-800",
+                },
+                RESOLVED: {
+                  label: "解決済み",
+                  className: "bg-green-100 text-green-800",
+                },
+                ESCALATED: {
+                  label: "電話対応",
+                  className: "bg-blue-100 text-blue-800",
+                },
+              };
 
               return (
                 <Link
@@ -90,13 +115,9 @@ export default function HistoryPage() {
                           {lastMessage || "無題の相談"}
                         </h2>
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium shrink-0 ${
-                            isResolved
-                              ? "bg-green-100 text-green-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }`}
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium shrink-0 ${statusConfig[status].className}`}
                         >
-                          {isResolved ? "解決済み" : "対応中"}
+                          {statusConfig[status].label}
                         </span>
                       </div>
                       {/* 内容 */}

@@ -3,6 +3,7 @@ import { Murecho } from "next/font/google";
 import "./globals.css";
 import ClientNavigation from "../components/ClientNavigation";
 import { Providers } from "./providers";
+
 const murecho = Murecho({
   weight: ["300", "400", "500", "700"],
   subsets: ["latin"],
