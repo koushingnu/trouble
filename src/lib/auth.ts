@@ -13,7 +13,10 @@ export const authOptions: AuthOptions = {
       },
       async authorize(credentials) {
         try {
+          console.log("[AUTH] Login attempt for:", credentials?.email);
+          
           if (!credentials?.email || !credentials?.password) {
+            console.log("[AUTH] Missing credentials");
             return null;
           }
 
@@ -24,11 +27,19 @@ export const authOptions: AuthOptions = {
           });
 
           if (!user) {
+            console.log("[AUTH] User not found:", credentials.email);
             return null;
           }
 
+          console.log("[AUTH] User found, ID:", user.id);
+          console.log("[AUTH] Input password length:", credentials.password.length);
+          console.log("[AUTH] Stored hash starts with:", user.password.substring(0, 10));
+
           const isValid = await compare(credentials.password, user.password);
+          console.log("[AUTH] Password validation result:", isValid);
+          
           if (!isValid) {
+            console.log("[AUTH] Password mismatch for user:", credentials.email);
             return null;
           }
 
@@ -39,6 +50,7 @@ export const authOptions: AuthOptions = {
             },
           });
 
+          console.log("[AUTH] Login successful for user:", user.id);
           return {
             id: String(user.id),
             email: user.email,
@@ -46,7 +58,7 @@ export const authOptions: AuthOptions = {
             is_admin: user.is_admin,
           };
         } catch (error) {
-          console.error("Auth error:", error);
+          console.error("[AUTH] Error:", error);
           return null;
         }
       },
