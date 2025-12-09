@@ -48,7 +48,7 @@ function LoginForm() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* ヘッダー */}
-      <header className="w-full bg-white py-8 px-4">
+      <header className="w-full bg-[#FDFDFD] py-8 px-4">
         <div className="max-w-md mx-auto text-center px-6">
           <Image
             src="/logo/logo.png"
@@ -96,7 +96,7 @@ function LoginForm() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-[#4a9fd8] bg-white text-gray-800"
+                  className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-[#1888CF] bg-[#FDFDFD] text-gray-800"
                   required
                 />
               </div>
@@ -119,7 +119,7 @@ function LoginForm() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-[#4a9fd8] bg-white text-gray-800"
+                  className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-[#1888CF] bg-[#FDFDFD] text-gray-800"
                   required
                 />
               </div>
@@ -141,7 +141,7 @@ function LoginForm() {
               </p>
               <Link
                 href="/register"
-                className="block w-full text-center bg-white text-[#2b8bc7] py-3 px-4 rounded-full font-bold border-2 border-[#2b8bc7] hover:bg-[#f0f8ff] transition-colors duration-200"
+                className="block w-full text-center bg-[#FDFDFD] text-[#1888CF] py-3 px-4 rounded-full font-bold border-2 border-[#1888CF] hover:bg-[#f0f8ff] transition-colors duration-200"
               >
                 新規登録はこちら
               </Link>
@@ -151,14 +151,14 @@ function LoginForm() {
       </main>
 
       {/* フッター */}
-      <footer className="w-full bg-white py-4 px-4 border-t border-gray-200">
+      <footer className="w-full bg-[#FDFDFD] py-4 px-4 border-t border-gray-200">
         <div className="max-w-md mx-auto flex justify-between items-center text-sm text-gray-600">
           <p>© トラブルまるごとレスキュー</p>
           <div className="flex gap-4">
-            <Link href="/company" className="hover:text-[#2b8bc7]">
+            <Link href="/company" className="hover:text-[#1888CF]">
               会社概要
             </Link>
-            <Link href="/contact" className="hover:text-[#2b8bc7]">
+            <Link href="/contact" className="hover:text-[#1888CF]">
               お問い合わせ
             </Link>
           </div>
