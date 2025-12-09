@@ -4,7 +4,7 @@ import { useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { FaEnvelope, FaLock } from "react-icons/fa";
+import Image from "next/image";
 import FullScreenLoading from "../../components/FullScreenLoading";
 
 function LoginForm() {
@@ -22,8 +22,6 @@ function LoginForm() {
     setError("");
 
     try {
-      console.log("Attempting login with:", { email, password });
-
       const result = await signIn("credentials", {
         email,
         password,
@@ -31,17 +29,13 @@ function LoginForm() {
         callbackUrl,
       });
 
-      console.log("Login result:", result);
-
       if (result?.error) {
-        console.error("Login error:", result.error);
         setError("メールアドレスまたはパスワードが正しくありません");
         setLoading(false);
         return;
       }
 
       if (result?.ok) {
-        console.log("Login successful, redirecting to:", callbackUrl);
         router.push(callbackUrl);
         router.refresh();
       }
@@ -55,78 +49,134 @@ function LoginForm() {
   return (
     <>
       {loading && <FullScreenLoading message="ログイン中..." />}
-      <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg border border-gray-100">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-gray-800 to-gray-600 font-noto-sans-jp">
-            ログイン
-          </h1>
-          <div className="mt-2 h-1 w-12 bg-gradient-to-r from-blue-500 to-blue-300 mx-auto rounded-full"></div>
+      
+      {/* ヘッダー */}
+      <header className="w-full bg-white py-6 px-4">
+        <div className="max-w-md mx-auto">
+          <Image
+            src="/logo/logo.png"
+            alt="トラブルまるごとレスキュー隊"
+            width={320}
+            height={80}
+            className="mx-auto"
+            priority
+          />
         </div>
+      </header>
 
-        {error && (
-          <div className="mb-6 p-4 rounded-lg bg-red-50 border border-red-200">
-            <p className="text-sm text-red-600">{error}</p>
-          </div>
-        )}
+      {/* メインコンテンツ */}
+      <main className="flex-1 w-full bg-gradient-to-b from-[#a8d5f5] to-[#7ec5f0] px-4 py-8">
+        <div className="max-w-md mx-auto">
+          <div className="bg-[#f5f5f5] rounded-3xl shadow-lg p-8">
+            <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
+              ログイン
+            </h1>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <div className="relative">
-              <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 bg-white text-gray-800 placeholder-gray-400"
-                placeholder="メールアドレス"
-                required
-              />
+            {error && (
+              <div className="mb-6 p-4 rounded-lg bg-red-50 border border-red-200">
+                <p className="text-sm text-red-600 text-center">{error}</p>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* メールアドレス */}
+              <div>
+                <div className="flex items-center mb-2">
+                  <Image
+                    src="/icon/mail.png"
+                    alt="メール"
+                    width={24}
+                    height={24}
+                    className="mr-2"
+                  />
+                  <label className="text-gray-700 font-medium">
+                    メールアドレス
+                  </label>
+                </div>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-[#4a9fd8] bg-white text-gray-800 placeholder-gray-400"
+                  placeholder=""
+                  required
+                />
+              </div>
+
+              {/* パスワード */}
+              <div>
+                <div className="flex items-center mb-2">
+                  <Image
+                    src="/icon/password.png"
+                    alt="パスワード"
+                    width={24}
+                    height={24}
+                    className="mr-2"
+                  />
+                  <label className="text-gray-700 font-medium">
+                    パスワード
+                  </label>
+                </div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-[#4a9fd8] bg-white text-gray-800 placeholder-gray-400"
+                  placeholder=""
+                  required
+                />
+              </div>
+
+              {/* ログインボタン */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-[#2b8bc7] text-white py-4 px-4 rounded-full font-bold text-lg hover:bg-[#2376a8] disabled:opacity-50 transition-colors duration-200 shadow-md"
+              >
+                {loading ? "ログイン中..." : "ログイン"}
+              </button>
+            </form>
+
+            {/* 新規登録リンク */}
+            <div className="mt-8 pt-6 border-t border-gray-300">
+              <p className="text-center text-gray-700 font-medium mb-4">
+                アカウントをお持ちでない方
+              </p>
+              <Link
+                href="/register"
+                className="block w-full text-center bg-white text-[#2b8bc7] py-3 px-4 rounded-full font-bold border-2 border-[#2b8bc7] hover:bg-[#f0f8ff] transition-colors duration-200"
+              >
+                新規登録はこちら
+              </Link>
             </div>
           </div>
-
-          <div>
-            <div className="relative">
-              <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 bg-white text-gray-800 placeholder-gray-400"
-                placeholder="パスワード"
-                required
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-600 disabled:opacity-50 transition-colors duration-200"
-          >
-            {loading ? "ログイン中..." : "ログイン"}
-          </button>
-        </form>
-
-        <div className="mt-8 text-center">
-          <p className="text-gray-600 mb-2">アカウントをお持ちでない方は</p>
-          <Link
-            href="/register"
-            className="inline-block bg-white text-blue-500 py-2 px-6 rounded-lg font-semibold border-2 border-blue-500 hover:bg-blue-50 transition-colors duration-200"
-          >
-            新規登録
-          </Link>
         </div>
-      </div>
+      </main>
+
+      {/* フッター */}
+      <footer className="w-full bg-white py-4 px-4 border-t border-gray-200">
+        <div className="max-w-md mx-auto flex justify-between items-center text-sm text-gray-600">
+          <p>© トラブルまるごとレスキュー</p>
+          <div className="flex gap-4">
+            <Link href="/company" className="hover:text-[#2b8bc7]">
+              会社概要
+            </Link>
+            <Link href="/contact" className="hover:text-[#2b8bc7]">
+              お問い合わせ
+            </Link>
+          </div>
+        </div>
+      </footer>
     </>
   );
 }
 
 export default function Login() {
   return (
-    <main className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-gradient-to-br from-gray-50 to-white p-4 -mt-16">
+    <div className="min-h-screen flex flex-col">
       <Suspense fallback={<FullScreenLoading message="読み込み中..." />}>
         <LoginForm />
       </Suspense>
-    </main>
+    </div>
   );
 }
