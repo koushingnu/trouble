@@ -39,7 +39,12 @@ export default function NewTroubleChat({
   }, [initialChatRoomId]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    try {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    } catch (error) {
+      // フォールバック: smoothがサポートされていない場合
+      messagesEndRef.current?.scrollIntoView();
+    }
   };
 
   useEffect(() => {
@@ -48,6 +53,8 @@ export default function NewTroubleChat({
 
   // チャット履歴をロード
   useEffect(() => {
+    if (typeof window === "undefined") return; // SSR対策
+    
     const loadChatHistory = async () => {
       if (!chatRoomId || !session?.user) {
         return;
@@ -163,7 +170,7 @@ export default function NewTroubleChat({
   };
 
   return (
-    <div className="bg-[#FDFDFD] rounded-3xl shadow-lg overflow-hidden flex flex-col h-[600px] max-h-[calc(100vh-200px)]">
+    <div className="bg-[#FDFDFD] rounded-3xl shadow-lg overflow-hidden flex flex-col h-[calc(100vh-220px)] md:h-[600px] max-h-[calc(100vh-220px)]">
       {/* ヘッダー */}
       <div className="bg-[#FDFDFD] px-6 py-4 border-b border-gray-200 flex items-center justify-between">
         <h2 className="text-xl font-bold text-gray-800">相談する</h2>
