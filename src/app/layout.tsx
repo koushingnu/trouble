@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import { Murecho } from "next/font/google";
+import { Zen_Kaku_Gothic_New } from "next/font/google";
 import "./globals.css";
 import ClientNavigation from "../components/ClientNavigation";
 import { Providers } from "./providers";
 
-const murecho = Murecho({
+const zenKakuGothicNew = Zen_Kaku_Gothic_New({
   weight: ["300", "400", "500", "700"],
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-murecho",
+  variable: "--font-zen-kaku-gothic-new",
 });
 
 export const metadata: Metadata = {
@@ -22,8 +22,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ja" className={`${murecho.variable}`}>
-      <body className="min-h-screen bg-slate-50">
+    <html lang="ja" className={`${zenKakuGothicNew.variable}`}>
+      <body className="min-h-screen bg-slate-50 font-sans">
         <Providers>
           <div className="flex flex-col min-h-screen">
             <ClientNavigation />
