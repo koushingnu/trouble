@@ -23,7 +23,12 @@ export default function NewTroubleChat({
   const [chatStatus, setChatStatus] = useState<
     "IN_PROGRESS" | "RESOLVED" | "ESCALATED"
   >("IN_PROGRESS");
+  const [mounted, setMounted] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!chatRoomId) {
@@ -62,7 +67,7 @@ export default function NewTroubleChat({
 
   // チャット履歴をロード
   useEffect(() => {
-    if (typeof window === "undefined") return; // SSR対策
+    if (!mounted || typeof window === "undefined") return; // SSR対策
     
     const loadChatHistory = async () => {
       if (!chatRoomId || !session?.user) {
@@ -98,7 +103,7 @@ export default function NewTroubleChat({
     };
 
     loadChatHistory();
-  }, [chatRoomId, session?.user]);
+  }, [chatRoomId, session?.user, mounted]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();

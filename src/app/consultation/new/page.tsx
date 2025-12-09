@@ -7,15 +7,23 @@ import { APIResponse, ChatRoom } from "@/types/chat";
 import AuthenticatedLayout from "@/components/AuthenticatedLayout";
 
 export default function NewConsultationPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [latestChatRoom, setLatestChatRoom] = useState<ChatRoom | null>(null);
   const [isLoadingChatRooms, setIsLoadingChatRooms] = useState(true);
   const [isNewChat, setIsNewChat] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted || status === "loading") return;
+    
     const fetchLatestChatRoom = async () => {
       if (!session?.user) {
         setIsLoadingChatRooms(false);
+        setIsNewChat(true);
         return;
       }
 
@@ -48,9 +56,9 @@ export default function NewConsultationPage() {
     };
 
     fetchLatestChatRoom();
-  }, [session?.user]);
+  }, [session?.user, status, mounted]);
 
-  if (isLoadingChatRooms) {
+  if (!mounted || isLoadingChatRooms) {
     return (
       <AuthenticatedLayout>
         <div className="max-w-md mx-auto px-4 py-8">
