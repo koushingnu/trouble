@@ -18,7 +18,10 @@ export default withAuth(
       pathname.startsWith("/_next") ||
       pathname.startsWith("/static") ||
       pathname.startsWith("/favicon.ico") ||
-      pathname.startsWith("/api")
+      pathname.startsWith("/api") ||
+      pathname.startsWith("/logo") ||
+      pathname.startsWith("/icon") ||
+      pathname.startsWith("/assistant.png")
     ) {
       console.log("→ Skipping middleware (static/api)");
       return NextResponse.next();
@@ -72,6 +75,9 @@ export default withAuth(
           pathname.startsWith("/static") ||
           pathname.startsWith("/favicon.ico") ||
           pathname.startsWith("/api") ||
+          pathname.startsWith("/logo") ||
+          pathname.startsWith("/icon") ||
+          pathname.startsWith("/assistant.png") ||
           PUBLIC_PATHS.some((path) => pathname.startsWith(path))
         ) {
           console.log("→ Authorized: public resource");
@@ -94,5 +100,7 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon\\.ico).*)"],
+  matcher: [
+    "/((?!api|_next/static|_next/image|favicon\\.ico|logo|icon|.*\\.png|.*\\.jpg|.*\\.jpeg|.*\\.gif|.*\\.svg).*)",
+  ],
 };
