@@ -4,7 +4,6 @@ import { useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import FullScreenLoading from "../../components/FullScreenLoading";
 
 function LoginForm() {
   const [email, setEmail] = useState("");
@@ -46,9 +45,7 @@ function LoginForm() {
   };
 
   return (
-    <>
-      {loading && <FullScreenLoading message="ログイン中..." />}
-      
+    <div className="min-h-screen flex flex-col">
       {/* ヘッダー */}
       <header className="w-full bg-white py-6 px-4">
         <div className="max-w-md mx-auto text-center">
@@ -91,8 +88,7 @@ function LoginForm() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-[#4a9fd8] bg-white text-gray-800 placeholder-gray-400"
-                  placeholder=""
+                  className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-[#4a9fd8] bg-white text-gray-800"
                   required
                 />
               </div>
@@ -113,8 +109,7 @@ function LoginForm() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-[#4a9fd8] bg-white text-gray-800 placeholder-gray-400"
-                  placeholder=""
+                  className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-[#4a9fd8] bg-white text-gray-800"
                   required
                 />
               </div>
@@ -159,16 +154,14 @@ function LoginForm() {
           </div>
         </div>
       </footer>
-    </>
+    </div>
   );
 }
 
 export default function Login() {
   return (
-    <div className="min-h-screen flex flex-col">
-      <Suspense fallback={<FullScreenLoading message="読み込み中..." />}>
-        <LoginForm />
-      </Suspense>
-    </div>
+    <Suspense fallback={<div>読み込み中...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }
