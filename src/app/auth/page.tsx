@@ -66,7 +66,7 @@ function LoginForm() {
       {/* メインコンテンツ */}
       <main className="flex-1 w-full bg-gradient-to-b from-[#ACE0F9] to-[#64B3F4] px-4 py-8">
         <div className="max-w-md mx-auto">
-          <div className="bg-[#f5f5f5] rounded-3xl shadow-lg p-8">
+          <div className="bg-[#FDFDFD] rounded-3xl shadow-lg p-8">
             <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
               ログイン
             </h1>
