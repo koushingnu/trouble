@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import TroubleChat from "../../../components/TroubleChat";
+import NewTroubleChat from "../../../components/NewTroubleChat";
 import { useSession } from "next-auth/react";
 import { APIResponse, ChatRoom } from "@/types/chat";
 import AuthenticatedLayout from "@/components/AuthenticatedLayout";
@@ -65,7 +65,7 @@ export default function NewConsultationPage() {
   return (
     <AuthenticatedLayout>
       <div className="max-w-md mx-auto px-4 py-6">
-        <TroubleChat
+        <NewTroubleChat
           initialChatRoomId={isNewChat ? null : latestChatRoom?.id || null}
         />
       </div>

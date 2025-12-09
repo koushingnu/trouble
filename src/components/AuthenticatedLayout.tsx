@@ -11,7 +11,7 @@ export default function AuthenticatedLayout({
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-[#ACE0F9] to-[#64B3F4]">
       {/* メインヘッダー */}
-      <header className="w-full bg-[#FDFDFD] py-6 px-4">
+      <header className="w-full bg-[#FDFDFD] py-6 px-4 border-b border-gray-200">
         <div className="max-w-7xl mx-auto text-center">
           <Image
             src="/logo/logo.svg"
