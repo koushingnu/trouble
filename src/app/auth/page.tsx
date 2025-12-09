@@ -53,10 +53,10 @@ function LoginForm() {
           <Image
             src="/logo/logo.png"
             alt="トラブルまるごとレスキュー隊"
-            width={400}
-            height={100}
+            width={450}
+            height={98}
             priority
-            className="mx-auto h-20 w-auto"
+            className="mx-auto h-auto w-auto max-h-20"
           />
         </div>
       </header>
@@ -82,9 +82,9 @@ function LoginForm() {
                   <Image
                     src="/icon/mail.png"
                     alt="メール"
-                    width={24}
-                    height={24}
-                    className="mr-2"
+                    width={40}
+                    height={40}
+                    className="w-6 h-6 mr-2"
                   />
                   <label className="text-gray-700 font-medium">
                     メールアドレス
@@ -105,9 +105,9 @@ function LoginForm() {
                   <Image
                     src="/icon/password.png"
                     alt="パスワード"
-                    width={24}
-                    height={24}
-                    className="mr-2"
+                    width={40}
+                    height={40}
+                    className="w-6 h-6 mr-2"
                   />
                   <label className="text-gray-700 font-medium">
                     パスワード
