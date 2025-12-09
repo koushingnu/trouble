@@ -48,15 +48,17 @@ function LoginForm() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* ヘッダー */}
-      <header className="w-full bg-white py-6 px-4">
-        <div className="max-w-md mx-auto text-center">
+      <header className="w-full bg-white py-8 px-4">
+        <div className="max-w-md mx-auto text-center px-6">
           <Image
             src="/logo/logo.png"
             alt="トラブルまるごとレスキュー隊"
             width={450}
             height={98}
             priority
-            className="mx-auto h-auto w-auto max-h-20"
+            quality={100}
+            className="mx-auto w-full max-w-[280px] h-auto"
+            style={{ imageRendering: 'crisp-edges' }}
           />
         </div>
       </header>
