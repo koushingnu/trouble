@@ -58,7 +58,7 @@ function LoginForm() {
             priority
             quality={100}
             className="mx-auto w-full max-w-[280px] h-auto"
-            style={{ imageRendering: 'crisp-edges' }}
+            style={{ imageRendering: "crisp-edges" }}
           />
         </div>
       </header>
