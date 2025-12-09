@@ -4,7 +4,6 @@ import { useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import FullScreenLoading from "../../components/FullScreenLoading";
 
 function LoginForm() {
@@ -52,14 +51,11 @@ function LoginForm() {
       
       {/* ヘッダー */}
       <header className="w-full bg-white py-6 px-4">
-        <div className="max-w-md mx-auto">
-          <Image
+        <div className="max-w-md mx-auto text-center">
+          <img
             src="/logo/logo.png"
             alt="トラブルまるごとレスキュー隊"
-            width={320}
-            height={80}
-            className="mx-auto"
-            priority
+            className="mx-auto h-20 w-auto"
           />
         </div>
       </header>
@@ -82,12 +78,10 @@ function LoginForm() {
               {/* メールアドレス */}
               <div>
                 <div className="flex items-center mb-2">
-                  <Image
+                  <img
                     src="/icon/mail.png"
                     alt="メール"
-                    width={24}
-                    height={24}
-                    className="mr-2"
+                    className="w-6 h-6 mr-2"
                   />
                   <label className="text-gray-700 font-medium">
                     メールアドレス
@@ -106,12 +100,10 @@ function LoginForm() {
               {/* パスワード */}
               <div>
                 <div className="flex items-center mb-2">
-                  <Image
+                  <img
                     src="/icon/password.png"
                     alt="パスワード"
-                    width={24}
-                    height={24}
-                    className="mr-2"
+                    className="w-6 h-6 mr-2"
                   />
                   <label className="text-gray-700 font-medium">
                     パスワード
