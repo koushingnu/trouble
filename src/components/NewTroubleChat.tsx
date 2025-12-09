@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { PaperAirplaneIcon } from "@heroicons/react/24/solid";
 import { HeartIcon } from "@heroicons/react/24/outline";
-import Image from "next/image";
 import { Message } from "@/types/chat";
 
 interface TroubleChatProps {
@@ -164,7 +163,7 @@ export default function NewTroubleChat({
   };
 
   return (
-    <div className="bg-[#FDFDFD] rounded-3xl shadow-lg overflow-hidden flex flex-col h-[600px]">
+    <div className="bg-[#FDFDFD] rounded-3xl shadow-lg overflow-hidden flex flex-col h-[600px] max-h-[calc(100vh-200px)]">
       {/* ヘッダー */}
       <div className="bg-[#FDFDFD] px-6 py-4 border-b border-gray-200 flex items-center justify-between">
         <h2 className="text-xl font-bold text-gray-800">相談する</h2>
@@ -180,7 +179,7 @@ export default function NewTroubleChat({
       </div>
 
       {/* メッセージエリア */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+      <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-hide">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-gray-400">
             <p className="text-sm mb-4">お困りのトラブルについて、</p>
@@ -216,13 +215,11 @@ export default function NewTroubleChat({
                 className={`flex ${isUser ? "justify-end" : "justify-start"} gap-2`}
               >
                 {!isUser && (
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                    <Image
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                    <img
                       src="/assistant.png"
                       alt="アシスタント"
-                      width={40}
-                      height={40}
-                      className="w-8 h-8 rounded-full"
+                      className="w-8 h-8 object-cover"
                     />
                   </div>
                 )}
@@ -245,7 +242,7 @@ export default function NewTroubleChat({
       </div>
 
       {/* 入力エリア */}
-      <div className="bg-[#FDFDFD] px-6 py-4 border-t border-gray-200">
+      <div className="bg-[#FDFDFD] px-4 py-3 border-t border-gray-200 flex-shrink-0">
         <form onSubmit={handleSendMessage} className="flex items-center gap-2">
           <input
             type="text"
@@ -257,12 +254,12 @@ export default function NewTroubleChat({
                 ? "この相談は解決済みです"
                 : "相談内容を入力してください"
             }
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#1888CF] disabled:bg-gray-100 disabled:text-gray-400"
+            className="flex-1 min-w-0 px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-[#1888CF] disabled:bg-gray-100 disabled:text-gray-400"
           />
           <button
             type="submit"
             disabled={isLoading || !inputMessage.trim() || chatStatus === "RESOLVED"}
-            className="bg-[#1888CF] text-white p-3 rounded-lg hover:bg-[#1568a8] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex-shrink-0 bg-[#1888CF] text-white p-2.5 rounded-lg hover:bg-[#1568a8] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <PaperAirplaneIcon className="w-5 h-5" />
           </button>

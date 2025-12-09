@@ -19,3 +19,13 @@ img {
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
 }
+
+/* スクロールバーを非表示にする */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
