@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { NextRequest } from "next/server";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
+import { compare, hash } from "bcryptjs";
+import prisma from "@/lib/prisma";
 
 export async function PUT(request: NextRequest) {
   try {
     const token = await getToken({ req: request });
-    if (!token) {
+    if (!token || !token.sub) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -20,25 +20,40 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const response = await fetch(`${API_BASE}?action=change_password`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Basic " + process.env.API_AUTH,
-      },
-      body: JSON.stringify({
-        userId: token.sub,
-        currentPassword,
-        newPassword,
-      }),
+    // ユーザーを取得
+    const user = await prisma.user.findUnique({
+      where: { id: Number(token.sub) },
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "パスワードの変更に失敗しました");
+    if (!user) {
+      return NextResponse.json(
+        { error: "ユーザーが見つかりません" },
+        { status: 404 }
+      );
     }
 
-    return NextResponse.json({ success: true });
+    // 現在のパスワードを確認
+    const isValidPassword = await compare(currentPassword, user.password);
+    if (!isValidPassword) {
+      return NextResponse.json(
+        { error: "現在のパスワードが正しくありません" },
+        { status: 400 }
+      );
+    }
+
+    // 新しいパスワードをハッシュ化
+    const hashedPassword = await hash(newPassword, 10);
+
+    // パスワードを更新
+    await prisma.user.update({
+      where: { id: Number(token.sub) },
+      data: { password: hashedPassword },
+    });
+
+    return NextResponse.json({ 
+      success: true,
+      message: "パスワードを更新しました" 
+    });
   } catch (error) {
     console.error("Password change error:", error);
     return NextResponse.json(
