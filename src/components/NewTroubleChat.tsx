@@ -39,16 +39,25 @@ export default function NewTroubleChat({
   }, [initialChatRoomId]);
 
   const scrollToBottom = () => {
+    if (typeof window === "undefined") return;
+    
     try {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      if (messagesEndRef.current) {
+        const element = messagesEndRef.current;
+        const parent = element.parentElement;
+        if (parent) {
+          parent.scrollTop = parent.scrollHeight;
+        }
+      }
     } catch (error) {
-      // フォールバック: smoothがサポートされていない場合
-      messagesEndRef.current?.scrollIntoView();
+      console.error("Scroll error:", error);
     }
   };
 
   useEffect(() => {
-    scrollToBottom();
+    if (messages.length > 0) {
+      setTimeout(() => scrollToBottom(), 100);
+    }
   }, [messages]);
 
   // チャット履歴をロード
@@ -93,6 +102,7 @@ export default function NewTroubleChat({
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!inputMessage.trim() || isLoading || chatStatus === "RESOLVED") return;
 
     const userMessage = inputMessage.trim();
@@ -250,7 +260,11 @@ export default function NewTroubleChat({
 
       {/* 入力エリア */}
       <div className="bg-[#FDFDFD] px-4 py-3 border-t border-gray-200 flex-shrink-0">
-        <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+        <form 
+          onSubmit={handleSendMessage} 
+          className="flex items-center gap-2"
+          onTouchStart={(e) => e.stopPropagation()}
+        >
           <input
             type="text"
             value={inputMessage}
@@ -261,12 +275,14 @@ export default function NewTroubleChat({
                 ? "この相談は解決済みです"
                 : "相談内容を入力してください"
             }
-            className="flex-1 min-w-0 px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-[#1888CF] disabled:bg-gray-100 disabled:text-gray-400"
+            className="flex-1 min-w-0 px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-[#1888CF] disabled:bg-gray-100 disabled:text-gray-400 touch-manipulation"
+            autoComplete="off"
           />
           <button
             type="submit"
             disabled={isLoading || !inputMessage.trim() || chatStatus === "RESOLVED"}
-            className="flex-shrink-0 bg-[#1888CF] text-white p-2.5 rounded-lg hover:bg-[#1568a8] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex-shrink-0 bg-[#1888CF] text-white p-2.5 rounded-lg hover:bg-[#1568a8] disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-manipulation"
+            onTouchStart={(e) => e.stopPropagation()}
           >
             <PaperAirplaneIcon className="w-5 h-5" />
           </button>

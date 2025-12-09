@@ -29,3 +29,9 @@ img {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* タッチ操作の最適化 */
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
