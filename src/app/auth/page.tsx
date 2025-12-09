@@ -51,14 +51,12 @@ function LoginForm() {
       <header className="w-full bg-[#FDFDFD] py-8 px-4">
         <div className="max-w-md mx-auto text-center px-6">
           <Image
-            src="/logo/logo.png"
+            src="/logo/logo.svg"
             alt="トラブルまるごとレスキュー隊"
             width={450}
             height={98}
             priority
-            quality={100}
             className="mx-auto w-full max-w-[280px] h-auto"
-            style={{ imageRendering: "crisp-edges" }}
           />
         </div>
       </header>
@@ -82,7 +80,7 @@ function LoginForm() {
               <div>
                 <div className="flex items-center mb-2">
                   <Image
-                    src="/icon/mail.png"
+                    src="/icon/mail.svg"
                     alt="メール"
                     width={40}
                     height={40}
@@ -105,7 +103,7 @@ function LoginForm() {
               <div>
                 <div className="flex items-center mb-2">
                   <Image
-                    src="/icon/password.png"
+                    src="/icon/password.svg"
                     alt="パスワード"
                     width={40}
                     height={40}
