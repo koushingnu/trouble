@@ -48,7 +48,7 @@ function LoginForm() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* ヘッダー */}
-      <header className="w-full bg-[#FDFDFD] py-8 px-4">
+      <header className="w-full bg-[#FDFDFD] py-4 px-4">
         <div className="max-w-md mx-auto text-center px-6">
           <Image
             src="/logo/logo.svg"
@@ -56,7 +56,7 @@ function LoginForm() {
             width={450}
             height={98}
             priority
-            className="mx-auto w-full max-w-[280px] h-auto"
+            className="mx-auto w-full max-w-[200px] h-auto"
           />
         </div>
       </header>
