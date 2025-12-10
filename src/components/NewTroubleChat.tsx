@@ -207,28 +207,28 @@ export default function NewTroubleChat({
   };
 
   return (
-    <div className="bg-[#FDFDFD] rounded-3xl shadow-lg overflow-hidden flex flex-col h-[calc(100vh-220px)] md:h-[600px] max-h-[calc(100vh-220px)]">
+    <div className="flex flex-col h-[calc(100vh-180px)]">
       {/* ヘッダー */}
-      <div className="bg-[#FDFDFD] px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-800">相談する</h2>
+      <div className="bg-[#FDFDFD] px-4 py-3 flex items-center justify-between flex-shrink-0 shadow-sm">
+        <h2 className="text-lg font-bold text-gray-800">相談する</h2>
         {chatStatus === "IN_PROGRESS" && Array.isArray(messages) && messages.length > 0 && (
           <button
             onClick={handleResolve}
-            className="flex items-center gap-1 text-[#FF7BAC] border border-[#FF7BAC] rounded-full px-4 py-1 text-sm hover:bg-[#FFE4F1] transition-colors"
+            className="flex items-center gap-1 text-[#FF7BAC] border border-[#FF7BAC] rounded-full px-3 py-1 text-xs hover:bg-[#FFE4F1] transition-colors"
           >
             <HeartIcon className="w-4 h-4" />
-            <span>解決済みにする</span>
+            <span>解決済み</span>
           </button>
         )}
       </div>
 
-      {/* メッセージエリア */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-hide">
+      {/* メッセージエリア - 背景に直接表示 */}
+      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 scrollbar-hide">
         {(!Array.isArray(messages) || messages.length === 0) && (
-          <div className="flex flex-col items-center justify-center h-full text-gray-400">
-            <p className="text-sm mb-4">お困りのトラブルについて、</p>
-            <p className="text-sm mb-4">以下の入力欄からお気軽に</p>
-            <p className="text-sm">相談ください。</p>
+          <div className="flex flex-col items-center justify-center h-full text-white">
+            <p className="text-base mb-3">お困りのトラブルについて、</p>
+            <p className="text-base mb-3">以下の入力欄からお気軽に</p>
+            <p className="text-base">相談ください。</p>
           </div>
         )}
 
@@ -244,7 +244,7 @@ export default function NewTroubleChat({
               {/* 日付表示 */}
               {showDate && (
                 <div className="flex justify-center my-4">
-                  <span className="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full">
+                  <span className="bg-white/80 text-gray-700 text-xs px-3 py-1 rounded-full shadow-sm">
                     {new Date(message.created_at).toLocaleDateString("ja-JP", {
                       year: "numeric",
                       month: "long",
@@ -256,10 +256,10 @@ export default function NewTroubleChat({
 
               {/* メッセージ */}
               <div
-                className={`flex ${isUser ? "justify-end" : "justify-start"} gap-2`}
+                className={`flex ${isUser ? "justify-end" : "justify-start"} gap-2 items-end`}
               >
                 {!isUser && (
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-white flex items-center justify-center overflow-hidden shadow-sm">
                     <img
                       src="/assistant.png"
                       alt="アシスタント"
@@ -268,13 +268,13 @@ export default function NewTroubleChat({
                   </div>
                 )}
                 <div
-                  className={`max-w-[70%] rounded-2xl px-4 py-3 ${
+                  className={`max-w-[85%] rounded-2xl px-4 py-3 shadow-md ${
                     isUser
                       ? "bg-[#1888CF] text-white"
-                      : "bg-gray-100 text-gray-800"
+                      : "bg-white text-gray-800"
                   }`}
                 >
-                  <p className="text-sm whitespace-pre-wrap break-words">
+                  <p className="text-base whitespace-pre-wrap break-words leading-relaxed">
                     {message.body}
                   </p>
                 </div>
@@ -286,7 +286,7 @@ export default function NewTroubleChat({
       </div>
 
       {/* 入力エリア */}
-      <div className="bg-[#FDFDFD] px-4 py-3 border-t border-gray-200 flex-shrink-0">
+      <div className="bg-[#FDFDFD] px-4 py-3 flex-shrink-0 shadow-lg">
         <form 
           onSubmit={handleSendMessage} 
           className="flex items-center gap-2"
@@ -302,16 +302,16 @@ export default function NewTroubleChat({
                 ? "この相談は解決済みです"
                 : "相談内容を入力してください"
             }
-            className="flex-1 min-w-0 px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-[#1888CF] disabled:bg-gray-100 disabled:text-gray-400 touch-manipulation"
+            className="flex-1 min-w-0 px-4 py-3 text-base border-2 border-gray-300 rounded-full focus:outline-none focus:border-[#1888CF] disabled:bg-gray-100 disabled:text-gray-400 touch-manipulation"
             autoComplete="off"
           />
           <button
             type="submit"
             disabled={isLoading || !inputMessage.trim() || chatStatus === "RESOLVED"}
-            className="flex-shrink-0 bg-[#1888CF] text-white p-2.5 rounded-lg hover:bg-[#1568a8] disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-manipulation"
+            className="flex-shrink-0 bg-[#1888CF] text-white p-3 rounded-full hover:bg-[#1568a8] disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-manipulation shadow-md"
             onTouchStart={(e) => e.stopPropagation()}
           >
-            <PaperAirplaneIcon className="w-5 h-5" />
+            <PaperAirplaneIcon className="w-6 h-6" />
           </button>
         </form>
       </div>

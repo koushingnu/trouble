@@ -82,11 +82,11 @@ export default function NewConsultationPage() {
 
   return (
     <AuthenticatedLayout>
-      <div className="max-w-md mx-auto px-4 py-6">
+      <div className="h-full">
         <NewTroubleChat
-        initialChatRoomId={isNewChat ? null : latestChatRoom?.id || null}
-      />
-    </div>
+          initialChatRoomId={isNewChat ? null : latestChatRoom?.id || null}
+        />
+      </div>
     </AuthenticatedLayout>
   );
 }
