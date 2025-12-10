@@ -281,7 +281,7 @@ export default function NewTroubleChat({
               </div>
             </div>
           );
-        }))}
+        })}
         <div ref={messagesEndRef} />
       </div>
 
