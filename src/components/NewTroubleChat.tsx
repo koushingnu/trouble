@@ -60,7 +60,7 @@ export default function NewTroubleChat({
   };
 
   useEffect(() => {
-    if (messages.length > 0) {
+    if (Array.isArray(messages) && messages.length > 0) {
       setTimeout(() => scrollToBottom(), 100);
     }
   }, [messages]);
@@ -94,8 +94,10 @@ export default function NewTroubleChat({
           const historyData = await historyResponse.json();
           console.log("[NewTroubleChat] History API response:", historyData);
           if (historyData.success && historyData.data) {
-            console.log("[NewTroubleChat] Loaded messages:", historyData.data.length);
-            setMessages(historyData.data);
+            // APIは data.messages を返すので、messagesプロパティを取得
+            const messagesList = historyData.data.messages || [];
+            console.log("[NewTroubleChat] Loaded messages:", messagesList.length);
+            setMessages(Array.isArray(messagesList) ? messagesList : []);
           }
         } else {
           console.error("[NewTroubleChat] History API failed:", historyResponse.status);
@@ -209,7 +211,7 @@ export default function NewTroubleChat({
       {/* ヘッダー */}
       <div className="bg-[#FDFDFD] px-6 py-4 border-b border-gray-200 flex items-center justify-between">
         <h2 className="text-xl font-bold text-gray-800">相談する</h2>
-        {chatStatus === "IN_PROGRESS" && messages.length > 0 && (
+        {chatStatus === "IN_PROGRESS" && Array.isArray(messages) && messages.length > 0 && (
           <button
             onClick={handleResolve}
             className="flex items-center gap-1 text-[#FF7BAC] border border-[#FF7BAC] rounded-full px-4 py-1 text-sm hover:bg-[#FFE4F1] transition-colors"
@@ -222,7 +224,7 @@ export default function NewTroubleChat({
 
       {/* メッセージエリア */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-hide">
-        {messages.length === 0 && (
+        {(!Array.isArray(messages) || messages.length === 0) && (
           <div className="flex flex-col items-center justify-center h-full text-gray-400">
             <p className="text-sm mb-4">お困りのトラブルについて、</p>
             <p className="text-sm mb-4">以下の入力欄からお気軽に</p>
@@ -230,7 +232,7 @@ export default function NewTroubleChat({
           </div>
         )}
 
-        {messages.map((message, index) => {
+        {Array.isArray(messages) && messages.map((message, index) => {
           const isUser = message.sender === "user";
           const showDate =
             index === 0 ||
@@ -279,7 +281,7 @@ export default function NewTroubleChat({
               </div>
             </div>
           );
-        })}
+        }))}
         <div ref={messagesEndRef} />
       </div>
 
