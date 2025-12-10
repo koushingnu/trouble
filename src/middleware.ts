@@ -3,6 +3,7 @@ import { withAuth } from "next-auth/middleware";
 
 const PUBLIC_PATHS = ["/auth", "/auth/error", "/register"];
 const ADMIN_PATHS = ["/admin"];
+const PROTECTED_PATHS = ["/consultation", "/history", "/mypage"];
 
 export default withAuth(
   function middleware(req) {
@@ -31,6 +32,15 @@ export default withAuth(
     if (PUBLIC_PATHS.some((path) => pathname.startsWith(path))) {
       console.log("→ Public path, proceeding");
       return NextResponse.next();
+    }
+
+    // 保護されたパスの認証チェック
+    if (PROTECTED_PATHS.some((path) => pathname.startsWith(path))) {
+      if (!req.nextauth?.token) {
+        console.log("→ Protected path without token, redirecting to /auth");
+        return NextResponse.redirect(new URL("/auth", req.url));
+      }
+      console.log("→ Protected path with token, proceeding");
     }
 
     // 管理者ページのチェック
