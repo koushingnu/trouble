@@ -381,17 +381,17 @@ export default function TroubleChat({
                   <span>解決済みにする</span>
                 </button>
               )}
-              <button
-                onClick={() => setIsFullScreen(!isFullScreen)}
-                className="text-white hover:text-white/80 transition-colors p-2 hover:bg-sky-500/50 rounded-lg"
-                aria-label={isFullScreen ? "全画面解除" : "全画面表示"}
-              >
-                {isFullScreen ? (
-                  <ArrowsPointingInIcon className="h-5 w-5" />
-                ) : (
-                  <ArrowsPointingOutIcon className="h-5 w-5" />
-                )}
-              </button>
+            <button
+              onClick={() => setIsFullScreen(!isFullScreen)}
+              className="text-white hover:text-white/80 transition-colors p-2 hover:bg-sky-500/50 rounded-lg"
+              aria-label={isFullScreen ? "全画面解除" : "全画面表示"}
+            >
+              {isFullScreen ? (
+                <ArrowsPointingInIcon className="h-5 w-5" />
+              ) : (
+                <ArrowsPointingOutIcon className="h-5 w-5" />
+              )}
+            </button>
             </div>
           </div>
           <p className="mt-1 text-sm text-white/90">

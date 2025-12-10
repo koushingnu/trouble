@@ -16,35 +16,35 @@ export default function HistoryPage() {
   const [currentView, setCurrentView] = useState<"summary" | "list">("summary");
   const [selectedFilter, setSelectedFilter] = useState<FilterType>("all");
 
-  const fetchChatRooms = async () => {
-    if (!session?.user) return;
+    const fetchChatRooms = async () => {
+      if (!session?.user) return;
 
-    try {
-      const response = await fetch("/api/chat/rooms", {
-        headers: {
-          "Cache-Control": "no-cache",
-          Pragma: "no-cache",
-        },
-      });
+      try {
+        const response = await fetch("/api/chat/rooms", {
+          headers: {
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
+          },
+        });
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch chat rooms");
-      }
+        if (!response.ok) {
+          throw new Error("Failed to fetch chat rooms");
+        }
 
-      const data: APIResponse<ChatRoom[]> = await response.json();
-      if (data.success && data.data) {
-        const sortedChatRooms = data.data.sort(
-          (a, b) =>
+        const data: APIResponse<ChatRoom[]> = await response.json();
+        if (data.success && data.data) {
+          const sortedChatRooms = data.data.sort(
+            (a, b) =>
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-        setChatRooms(sortedChatRooms);
+          );
+          setChatRooms(sortedChatRooms);
+        }
+      } catch (error) {
+        console.error("Error fetching chat rooms:", error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching chat rooms:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
 
   useEffect(() => {
     fetchChatRooms();
@@ -120,9 +120,9 @@ export default function HistoryPage() {
       <AuthenticatedLayout>
         <div className="max-w-md mx-auto px-4 py-8">
           <div className="bg-[#FDFDFD] rounded-3xl shadow-lg p-6">
-            <p className="text-center text-gray-500">読み込み中...</p>
-          </div>
+          <p className="text-center text-gray-500">読み込み中...</p>
         </div>
+      </div>
       </AuthenticatedLayout>
     );
   }
@@ -178,50 +178,50 @@ export default function HistoryPage() {
                 <span className="text-[#1888CF] text-lg font-bold">
                   {filteredChatRooms.length}件
                 </span>
-              </div>
+      </div>
 
               <div className="space-y-3">
                 {filteredChatRooms.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">
                     該当する相談はありません
                   </p>
-                ) : (
+          ) : (
                   filteredChatRooms.map((chatRoom) => {
                     const status = chatRoom.status || "IN_PROGRESS";
                     const statusConfig = statusBadgeConfig[status];
 
-                    return (
-                      <Link
+              return (
+                <Link
                         key={chatRoom.id}
-                        href={`/consultation/${chatRoom.id}`}
+                  href={`/consultation/${chatRoom.id}`}
                         className="block border-2 border-[#1888CF] rounded-2xl p-4 hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="flex items-start justify-between">
+                >
+                  <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <p className="text-xs text-gray-600 mb-1">
                               相談日{" "}
-                              {new Date(chatRoom.created_at).toLocaleDateString(
-                                "ja-JP",
-                                {
-                                  year: "numeric",
+                          {new Date(chatRoom.created_at).toLocaleDateString(
+                            "ja-JP",
+                            {
+                              year: "numeric",
                                   month: "2-digit",
                                   day: "2-digit",
-                                }
-                              )}
+                            }
+                          )}
                             </p>
                             <p className="text-sm font-medium text-gray-900 line-clamp-2">
                               {chatRoom.last_message || "タイトルタイトルタイトル"}
                             </p>
-                          </div>
+                      </div>
                           <div
                             className={`ml-3 px-3 py-1 rounded-full text-xs font-bold ${statusConfig.bgColor} ${statusConfig.textColor} whitespace-nowrap`}
                           >
                             {statusConfig.label}
-                          </div>
-                        </div>
-                      </Link>
-                    );
-                  })
+                    </div>
+                  </div>
+                </Link>
+              );
+            })
                 )}
               </div>
 

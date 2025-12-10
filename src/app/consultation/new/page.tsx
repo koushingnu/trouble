@@ -18,16 +18,23 @@ export default function NewConsultationPage() {
   }, []);
 
   useEffect(() => {
-    if (!mounted || status === "loading") return;
+    if (!mounted || status === "loading") {
+      console.log("[NewConsultationPage] Waiting for mount or session...", { mounted, status });
+      return;
+    }
+    
+    console.log("[NewConsultationPage] Starting fetch for chat rooms");
     
     const fetchLatestChatRoom = async () => {
       if (!session?.user) {
+        console.log("[NewConsultationPage] No session user, setting new chat");
         setIsLoadingChatRooms(false);
         setIsNewChat(true);
         return;
       }
 
       try {
+        console.log("[NewConsultationPage] Fetching /api/chat/rooms");
         const response = await fetch("/api/chat/rooms", {
           headers: {
             "Cache-Control": "no-cache",
@@ -40,15 +47,18 @@ export default function NewConsultationPage() {
         }
 
         const data: APIResponse<ChatRoom[]> = await response.json();
+        console.log("[NewConsultationPage] API Response:", data);
 
         if (data.success && data.data && data.data.length > 0) {
+          console.log("[NewConsultationPage] Found chat room:", data.data[0].id);
           setLatestChatRoom(data.data[0]);
           setIsNewChat(false);
         } else {
+          console.log("[NewConsultationPage] No chat rooms, setting new chat");
           setIsNewChat(true);
         }
       } catch (error) {
-        console.error("Error fetching latest chat:", error);
+        console.error("[NewConsultationPage] Error fetching latest chat:", error);
         setIsNewChat(true);
       } finally {
         setIsLoadingChatRooms(false);
@@ -64,7 +74,7 @@ export default function NewConsultationPage() {
         <div className="max-w-md mx-auto px-4 py-8">
           <div className="bg-[#FDFDFD] rounded-3xl shadow-lg p-6 text-center text-gray-500">
             読み込み中...
-          </div>
+        </div>
         </div>
       </AuthenticatedLayout>
     );
@@ -74,9 +84,9 @@ export default function NewConsultationPage() {
     <AuthenticatedLayout>
       <div className="max-w-md mx-auto px-4 py-6">
         <NewTroubleChat
-          initialChatRoomId={isNewChat ? null : latestChatRoom?.id || null}
-        />
-      </div>
+        initialChatRoomId={isNewChat ? null : latestChatRoom?.id || null}
+      />
+    </div>
     </AuthenticatedLayout>
   );
 }

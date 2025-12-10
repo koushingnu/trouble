@@ -67,13 +67,19 @@ export default function NewTroubleChat({
 
   // チャット履歴をロード
   useEffect(() => {
-    if (!mounted || typeof window === "undefined") return; // SSR対策
+    if (!mounted || typeof window === "undefined") {
+      console.log("[NewTroubleChat] Waiting for mount or window...", { mounted, hasWindow: typeof window !== "undefined" });
+      return;
+    }
     
     const loadChatHistory = async () => {
       if (!chatRoomId || !session?.user) {
+        console.log("[NewTroubleChat] No chatRoomId or session, skipping history load", { chatRoomId, hasSession: !!session?.user });
         return;
       }
 
+      console.log("[NewTroubleChat] Loading chat history for room:", chatRoomId);
+      
       try {
         const [historyResponse, roomResponse] = await Promise.all([
           fetch(`/api/chat/history?chatRoomId=${chatRoomId}`, {
@@ -86,19 +92,27 @@ export default function NewTroubleChat({
 
         if (historyResponse.ok) {
           const historyData = await historyResponse.json();
+          console.log("[NewTroubleChat] History API response:", historyData);
           if (historyData.success && historyData.data) {
+            console.log("[NewTroubleChat] Loaded messages:", historyData.data.length);
             setMessages(historyData.data);
           }
+        } else {
+          console.error("[NewTroubleChat] History API failed:", historyResponse.status);
         }
 
         if (roomResponse.ok) {
           const roomData = await roomResponse.json();
+          console.log("[NewTroubleChat] Room API response:", roomData);
           if (roomData.success && roomData.data) {
+            console.log("[NewTroubleChat] Chat status:", roomData.data.status);
             setChatStatus(roomData.data.status);
           }
+        } else {
+          console.error("[NewTroubleChat] Room API failed:", roomResponse.status);
         }
       } catch (error) {
-        console.error("Error loading chat history:", error);
+        console.error("[NewTroubleChat] Error loading chat history:", error);
       }
     };
 
@@ -108,9 +122,13 @@ export default function NewTroubleChat({
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!inputMessage.trim() || isLoading || chatStatus === "RESOLVED") return;
+    if (!inputMessage.trim() || isLoading || chatStatus === "RESOLVED") {
+      console.log("[NewTroubleChat] Send blocked:", { hasMessage: !!inputMessage.trim(), isLoading, chatStatus });
+      return;
+    }
 
     const userMessage = inputMessage.trim();
+    console.log("[NewTroubleChat] Sending message:", userMessage);
     setInputMessage("");
     setIsLoading(true);
 
@@ -125,6 +143,7 @@ export default function NewTroubleChat({
     setMessages((prev) => [...prev, tempUserMessage]);
 
     try {
+      console.log("[NewTroubleChat] Calling /api/chat with:", { message: userMessage, chatRoomId });
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -135,6 +154,7 @@ export default function NewTroubleChat({
       });
 
       const data = await response.json();
+      console.log("[NewTroubleChat] Chat API response:", data);
 
       if (data.success) {
         // チャットルームIDを保存
