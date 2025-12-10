@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { NextRequest } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import prisma from "@/lib/prisma";
 import OpenAI from "openai";
 import { ChatCompletionMessageParam } from "openai/resources/chat";
-
-const prisma = new PrismaClient();
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
