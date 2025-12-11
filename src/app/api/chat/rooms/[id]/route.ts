@@ -128,7 +128,7 @@ export async function PATCH(
       where: { id: chatRoomId },
       data: {
         status,
-        resolved_at: resolved_at ? new Date(resolved_at) : null,
+        resolved_at: status === "RESOLVED" ? new Date() : null,
       },
     });
 

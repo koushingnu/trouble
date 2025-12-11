@@ -124,7 +124,7 @@ export default function NewTroubleChat({
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!inputMessage.trim() || isLoading || chatStatus === "RESOLVED") {
+    if (!inputMessage.trim() || isLoading) {
       console.log("[NewTroubleChat] Send blocked:", { hasMessage: !!inputMessage.trim(), isLoading, chatStatus });
       return;
     }
@@ -185,24 +185,34 @@ export default function NewTroubleChat({
     }
   };
 
-  const handleResolve = async () => {
+  const handleToggleResolve = async () => {
     if (!chatRoomId) return;
+
+    const newStatus = chatStatus === "RESOLVED" ? "IN_PROGRESS" : "RESOLVED";
+    const confirmMessage = newStatus === "RESOLVED" 
+      ? "この相談を解決済みにしますか？"
+      : "この相談を対応中に戻しますか？";
+
+    if (!confirm(confirmMessage)) return;
 
     try {
       const response = await fetch(`/api/chat/rooms/${chatRoomId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "RESOLVED" }),
+        body: JSON.stringify({ status: newStatus }),
       });
 
       const data = await response.json();
       if (data.success) {
-        setChatStatus("RESOLVED");
-        alert("相談を解決済みにしました");
+        setChatStatus(newStatus);
+        const successMessage = newStatus === "RESOLVED"
+          ? "相談を解決済みにしました"
+          : "相談を対応中に戻しました";
+        alert(successMessage);
       }
     } catch (error) {
-      console.error("Error resolving chat:", error);
-      alert("解決済みにできませんでした");
+      console.error("Error toggling chat status:", error);
+      alert("ステータスの変更に失敗しました");
     }
   };
 
@@ -219,20 +229,27 @@ export default function NewTroubleChat({
       <div className="bg-[#FDFDFD] px-4 py-3 flex items-center justify-between flex-shrink-0 shadow-sm">
         <h2 className="text-lg font-bold text-gray-800">相談する</h2>
         <div className="flex items-center gap-2">
-          {chatStatus === "IN_PROGRESS" && Array.isArray(messages) && messages.length > 0 && (
-            <button
-              onClick={handleResolve}
-              className="flex items-center gap-1 text-[#FF7BAC] border-2 border-[#FF7BAC] rounded-full px-4 py-1.5 text-sm hover:bg-[#FFE4F1] transition-colors"
-            >
-              <HeartIcon className="w-4 h-4" />
-              <span>解決済みにする</span>
-            </button>
-          )}
-          {chatStatus === "RESOLVED" && (
-            <div className="flex items-center gap-1 bg-[#FF7BAC] text-white rounded-full px-4 py-1.5 text-sm">
-              <HeartIcon className="w-4 h-4 fill-current" />
-              <span>解決済み</span>
-            </div>
+          {Array.isArray(messages) && messages.length > 0 && (
+            <>
+              {chatStatus === "IN_PROGRESS" && (
+                <button
+                  onClick={handleToggleResolve}
+                  className="flex items-center gap-1 text-[#FF7BAC] border-2 border-[#FF7BAC] rounded-full px-4 py-1.5 text-sm hover:bg-[#FFE4F1] transition-colors"
+                >
+                  <HeartIcon className="w-4 h-4" />
+                  <span>解決済みにする</span>
+                </button>
+              )}
+              {chatStatus === "RESOLVED" && (
+                <button
+                  onClick={handleToggleResolve}
+                  className="flex items-center gap-1 bg-[#FF7BAC] text-white rounded-full px-4 py-1.5 text-sm hover:bg-[#E06A9C] transition-colors cursor-pointer"
+                >
+                  <HeartIcon className="w-4 h-4 fill-current" />
+                  <span>解決済み</span>
+                </button>
+              )}
+            </>
           )}
           <button
             onClick={handleNewChat}
@@ -330,18 +347,14 @@ export default function NewTroubleChat({
             type="text"
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
-            disabled={isLoading || chatStatus === "RESOLVED"}
-            placeholder={
-              chatStatus === "RESOLVED"
-                ? "この相談は解決済みです"
-                : "相談内容を入力してください"
-            }
+            disabled={isLoading}
+            placeholder="相談内容を入力してください"
             className="flex-1 min-w-0 px-4 py-3 text-base border-2 border-gray-300 rounded-full focus:outline-none focus:border-[#1888CF] disabled:bg-gray-100 disabled:text-gray-400 touch-manipulation"
             autoComplete="off"
           />
           <button
             type="submit"
-            disabled={isLoading || !inputMessage.trim() || chatStatus === "RESOLVED"}
+            disabled={isLoading || !inputMessage.trim()}
             className="flex-shrink-0 bg-[#1888CF] text-white p-3 rounded-full hover:bg-[#1568a8] disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-manipulation shadow-md"
             onTouchStart={(e) => e.stopPropagation()}
           >
