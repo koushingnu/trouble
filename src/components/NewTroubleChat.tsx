@@ -246,7 +246,7 @@ export default function NewTroubleChat({
                   className="flex items-center gap-1 bg-[#FF7BAC] text-white rounded-full px-4 py-1.5 text-sm hover:bg-[#E06A9C] transition-colors cursor-pointer"
                 >
                   <HeartIcon className="w-4 h-4 fill-current" />
-                  <span>解決済み</span>
+                  <span>相談中にする</span>
                 </button>
               )}
             </>
