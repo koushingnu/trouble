@@ -206,20 +206,54 @@ export default function NewTroubleChat({
     }
   };
 
+  const handleNewChat = () => {
+    // 新しいチャットを開始
+    setChatRoomId(null);
+    setMessages([]);
+    setChatStatus("IN_PROGRESS");
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-180px)]">
       {/* ヘッダー */}
       <div className="bg-[#FDFDFD] px-4 py-3 flex items-center justify-between flex-shrink-0 shadow-sm">
         <h2 className="text-lg font-bold text-gray-800">相談する</h2>
-        {chatStatus === "IN_PROGRESS" && Array.isArray(messages) && messages.length > 0 && (
+        <div className="flex items-center gap-2">
+          {chatStatus === "IN_PROGRESS" && Array.isArray(messages) && messages.length > 0 && (
+            <button
+              onClick={handleResolve}
+              className="flex items-center gap-1 text-[#FF7BAC] border-2 border-[#FF7BAC] rounded-full px-4 py-1.5 text-sm hover:bg-[#FFE4F1] transition-colors"
+            >
+              <HeartIcon className="w-4 h-4" />
+              <span>解決済みにする</span>
+            </button>
+          )}
+          {chatStatus === "RESOLVED" && (
+            <div className="flex items-center gap-1 bg-[#FF7BAC] text-white rounded-full px-4 py-1.5 text-sm">
+              <HeartIcon className="w-4 h-4 fill-current" />
+              <span>解決済み</span>
+            </div>
+          )}
           <button
-            onClick={handleResolve}
-            className="flex items-center gap-1 text-[#FF7BAC] border border-[#FF7BAC] rounded-full px-3 py-1 text-xs hover:bg-[#FFE4F1] transition-colors"
+            onClick={handleNewChat}
+            className="flex items-center justify-center w-9 h-9 bg-[#1888CF] text-white rounded-full hover:bg-[#1568a8] transition-colors"
+            title="新しい相談を開始"
           >
-            <HeartIcon className="w-4 h-4" />
-            <span>解決済み</span>
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
           </button>
-        )}
+        </div>
       </div>
 
       {/* メッセージエリア - 背景に直接表示 */}
