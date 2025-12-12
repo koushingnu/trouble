@@ -181,7 +181,10 @@ export async function POST(request: NextRequest) {
       });
 
       // タイトル自動生成（タイトルがない場合、かつユーザーメッセージが2件目以降）
-      if (!chatRoom.title && history.filter((m) => m.sender === "user").length >= 2) {
+      if (
+        !chatRoom.title &&
+        history.filter((m) => m.sender === "user").length >= 2
+      ) {
         try {
           const titleCompletion = await openai.chat.completions.create({
             model: GPT_MODEL,
@@ -202,13 +205,13 @@ export async function POST(request: NextRequest) {
 
           const generatedTitle =
             titleCompletion.choices[0].message.content?.trim() || null;
-          
+
           if (generatedTitle) {
-            await tx.chatRoom.update({
+            const updatedRoom = await tx.chatRoom.update({
               where: { id: chatRoom.id },
               data: { title: generatedTitle.substring(0, 100) },
             });
-            chatRoom.title = generatedTitle;
+            chatRoom = updatedRoom;
           }
         } catch (titleError) {
           console.error("Error generating title:", titleError);
