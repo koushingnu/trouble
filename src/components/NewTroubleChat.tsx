@@ -253,7 +253,7 @@ export default function NewTroubleChat({
           )}
           <button
             onClick={handleNewChat}
-            className="flex items-center justify-center w-9 h-9 bg-[#1888CF] text-white rounded-full hover:bg-[#1568a8] transition-colors"
+            className="flex items-center justify-center w-9 h-9 bg-white text-[#1888CF] border-2 border-[#1888CF] rounded-full hover:bg-[#f0f8ff] transition-colors"
             title="新しい相談を開始"
           >
             <svg
