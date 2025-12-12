@@ -64,15 +64,15 @@ export default function MyPage() {
       <div className="max-w-md mx-auto px-4 py-6">
         <div className="bg-[#FDFDFD] rounded-3xl shadow-lg overflow-hidden">
           {/* ヘッダー */}
-          <div className="px-6 py-6 border-b border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200">
             <h1 className="text-2xl font-bold text-gray-800">マイページ</h1>
           </div>
 
           {/* コンテンツエリア */}
-          <div className="px-6 py-8 space-y-6">
+          <div className="px-6 py-6 space-y-4">
             {/* ユーザー情報 */}
-            <div className="space-y-4">
-              <div className="border-b border-gray-200 pb-3">
+            <div className="space-y-3">
+              <div className="border-b border-gray-200 pb-2">
                 <dt className="text-sm font-medium text-gray-500 mb-1">
                   メールアドレス
                 </dt>
@@ -81,7 +81,7 @@ export default function MyPage() {
                 </dd>
               </div>
 
-              <div className="border-b border-gray-200 pb-3">
+              <div className="border-b border-gray-200 pb-2">
                 <dt className="text-sm font-medium text-gray-500 mb-1">
                   アカウントタイプ
                 </dt>
@@ -100,7 +100,7 @@ export default function MyPage() {
                 </dd>
               </div>
 
-              <div className="pb-3">
+              <div className="pb-2">
                 <dt className="text-sm font-medium text-gray-500 mb-1">登録日</dt>
                 <dd className="text-base text-gray-800">
                   {userDetails?.created_at
@@ -118,7 +118,7 @@ export default function MyPage() {
             </div>
 
             {/* ログアウトボタン */}
-            <div className="pt-4">
+            <div className="pt-2">
               <button
                 onClick={handleLogout}
                 className="w-full bg-[#FDFDFD] text-[#1888CF] py-4 px-6 rounded-full font-bold text-lg border-2 border-[#1888CF] hover:bg-[#f0f8ff] transition-colors duration-200 shadow-sm"
@@ -128,7 +128,7 @@ export default function MyPage() {
             </div>
 
             {/* 解約リンク */}
-            <div className="pt-3 text-center">
+            <div className="pt-2 text-center">
               <a
                 href="#"
                 className="text-sm text-gray-500 hover:text-gray-700 underline transition-colors"
