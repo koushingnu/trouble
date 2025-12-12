@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // トランザクションでチャットルームとメッセージを保存
+    // トランザクションでチャットルームとメッセージを保存（タイムアウト30秒）
     const result = await prisma.$transaction(async (tx) => {
       // チャットルームの取得または作成
       let chatRoom;
@@ -224,6 +224,8 @@ export async function POST(request: NextRequest) {
         chatRoomId: chatRoom.id,
         title: chatRoom.title,
       };
+    }, {
+      timeout: 30000, // 30秒
     });
 
     console.log("Chat completed successfully");
