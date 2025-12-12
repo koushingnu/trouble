@@ -3,9 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FaEnvelope, FaLock, FaKey } from "react-icons/fa";
-import FullScreenLoading from "../../components/FullScreenLoading";
-import { toast } from "react-hot-toast";
+import Image from "next/image";
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -25,7 +23,6 @@ export default function Register() {
 
     if (password !== confirmPassword) {
       setError("パスワードが一致しません");
-      toast.error("パスワードが一致しません");
       setLoading(false);
       return;
     }
@@ -46,7 +43,6 @@ export default function Register() {
       }
 
       setSuccess(true);
-      toast.success("登録が完了しました");
       // フォームをクリア
       setEmail("");
       setPassword("");
@@ -61,120 +57,157 @@ export default function Register() {
       setError(
         error instanceof Error ? error.message : "登録中にエラーが発生しました"
       );
-      toast.error(
-        error instanceof Error ? error.message : "登録中にエラーが発生しました"
-      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <>
-      {loading && <FullScreenLoading message="登録中..." />}
-      <main className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-gradient-to-br from-gray-50 to-white p-4 -mt-16">
-        <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg border border-gray-100">
-          <div className="text-center mb-6">
-            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-gray-800 to-gray-600 font-noto-sans-jp">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-[#ACE0F9] to-[#64B3F4]">
+      {/* ヘッダー */}
+      <header className="w-full bg-[#FDFDFD] py-4 px-4">
+        <div className="max-w-md mx-auto text-center px-6">
+          <Image
+            src="/logo/logo.svg"
+            alt="トラブルまるごとレスキュー隊"
+            width={450}
+            height={98}
+            priority
+            className="mx-auto w-full max-w-[200px] h-auto"
+          />
+        </div>
+      </header>
+
+      {/* メインコンテンツ */}
+      <main className="flex-1 flex items-center justify-center px-4 py-8">
+        <div className="w-full max-w-md">
+          <div className="bg-[#FDFDFD] rounded-3xl shadow-lg p-8">
+            <h1 className="text-2xl font-bold text-center text-gray-800 mb-6">
               新規登録
             </h1>
-            <div className="mt-2 h-1 w-12 bg-gradient-to-r from-blue-500 to-blue-300 mx-auto rounded-full"></div>
-            <p className="mt-2 text-sm text-gray-600">
-              認証キーをお持ちの方のみ登録いただけます
-            </p>
-          </div>
 
-          {error && (
-            <div className="mb-3 p-2 bg-red-50 border border-red-100 text-red-600 rounded text-sm">
-              {error}
-            </div>
-          )}
-
-          {success && (
-            <div className="mb-3 p-2 bg-green-50 border border-green-100 text-green-600 rounded text-sm">
-              登録が完了しました。3秒後にログインページへ移動します...
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <div className="relative">
-                <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-11 pr-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 bg-white text-gray-800 placeholder-gray-400 text-base"
-                  placeholder="メールアドレス"
-                  required
-                />
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
+                {error}
               </div>
-            </div>
+            )}
 
-            <div>
-              <div className="relative">
-                <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-11 pr-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 bg-white text-gray-800 placeholder-gray-400 text-base"
-                  placeholder="パスワード"
-                  required
-                />
+            {success && (
+              <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-600 rounded-lg text-sm">
+                登録が完了しました。3秒後にログインページへ移動します...
               </div>
-            </div>
+            )}
 
-            <div>
-              <div className="relative">
-                <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full pl-11 pr-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 bg-white text-gray-800 placeholder-gray-400 text-base"
-                  placeholder="パスワード（確認）"
-                  required
-                />
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <div className="relative">
+                  <Image
+                    src="/icon/mail.svg"
+                    alt="メール"
+                    width={20}
+                    height={20}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#1888CF]"
+                  />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 rounded-full border-2 border-gray-300 focus:outline-none focus:border-[#1888CF] bg-[#FDFDFD] text-gray-800 placeholder-gray-400"
+                    placeholder="メールアドレス"
+                    required
+                    disabled={loading}
+                  />
+                </div>
               </div>
-            </div>
 
-            <div>
-              <div className="relative">
-                <FaKey className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
-                <input
-                  type="text"
-                  value={token}
-                  onChange={(e) => setToken(e.target.value)}
-                  className="w-full pl-11 pr-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 bg-white text-gray-800 placeholder-gray-400 text-base"
-                  placeholder="認証キー"
-                  required
-                />
+              <div>
+                <div className="relative">
+                  <Image
+                    src="/icon/lock.svg"
+                    alt="パスワード"
+                    width={20}
+                    height={20}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2"
+                  />
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 rounded-full border-2 border-gray-300 focus:outline-none focus:border-[#1888CF] bg-[#FDFDFD] text-gray-800 placeholder-gray-400"
+                    placeholder="パスワード"
+                    required
+                    disabled={loading}
+                  />
+                </div>
               </div>
+
+              <div>
+                <div className="relative">
+                  <Image
+                    src="/icon/lock.svg"
+                    alt="パスワード確認"
+                    width={20}
+                    height={20}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2"
+                  />
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 rounded-full border-2 border-gray-300 focus:outline-none focus:border-[#1888CF] bg-[#FDFDFD] text-gray-800 placeholder-gray-400"
+                    placeholder="パスワード（確認）"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="relative">
+                  <Image
+                    src="/icon/lock.svg"
+                    alt="認証キー"
+                    width={20}
+                    height={20}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2"
+                  />
+                  <input
+                    type="text"
+                    value={token}
+                    onChange={(e) => setToken(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 rounded-full border-2 border-gray-300 focus:outline-none focus:border-[#1888CF] bg-[#FDFDFD] text-gray-800 placeholder-gray-400"
+                    placeholder="認証キー"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-[#1888CF] text-white py-3 px-6 rounded-full font-bold hover:bg-[#1568a8] disabled:opacity-50 transition-colors duration-200 mt-6"
+              >
+                {loading ? "登録中..." : "登録する"}
+              </button>
+            </form>
+
+            <div className="mt-6 text-center">
+              <Link
+                href="/auth"
+                className="text-[#1888CF] hover:underline text-sm font-medium"
+              >
+                すでにアカウントをお持ちの方はこちら
+              </Link>
             </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-500 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-600 disabled:opacity-50 transition-colors duration-200 text-base mt-4"
-            >
-              {loading ? "登録中..." : "登録する"}
-            </button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-gray-600 mb-2 text-sm">
-              すでにアカウントをお持ちの方は
-            </p>
-            <Link
-              href="/auth"
-              className="inline-block bg-white text-blue-500 py-1.5 px-6 rounded-lg font-semibold border-2 border-blue-500 hover:bg-blue-50 transition-colors duration-200 text-sm"
-            >
-              ログイン
-            </Link>
           </div>
         </div>
       </main>
-    </>
+
+      {/* フッター */}
+      <footer className="w-full bg-[#FDFDFD] py-3 text-center">
+        <p className="text-xs text-gray-600">© 2025 トラブルまるごとレスキュー隊</p>
+      </footer>
+    </div>
   );
 }
