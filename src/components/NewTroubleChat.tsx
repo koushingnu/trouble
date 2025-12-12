@@ -245,7 +245,7 @@ export default function NewTroubleChat({
                   onClick={handleToggleResolve}
                   className="flex items-center gap-1 bg-white text-[#FF7BAC] border-2 border-[#FF7BAC] rounded-full px-4 py-1.5 text-sm hover:bg-[#FFE4F1] transition-colors cursor-pointer"
                 >
-                  <HeartIcon className="w-4 h-4" />
+                  <HeartIcon className="w-4 h-4 fill-current" />
                   <span>解決済み</span>
                 </button>
               )}

@@ -17,7 +17,7 @@ export default function ConsultationDetailPage() {
 
   return (
     <AuthenticatedLayout>
-      <div className="max-w-md mx-auto px-4 py-6">
+      <div className="h-full">
         <NewTroubleChat initialChatRoomId={parseInt(chatRoomId as string, 10)} />
       </div>
     </AuthenticatedLayout>
