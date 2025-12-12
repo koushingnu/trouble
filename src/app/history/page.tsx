@@ -73,26 +73,26 @@ export default function HistoryPage() {
   const filterConfig = {
     all: {
       label: "すべて",
-      bgColor: "bg-gray-200",
-      textColor: "text-gray-800",
+      bgColor: "bg-[#E8E8E8]",
+      textColor: "text-[#1888CF]",
       count: stats.all,
     },
     resolved: {
       label: "解決済み",
-      bgColor: "bg-blue-100",
-      textColor: "text-blue-800",
+      bgColor: "bg-[#E3F2FD]",
+      textColor: "text-[#1888CF]",
       count: stats.resolved,
     },
     in_progress: {
       label: "相談中",
-      bgColor: "bg-yellow-100",
-      textColor: "text-yellow-800",
+      bgColor: "bg-[#FFF9C4]",
+      textColor: "text-[#1888CF]",
       count: stats.in_progress,
     },
     escalated: {
       label: "電話相談",
-      bgColor: "bg-pink-100",
-      textColor: "text-pink-800",
+      bgColor: "bg-[#FFE4F1]",
+      textColor: "text-[#1888CF]",
       count: stats.escalated,
     },
   };
@@ -100,18 +100,18 @@ export default function HistoryPage() {
   const statusBadgeConfig = {
     IN_PROGRESS: {
       label: "相談中",
-      bgColor: "bg-yellow-100",
-      textColor: "text-yellow-800",
+      bgColor: "bg-[#FFF9C4]",
+      textColor: "text-[#1888CF]",
     },
     RESOLVED: {
       label: "解決済み",
-      bgColor: "bg-blue-100",
-      textColor: "text-blue-800",
+      bgColor: "bg-[#E3F2FD]",
+      textColor: "text-[#1888CF]",
     },
     ESCALATED: {
       label: "電話相談",
-      bgColor: "bg-pink-100",
-      textColor: "text-pink-800",
+      bgColor: "bg-[#FFE4F1]",
+      textColor: "text-[#1888CF]",
     },
   };
 
