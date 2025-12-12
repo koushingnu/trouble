@@ -117,8 +117,18 @@ export default function MyPage() {
               </div>
             </div>
 
+            {/* 解約リンク */}
+            <div className="pt-4 text-center">
+              <a
+                href="#"
+                className="text-sm text-gray-500 hover:text-gray-700 underline transition-colors"
+              >
+                解約はこちらから
+              </a>
+            </div>
+
             {/* ログアウトボタン */}
-            <div className="pt-4">
+            <div className="pt-2">
               <button
                 onClick={handleLogout}
                 className="w-full bg-[#FDFDFD] text-[#1888CF] py-4 px-6 rounded-full font-bold text-lg border-2 border-[#1888CF] hover:bg-[#f0f8ff] transition-colors duration-200 shadow-sm"
