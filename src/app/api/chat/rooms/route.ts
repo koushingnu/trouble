@@ -75,10 +75,18 @@ export async function GET(request: NextRequest) {
     }
     console.log("User ID:", userId);
 
-    // ユーザーのチャットルーム一覧を取得
+    // ユーザーのチャットルーム一覧を最新メッセージと一緒に取得（N+1解消）
     const chatRooms = await prisma.chatRoom.findMany({
       where: {
         user_id: userId,
+      },
+      include: {
+        messages: {
+          orderBy: {
+            created_at: "desc",
+          },
+          take: 1, // 最新メッセージのみ
+        },
       },
       orderBy: {
         created_at: "desc",
@@ -87,30 +95,20 @@ export async function GET(request: NextRequest) {
 
     console.log("Found chat rooms:", chatRooms.length);
 
-    // 各チャットルームの最新メッセージを取得
-    const formattedRooms = await Promise.all(
-      chatRooms.map(async (room) => {
-        const latestMessage = await prisma.message.findFirst({
-          where: {
-            chat_room_id: room.id,
-          },
-          orderBy: {
-            created_at: "desc",
-          },
-        });
+    // フォーマット（N+1解消: 1回のクエリで全データ取得済み）
+    const formattedRooms = chatRooms.map((room) => {
+      const latestMessage = room.messages[0];
+      console.log(`Chat room ${room.id} latest message:`, latestMessage);
 
-        console.log(`Chat room ${room.id} latest message:`, latestMessage);
-
-        return {
-          id: room.id,
-          created_at: room.created_at,
-          status: room.status,
-          resolved_at: room.resolved_at,
-          last_message: latestMessage?.body || null,
-          last_message_at: latestMessage?.created_at || null,
-        };
-      })
-    );
+      return {
+        id: room.id,
+        created_at: room.created_at,
+        status: room.status,
+        resolved_at: room.resolved_at,
+        last_message: latestMessage?.body || null,
+        last_message_at: latestMessage?.created_at || null,
+      };
+    });
 
     console.log("Formatted rooms:", formattedRooms);
     console.log("=== Get Chat Rooms API End ===");
