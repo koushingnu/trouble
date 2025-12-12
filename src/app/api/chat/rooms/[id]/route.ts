@@ -90,7 +90,7 @@ export async function PATCH(
 
     const body = await request.json();
     console.log("[DEBUG] Request body:", body);
-    const { status, resolved_at } = body;
+    const { status, resolved_at, title } = body;
 
     // チャットルームの所有者確認
     const chatRoom = await prisma.chatRoom.findUnique({
@@ -120,16 +120,30 @@ export async function PATCH(
       chatRoomId,
       status,
       resolved_at,
+      title,
       userId: session.user.id,
     });
 
-    // ステータス更新
+    // 更新データを構築
+    const updateData: {
+      status?: "IN_PROGRESS" | "RESOLVED" | "ESCALATED";
+      resolved_at?: Date | null;
+      title?: string;
+    } = {};
+
+    if (status !== undefined) {
+      updateData.status = status;
+      updateData.resolved_at = status === "RESOLVED" ? new Date() : null;
+    }
+
+    if (title !== undefined) {
+      updateData.title = title.substring(0, 100); // 最大100文字
+    }
+
+    // ステータス・タイトル更新
     const updatedChatRoom = await prisma.chatRoom.update({
       where: { id: chatRoomId },
-      data: {
-        status,
-        resolved_at: status === "RESOLVED" ? new Date() : null,
-      },
+      data: updateData,
     });
 
     return NextResponse.json({

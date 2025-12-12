@@ -23,6 +23,8 @@ export default function NewTroubleChat({
   const [chatStatus, setChatStatus] = useState<
     "IN_PROGRESS" | "RESOLVED" | "ESCALATED"
   >("IN_PROGRESS");
+  const [chatTitle, setChatTitle] = useState<string>("");
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [mounted, setMounted] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -109,6 +111,7 @@ export default function NewTroubleChat({
           if (roomData.success && roomData.data) {
             console.log("[NewTroubleChat] Chat status:", roomData.data.status);
             setChatStatus(roomData.data.status);
+            setChatTitle(roomData.data.title || "");
           }
         } else {
           console.error("[NewTroubleChat] Room API failed:", roomResponse.status);
@@ -162,6 +165,11 @@ export default function NewTroubleChat({
         // チャットルームIDを保存
         if (data.data.chatRoomId && !chatRoomId) {
           setChatRoomId(data.data.chatRoomId);
+        }
+
+        // タイトルが生成されていたら更新
+        if (data.data.title) {
+          setChatTitle(data.data.title);
         }
 
         // アシスタントの応答を追加
@@ -221,14 +229,44 @@ export default function NewTroubleChat({
     setChatRoomId(null);
     setMessages([]);
     setChatStatus("IN_PROGRESS");
+    setChatTitle("");
+    setIsEditingTitle(false);
+  };
+
+  const handleUpdateTitle = async () => {
+    if (!chatRoomId || !chatTitle.trim()) {
+      setIsEditingTitle(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/chat/rooms/${chatRoomId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: chatTitle.trim() }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setChatTitle(chatTitle.trim());
+        setIsEditingTitle(false);
+      } else {
+        alert("タイトルの更新に失敗しました");
+      }
+    } catch (error) {
+      console.error("Error updating title:", error);
+      alert("タイトルの更新に失敗しました");
+    }
   };
 
   return (
     <div className="flex flex-col h-[calc(100vh-180px)]">
       {/* ヘッダー */}
-      <div className="bg-[#FDFDFD] px-4 py-3 flex items-center justify-between flex-shrink-0 shadow-sm">
-        <h2 className="text-lg font-bold text-gray-800">相談する</h2>
-        <div className="flex items-center gap-2">
+      <div className="bg-[#FDFDFD] px-4 py-3 flex-shrink-0 shadow-sm">
+        {/* タイトル行 */}
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-lg font-bold text-gray-800">相談する</h2>
+          <div className="flex items-center gap-2">
           {Array.isArray(messages) && messages.length > 0 && (
             <>
               {chatStatus === "IN_PROGRESS" && (
@@ -270,7 +308,42 @@ export default function NewTroubleChat({
               />
             </svg>
           </button>
+          </div>
         </div>
+        
+        {/* タイトル編集行 */}
+        {chatTitle && Array.isArray(messages) && messages.length > 0 && (
+          <div className="flex items-center gap-2">
+            {isEditingTitle ? (
+              <>
+                <input
+                  type="text"
+                  value={chatTitle}
+                  onChange={(e) => setChatTitle(e.target.value)}
+                  onBlur={handleUpdateTitle}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleUpdateTitle();
+                    } else if (e.key === "Escape") {
+                      setIsEditingTitle(false);
+                    }
+                  }}
+                  className="flex-1 text-sm text-gray-500 border-b border-gray-300 focus:outline-none focus:border-[#1888CF] px-1 py-0.5"
+                  autoFocus
+                  maxLength={100}
+                />
+              </>
+            ) : (
+              <button
+                onClick={() => setIsEditingTitle(true)}
+                className="text-sm text-gray-500 hover:text-gray-700 transition-colors truncate max-w-full"
+                title={chatTitle}
+              >
+                {chatTitle}
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* メッセージエリア - 背景に直接表示 */}

@@ -180,9 +180,46 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      // タイトル自動生成（タイトルがない場合、かつユーザーメッセージが2件目以降）
+      if (!chatRoom.title && history.filter((m) => m.sender === "user").length >= 2) {
+        try {
+          const titleCompletion = await openai.chat.completions.create({
+            model: GPT_MODEL,
+            messages: [
+              {
+                role: "system",
+                content:
+                  "以下のトラブル相談の内容を10文字以内の簡潔なタイトルにまとめてください。「〜について」「〜の件」などの形式で。",
+              },
+              {
+                role: "user",
+                content: message,
+              },
+            ],
+            temperature: 0.3,
+            max_tokens: 30,
+          });
+
+          const generatedTitle =
+            titleCompletion.choices[0].message.content?.trim() || null;
+          
+          if (generatedTitle) {
+            await tx.chatRoom.update({
+              where: { id: chatRoom.id },
+              data: { title: generatedTitle.substring(0, 100) },
+            });
+            chatRoom.title = generatedTitle;
+          }
+        } catch (titleError) {
+          console.error("Error generating title:", titleError);
+          // タイトル生成に失敗してもチャット自体は続行
+        }
+      }
+
       return {
         message: assistantMessage,
         chatRoomId: chatRoom.id,
+        title: chatRoom.title,
       };
     });
 
@@ -205,7 +242,5 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

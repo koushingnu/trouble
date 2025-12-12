@@ -210,7 +210,7 @@ export default function HistoryPage() {
                           )}
                             </p>
                             <p className="text-sm font-medium text-gray-900 line-clamp-2">
-                              {chatRoom.last_message || "タイトルタイトルタイトル"}
+                              {chatRoom.title || chatRoom.last_message || "新しい相談"}
                             </p>
                       </div>
                           <div

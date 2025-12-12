@@ -49,10 +49,14 @@ model ChatRoom {
   created_at  DateTime      @default(now())
   status      ChatStatus    @default(IN_PROGRESS)
   resolved_at DateTime?
+  title       String?       @db.VarChar(100)
   user        User          @relation(fields: [user_id], references: [id])
   messages    Message[]
 
   @@index([user_id], map: "ChatRoom_user_id_fkey")
+  @@index([created_at])
+  @@index([status])
+  @@index([user_id, status])
 }
 
 model Message {
@@ -64,6 +68,8 @@ model Message {
   chat_room    ChatRoom @relation(fields: [chat_room_id], references: [id])
 
   @@index([chat_room_id], map: "Message_chat_room_id_fkey")
+  @@index([created_at])
+  @@index([chat_room_id, created_at])
 }
 
 enum TokenStatus {

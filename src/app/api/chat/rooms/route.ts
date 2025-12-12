@@ -98,16 +98,17 @@ export async function GET(request: NextRequest) {
     // フォーマット（N+1解消: 1回のクエリで全データ取得済み）
     const formattedRooms = chatRooms.map((room) => {
       const latestMessage = room.messages[0];
-      console.log(`Chat room ${room.id} latest message:`, latestMessage);
+        console.log(`Chat room ${room.id} latest message:`, latestMessage);
 
-      return {
-        id: room.id,
-        created_at: room.created_at,
+        return {
+          id: room.id,
+          created_at: room.created_at,
         status: room.status,
         resolved_at: room.resolved_at,
-        last_message: latestMessage?.body || null,
-        last_message_at: latestMessage?.created_at || null,
-      };
+          title: room.title,
+          last_message: latestMessage?.body || null,
+          last_message_at: latestMessage?.created_at || null,
+        };
     });
 
     console.log("Formatted rooms:", formattedRooms);
