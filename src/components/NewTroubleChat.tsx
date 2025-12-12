@@ -243,9 +243,9 @@ export default function NewTroubleChat({
               {chatStatus === "RESOLVED" && (
                 <button
                   onClick={handleToggleResolve}
-                  className="flex items-center gap-1 bg-[#FF7BAC] text-white rounded-full px-4 py-1.5 text-sm hover:bg-[#E06A9C] transition-colors cursor-pointer"
+                  className="flex items-center gap-1 bg-white text-[#FF7BAC] border-2 border-[#FF7BAC] rounded-full px-4 py-1.5 text-sm hover:bg-[#FFE4F1] transition-colors cursor-pointer"
                 >
-                  <HeartIcon className="w-4 h-4 fill-current" />
+                  <HeartIcon className="w-4 h-4" />
                   <span>解決済み</span>
                 </button>
               )}
