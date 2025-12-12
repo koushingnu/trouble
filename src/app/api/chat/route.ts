@@ -92,141 +92,144 @@ export async function POST(request: NextRequest) {
     }
 
     // トランザクションでチャットルームとメッセージを保存（タイムアウト30秒）
-    const result = await prisma.$transaction(async (tx) => {
-      // チャットルームの取得または作成
-      let chatRoom;
-      if (chatRoomId) {
-        chatRoom = await tx.chatRoom.findUnique({
-          where: {
-            id: chatRoomId,
-            user_id: parseInt(token.id, 10),
-          },
-        });
-
-        if (!chatRoom) {
-          throw new Error("Chat room not found or unauthorized");
-        }
-      } else {
-        chatRoom = await tx.chatRoom.create({
-          data: {
-            user_id: parseInt(token.id, 10),
-          },
-        });
-      }
-
-      // ユーザーメッセージを保存
-      const userMessage = await tx.message.create({
-        data: {
-          chat_room_id: chatRoom.id,
-          sender: "user",
-          body: message,
-        },
-      });
-
-      // チャット履歴を取得
-      const history = await tx.message.findMany({
-        where: {
-          chat_room_id: chatRoom.id,
-        },
-        orderBy: {
-          created_at: "asc",
-        },
-      });
-
-      // OpenAI APIの呼び出し
-      if (!openai || !OPENAI_API_KEY) {
-        throw new Error(
-          "OpenAI APIの設定が正しくありません。環境変数 OPENAI_API_KEY を確認してください。"
-        );
-      }
-
-      const messages: ChatCompletionMessageParam[] = history.map((msg) => ({
-        role: msg.sender === "user" ? "user" : "assistant",
-        content: msg.body,
-      }));
-
-      // システムメッセージを追加
-      messages.unshift(
-        {
-          role: "system",
-          content: SYSTEM_PROMPT,
-        },
-        {
-          role: "system",
-          content: history.length <= 1 ? INITIAL_PROMPT : "",
-        }
-      );
-
-      const completion = await openai.chat.completions.create({
-        model: GPT_MODEL,
-        messages,
-        temperature: 0.3,
-        max_tokens: 1000,
-        presence_penalty: 0.3,
-        frequency_penalty: 0.3,
-      });
-
-      const assistantMessage = formatAssistantMessage(
-        completion.choices[0].message.content ??
-          "申し訳ございません。応答の生成に失敗しました。"
-      );
-
-      // アシスタントの応答を保存
-      const savedAssistantMessage = await tx.message.create({
-        data: {
-          chat_room_id: chatRoom.id,
-          sender: "assistant",
-          body: assistantMessage,
-        },
-      });
-
-      // タイトル自動生成（タイトルがない場合、かつユーザーメッセージが2件目以降）
-      if (
-        !chatRoom.title &&
-        history.filter((m) => m.sender === "user").length >= 2
-      ) {
-        try {
-          const titleCompletion = await openai.chat.completions.create({
-            model: GPT_MODEL,
-            messages: [
-              {
-                role: "system",
-                content:
-                  "以下のトラブル相談の内容を10文字以内の簡潔なタイトルにまとめてください。「〜について」「〜の件」などの形式で。",
-              },
-              {
-                role: "user",
-                content: message,
-              },
-            ],
-            temperature: 0.3,
-            max_tokens: 30,
+    const result = await prisma.$transaction(
+      async (tx) => {
+        // チャットルームの取得または作成
+        let chatRoom;
+        if (chatRoomId) {
+          chatRoom = await tx.chatRoom.findUnique({
+            where: {
+              id: chatRoomId,
+              user_id: parseInt(token.id, 10),
+            },
           });
 
-          const generatedTitle =
-            titleCompletion.choices[0].message.content?.trim() || null;
-
-          if (generatedTitle) {
-            const updatedRoom = await tx.chatRoom.update({
-              where: { id: chatRoom.id },
-              data: { title: generatedTitle.substring(0, 100) },
-            });
-            chatRoom = updatedRoom;
+          if (!chatRoom) {
+            throw new Error("Chat room not found or unauthorized");
           }
-        } catch (titleError) {
-          console.error("Error generating title:", titleError);
-          // タイトル生成に失敗してもチャット自体は続行
+        } else {
+          chatRoom = await tx.chatRoom.create({
+            data: {
+              user_id: parseInt(token.id, 10),
+            },
+          });
         }
-      }
 
-      return {
-        message: assistantMessage,
-        chatRoomId: chatRoom.id,
-        title: chatRoom.title,
-      };
-    }, {
-      timeout: 30000, // 30秒
-    });
+        // ユーザーメッセージを保存
+        const userMessage = await tx.message.create({
+          data: {
+            chat_room_id: chatRoom.id,
+            sender: "user",
+            body: message,
+          },
+        });
+
+        // チャット履歴を取得
+        const history = await tx.message.findMany({
+          where: {
+            chat_room_id: chatRoom.id,
+          },
+          orderBy: {
+            created_at: "asc",
+          },
+        });
+
+        // OpenAI APIの呼び出し
+        if (!openai || !OPENAI_API_KEY) {
+          throw new Error(
+            "OpenAI APIの設定が正しくありません。環境変数 OPENAI_API_KEY を確認してください。"
+          );
+        }
+
+        const messages: ChatCompletionMessageParam[] = history.map((msg) => ({
+          role: msg.sender === "user" ? "user" : "assistant",
+          content: msg.body,
+        }));
+
+        // システムメッセージを追加
+        messages.unshift(
+          {
+            role: "system",
+            content: SYSTEM_PROMPT,
+          },
+          {
+            role: "system",
+            content: history.length <= 1 ? INITIAL_PROMPT : "",
+          }
+        );
+
+        const completion = await openai.chat.completions.create({
+          model: GPT_MODEL,
+          messages,
+          temperature: 0.3,
+          max_tokens: 1000,
+          presence_penalty: 0.3,
+          frequency_penalty: 0.3,
+        });
+
+        const assistantMessage = formatAssistantMessage(
+          completion.choices[0].message.content ??
+            "申し訳ございません。応答の生成に失敗しました。"
+        );
+
+        // アシスタントの応答を保存
+        const savedAssistantMessage = await tx.message.create({
+          data: {
+            chat_room_id: chatRoom.id,
+            sender: "assistant",
+            body: assistantMessage,
+          },
+        });
+
+        // タイトル自動生成（タイトルがない場合、かつユーザーメッセージが2件目以降）
+        if (
+          !chatRoom.title &&
+          history.filter((m) => m.sender === "user").length >= 2
+        ) {
+          try {
+            const titleCompletion = await openai.chat.completions.create({
+              model: GPT_MODEL,
+              messages: [
+                {
+                  role: "system",
+                  content:
+                    "以下のトラブル相談の内容を10文字以内の簡潔なタイトルにまとめてください。「〜について」「〜の件」などの形式で。",
+                },
+                {
+                  role: "user",
+                  content: message,
+                },
+              ],
+              temperature: 0.3,
+              max_tokens: 30,
+            });
+
+            const generatedTitle =
+              titleCompletion.choices[0].message.content?.trim() || null;
+
+            if (generatedTitle) {
+              const updatedRoom = await tx.chatRoom.update({
+                where: { id: chatRoom.id },
+                data: { title: generatedTitle.substring(0, 100) },
+              });
+              chatRoom = updatedRoom;
+            }
+          } catch (titleError) {
+            console.error("Error generating title:", titleError);
+            // タイトル生成に失敗してもチャット自体は続行
+          }
+        }
+
+        return {
+          message: assistantMessage,
+          chatRoomId: chatRoom.id,
+          title: chatRoom.title,
+        };
+      },
+      {
+        timeout: 30000, // 30秒
+      }
+    );
 
     console.log("Chat completed successfully");
     console.log("=== Chat Prisma API End ===");

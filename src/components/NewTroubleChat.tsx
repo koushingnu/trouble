@@ -263,10 +263,44 @@ export default function NewTroubleChat({
     <div className="flex flex-col h-[calc(100vh-180px)]">
       {/* ヘッダー */}
       <div className="bg-[#FDFDFD] px-4 py-3 flex-shrink-0 shadow-sm">
-        {/* タイトル行 */}
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-lg font-bold text-gray-800">相談する</h2>
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between">
+          {/* 左側：タイトル */}
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <h2 className="text-lg font-bold text-gray-800 flex-shrink-0">相談する</h2>
+            {chatTitle && Array.isArray(messages) && messages.length > 0 && (
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                {isEditingTitle ? (
+                  <input
+                    type="text"
+                    value={chatTitle}
+                    onChange={(e) => setChatTitle(e.target.value)}
+                    onBlur={handleUpdateTitle}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleUpdateTitle();
+                      } else if (e.key === "Escape") {
+                        setIsEditingTitle(false);
+                      }
+                    }}
+                    className="flex-1 text-sm text-gray-500 border-b border-gray-300 focus:outline-none focus:border-[#1888CF] px-1 py-0.5 min-w-0"
+                    autoFocus
+                    maxLength={100}
+                  />
+                ) : (
+                  <button
+                    onClick={() => setIsEditingTitle(true)}
+                    className="text-sm text-gray-500 hover:text-gray-700 transition-colors truncate min-w-0"
+                    title={chatTitle}
+                  >
+                    {chatTitle}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+          
+          {/* 右側：ボタン */}
+          <div className="flex items-center gap-2 flex-shrink-0">
           {Array.isArray(messages) && messages.length > 0 && (
             <>
               {chatStatus === "IN_PROGRESS" && (
@@ -310,40 +344,6 @@ export default function NewTroubleChat({
           </button>
           </div>
         </div>
-        
-        {/* タイトル編集行 */}
-        {chatTitle && Array.isArray(messages) && messages.length > 0 && (
-          <div className="flex items-center gap-2">
-            {isEditingTitle ? (
-              <>
-                <input
-                  type="text"
-                  value={chatTitle}
-                  onChange={(e) => setChatTitle(e.target.value)}
-                  onBlur={handleUpdateTitle}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleUpdateTitle();
-                    } else if (e.key === "Escape") {
-                      setIsEditingTitle(false);
-                    }
-                  }}
-                  className="flex-1 text-sm text-gray-500 border-b border-gray-300 focus:outline-none focus:border-[#1888CF] px-1 py-0.5"
-                  autoFocus
-                  maxLength={100}
-                />
-              </>
-            ) : (
-              <button
-                onClick={() => setIsEditingTitle(true)}
-                className="text-sm text-gray-500 hover:text-gray-700 transition-colors truncate max-w-full"
-                title={chatTitle}
-              >
-                {chatTitle}
-              </button>
-            )}
-          </div>
-        )}
       </div>
 
       {/* メッセージエリア - 背景に直接表示 */}
