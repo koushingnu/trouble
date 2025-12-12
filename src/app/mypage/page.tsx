@@ -100,7 +100,7 @@ export default function MyPage() {
                 </dd>
               </div>
 
-              <div className="border-b border-gray-200 pb-3">
+              <div className="pb-3">
                 <dt className="text-sm font-medium text-gray-500 mb-1">登録日</dt>
                 <dd className="text-base text-gray-800">
                   {userDetails?.created_at
@@ -114,47 +114,6 @@ export default function MyPage() {
                       )
                     : "-"}
                 </dd>
-              </div>
-
-              {/* 相談履歴サマリー */}
-              <div className="pt-4">
-                <h3 className="text-sm font-medium text-gray-500 mb-3">
-                  相談履歴サマリー
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-[#ACE0F9] rounded-lg p-3 text-center">
-                    <dt className="text-xs font-medium text-[#1888CF] mb-1">
-                      総相談件数
-                    </dt>
-                    <dd className="text-2xl font-bold text-[#1888CF]">
-                      {userDetails?.chat_rooms_count || 0}
-                    </dd>
-                  </div>
-                  <div className="bg-green-50 rounded-lg p-3 text-center">
-                    <dt className="text-xs font-medium text-green-800 mb-1">
-                      解決済み
-                    </dt>
-                    <dd className="text-2xl font-bold text-green-700">
-                      {userDetails?.resolved_count || 0}
-                    </dd>
-                  </div>
-                  <div className="bg-yellow-50 rounded-lg p-3 text-center">
-                    <dt className="text-xs font-medium text-yellow-800 mb-1">
-                      対応中
-                    </dt>
-                    <dd className="text-2xl font-bold text-yellow-700">
-                      {userDetails?.in_progress_count || 0}
-                    </dd>
-                  </div>
-                  <div className="bg-blue-50 rounded-lg p-3 text-center">
-                    <dt className="text-xs font-medium text-blue-800 mb-1">
-                      電話対応
-                    </dt>
-                    <dd className="text-2xl font-bold text-blue-700">
-                      {userDetails?.escalated_count || 0}
-                    </dd>
-                  </div>
-                </div>
               </div>
             </div>
 

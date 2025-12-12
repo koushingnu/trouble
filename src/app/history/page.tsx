@@ -105,7 +105,7 @@ export default function HistoryPage() {
     },
     RESOLVED: {
       label: "解決済み",
-      bgColor: "bg-[#E3F2FD]",
+      bgColor: "bg-[#E8E8E8]",
       textColor: "text-[#1888CF]",
     },
     ESCALATED: {
