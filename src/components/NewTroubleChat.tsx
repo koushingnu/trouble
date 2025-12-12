@@ -234,10 +234,10 @@ export default function NewTroubleChat({
               {chatStatus === "IN_PROGRESS" && (
                 <button
                   onClick={handleToggleResolve}
-                  className="flex items-center gap-1 text-[#FF7BAC] border-2 border-[#FF7BAC] rounded-full px-4 py-1.5 text-sm hover:bg-[#FFE4F1] transition-colors"
+                  className="flex items-center gap-1 bg-white text-gray-700 border-2 border-gray-300 rounded-full px-4 py-1.5 text-sm hover:bg-gray-50 transition-colors"
                 >
                   <HeartIcon className="w-4 h-4" />
-                  <span>解決済みにする</span>
+                  <span>解決済み</span>
                 </button>
               )}
               {chatStatus === "RESOLVED" && (
@@ -246,7 +246,7 @@ export default function NewTroubleChat({
                   className="flex items-center gap-1 bg-[#FF7BAC] text-white rounded-full px-4 py-1.5 text-sm hover:bg-[#E06A9C] transition-colors cursor-pointer"
                 >
                   <HeartIcon className="w-4 h-4 fill-current" />
-                  <span>相談中にする</span>
+                  <span>解決済み</span>
                 </button>
               )}
             </>
