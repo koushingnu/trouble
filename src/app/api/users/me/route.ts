@@ -16,22 +16,16 @@ export async function GET(request: NextRequest) {
     }
     console.log("User ID:", token.id);
 
-    // ユーザー情報を取得
+    // ユーザー情報を取得（メッセージは取得しない）
     const user = await prisma.user.findUnique({
       where: {
         id: parseInt(token.id, 10),
       },
-      include: {
-        chat_rooms: {
-          include: {
-            messages: {
-              orderBy: {
-                created_at: "desc",
-              },
-              take: 1,
-            },
-          },
-        },
+      select: {
+        id: true,
+        email: true,
+        is_admin: true,
+        created_at: true,
       },
     });
 
@@ -48,20 +42,23 @@ export async function GET(request: NextRequest) {
       email: user.email,
       is_admin: user.is_admin,
       created_at: user.created_at,
-      chat_rooms_count: user.chat_rooms.length,
     });
 
-    // チャットルームの統計を計算
-    const chatRoomsCount = user.chat_rooms.length;
-    const resolvedCount = user.chat_rooms.filter(
-      (room) => room.status === "RESOLVED"
-    ).length;
-    const inProgressCount = user.chat_rooms.filter(
-      (room) => room.status === "IN_PROGRESS"
-    ).length;
-    const escalatedCount = user.chat_rooms.filter(
-      (room) => room.status === "ESCALATED"
-    ).length;
+    // チャットルームの統計を効率的に集計（count()使用）
+    const [chatRoomsCount, resolvedCount, inProgressCount, escalatedCount] = await Promise.all([
+      prisma.chatRoom.count({
+        where: { user_id: user.id },
+      }),
+      prisma.chatRoom.count({
+        where: { user_id: user.id, status: "RESOLVED" },
+      }),
+      prisma.chatRoom.count({
+        where: { user_id: user.id, status: "IN_PROGRESS" },
+      }),
+      prisma.chatRoom.count({
+        where: { user_id: user.id, status: "ESCALATED" },
+      }),
+    ]);
 
     console.log("Chat statistics:", {
       total: chatRoomsCount,
