@@ -149,18 +149,18 @@ export default function TokenManagement() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="px-6 py-6">
       {/* 認証キー生成フォーム */}
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+      <div className="bg-gray-50 rounded-xl p-6 mb-6 border border-gray-200">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
           認証キー生成
         </h2>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-wrap">
           <div className="relative">
             <select
               value={generatingCount}
               onChange={(e) => setGeneratingCount(Number(e.target.value))}
-              className="block w-48 rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
+              className="block w-48 rounded-lg border-gray-300 shadow-sm focus:border-[#1888CF] focus:ring-[#1888CF] text-sm py-2"
             >
               <option value={1}>1個</option>
               <option value={5}>5個</option>
@@ -174,7 +174,7 @@ export default function TokenManagement() {
           <button
             onClick={handleGenerateTokens}
             disabled={isGenerating}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-[#1888CF] hover:bg-[#1568a8] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1888CF] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
           >
             {isGenerating ? (
               <>

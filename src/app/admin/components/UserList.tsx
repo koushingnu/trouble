@@ -124,7 +124,7 @@ export default function UserList() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="px-6 py-6">
       <div className="overflow-x-auto">
         <AdminTable
           title="ユーザー一覧"
@@ -136,7 +136,7 @@ export default function UserList() {
           actionButton={
             <button
               onClick={handleCSVDownload}
-              className="inline-flex items-center px-4 py-2 bg-sky-600 text-white rounded-md hover:bg-sky-700 transition-colors"
+              className="inline-flex items-center px-4 py-2 bg-[#1888CF] text-white rounded-lg hover:bg-[#1568a8] transition-colors shadow-sm"
             >
               <ArrowDownTrayIcon className="w-5 h-5 mr-2" />
               CSVダウンロード

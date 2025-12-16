@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import AuthenticatedLayout from "@/components/AuthenticatedLayout";
 
 interface UserDetails {
@@ -15,6 +16,7 @@ interface UserDetails {
 }
 
 export default function MyPage() {
+  const router = useRouter();
   const { data: session } = useSession();
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -126,6 +128,18 @@ export default function MyPage() {
                 ログアウト
               </button>
             </div>
+
+            {/* 管理者ページリンク（管理者のみ） */}
+            {(userDetails?.is_admin || session?.user?.is_admin) && (
+              <div className="pt-2">
+                <button
+                  onClick={() => router.push("/admin")}
+                  className="w-full bg-[#FDFDFD] text-gray-600 py-2 px-4 rounded-lg font-medium text-sm border border-gray-300 hover:bg-gray-50 transition-colors duration-200"
+                >
+                  管理者ページ
+                </button>
+              </div>
+            )}
 
             {/* 解約リンク */}
             <div className="pt-2 text-center">
