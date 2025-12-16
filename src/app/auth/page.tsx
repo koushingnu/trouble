@@ -132,8 +132,18 @@ function LoginForm() {
               </button>
             </form>
 
+            {/* パスワード忘れた方 */}
+            <div className="mt-4 text-center">
+              <Link
+                href="/reset-password"
+                className="text-sm text-gray-600 hover:text-[#1888CF] underline"
+              >
+                パスワードをお忘れの方はこちら
+              </Link>
+            </div>
+
             {/* 新規登録リンク */}
-            <div className="mt-8 pt-6 border-t border-gray-300">
+            <div className="mt-6 pt-6 border-t border-gray-300">
               <p className="text-center text-gray-700 font-medium mb-4">
                 アカウントをお持ちでない方
               </p>
