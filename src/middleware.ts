@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { withAuth } from "next-auth/middleware";
 
-const PUBLIC_PATHS = ["/auth", "/auth/error", "/register"];
+const PUBLIC_PATHS = ["/auth", "/auth/error", "/register", "/reset-password", "/company", "/privacy"];
 const ADMIN_PATHS = ["/admin"];
 const PROTECTED_PATHS = ["/consultation", "/history", "/mypage"];
 
