@@ -34,11 +34,25 @@ export default function AuthenticatedLayout({
 
       {/* フッター */}
       <footer className="w-full bg-[#FDFDFD] py-4 px-4 border-t border-gray-200 mt-auto">
-        <div className="max-w-7xl mx-auto flex justify-center items-center gap-6 text-sm text-gray-600">
-          <p>運営者情報</p>
-          <p>プライバシーポリシー</p>
-          <p>お問い合わせ</p>
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-6 text-sm text-gray-600">
+          <a href="/company" className="hover:text-[#1888CF]">
+            運営者情報
+          </a>
+          <a href="/privacy" className="hover:text-[#1888CF]">
+            プライバシーポリシー
+          </a>
+          <a
+            href="https://jp01-troublesoudan.site-test02.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-[#1888CF]"
+          >
+            お問い合わせ
+          </a>
         </div>
+        <p className="text-center text-xs text-gray-500 mt-3">
+          © 2025 トラブルまるごとレスキュー隊
+        </p>
       </footer>
     </div>
   );
