@@ -27,6 +27,12 @@ export default function Register() {
       return;
     }
 
+    if (password.length < 5) {
+      setError("パスワードは5文字以上で設定してください");
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch("/api/users", {
         method: "POST",

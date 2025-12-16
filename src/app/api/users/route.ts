@@ -64,6 +64,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (password.length < 5) {
+      return NextResponse.json(
+        { error: "パスワードは5文字以上で設定してください" },
+        { status: 400 }
+      );
+    }
+
     // メールアドレスの重複チェック
     const existingUser = await prisma.user.findUnique({
       where: { email },

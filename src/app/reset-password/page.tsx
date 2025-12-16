@@ -28,8 +28,8 @@ export default function ResetPassword() {
       return;
     }
 
-    if (newPassword.length < 6) {
-      setError("パスワードは6文字以上で設定してください");
+    if (newPassword.length < 5) {
+      setError("パスワードは5文字以上で設定してください");
       setLoading(false);
       return;
     }
