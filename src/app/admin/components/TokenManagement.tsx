@@ -5,6 +5,7 @@ import { toast } from "react-hot-toast";
 import AdminTable from "../../components/AdminTable";
 import { Token } from "../../types";
 import { Column } from "../../components/AdminTable";
+import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 
 export default function TokenManagement() {
   const [tokens, setTokens] = useState<Token[]>([]);
@@ -101,6 +102,29 @@ export default function TokenManagement() {
       );
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleCSVDownload = async () => {
+    try {
+      const response = await fetch("/api/tokens/csv");
+      if (!response.ok) {
+        throw new Error("CSVのダウンロードに失敗しました");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `tokens_${new Date().toISOString().split("T")[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("CSVをダウンロードしました");
+    } catch (error) {
+      console.error("CSV download error:", error);
+      toast.error("CSVのダウンロードに失敗しました");
     }
   };
 
@@ -214,6 +238,15 @@ export default function TokenManagement() {
         columns={columns}
         data={tokens}
         emptyMessage="認証キーが登録されていません"
+        actionButton={
+          <button
+            onClick={handleCSVDownload}
+            className="inline-flex items-center px-4 py-2 bg-[#1888CF] text-white rounded-lg hover:bg-[#1568a8] transition-colors shadow-sm"
+          >
+            <ArrowDownTrayIcon className="w-5 h-5 mr-2" />
+            CSVダウンロード
+          </button>
+        }
       />
     </div>
   );
