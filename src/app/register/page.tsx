@@ -123,7 +123,7 @@ export default function Register() {
               <div>
                 <div className="relative">
                   <Image
-                    src="/icon/lock.svg"
+                    src="/icon/password.svg"
                     alt="パスワード"
                     width={20}
                     height={20}
@@ -144,7 +144,7 @@ export default function Register() {
               <div>
                 <div className="relative">
                   <Image
-                    src="/icon/lock.svg"
+                    src="/icon/password.svg"
                     alt="パスワード確認"
                     width={20}
                     height={20}
@@ -165,7 +165,7 @@ export default function Register() {
               <div>
                 <div className="relative">
                   <Image
-                    src="/icon/lock.svg"
+                    src="/icon/key.svg"
                     alt="認証キー"
                     width={20}
                     height={20}
