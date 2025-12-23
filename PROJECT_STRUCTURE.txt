@@ -1,0 +1,172 @@
+================================================================================
+プロジェクト構成
+================================================================================
+
+trouble/
+├── prisma/
+│   ├── migrations/           # データベースマイグレーション履歴
+│   └── schema.prisma         # データベーススキーマ定義
+│
+├── public/                   # 静的ファイル
+│   ├── icon/                 # アイコン（SVG）
+│   ├── logo/                 # ロゴ画像
+│   └── assistant.png         # AIアシスタント画像
+│
+├── src/
+│   ├── app/                  # Next.js App Router
+│   │   ├── admin/            # 管理画面
+│   │   │   ├── components/   # 管理画面専用コンポーネント
+│   │   │   │   ├── TokenManagement.tsx
+│   │   │   │   └── UserList.tsx
+│   │   │   └── page.tsx
+│   │   │
+│   │   ├── api/              # APIルート
+│   │   │   ├── auth/
+│   │   │   │   ├── [...nextauth]/route.ts    # NextAuth認証
+│   │   │   │   └── reset-password/route.ts   # パスワードリセット
+│   │   │   ├── chat/
+│   │   │   │   ├── route.ts                  # チャットメッセージ送信
+│   │   │   │   ├── rooms/route.ts            # チャットルーム一覧
+│   │   │   │   ├── rooms/[id]/route.ts       # チャットルーム詳細
+│   │   │   │   └── history/route.ts          # チャット履歴
+│   │   │   ├── tokens/
+│   │   │   │   ├── route.ts                  # トークン管理
+│   │   │   │   └── csv/route.ts              # トークンCSV生成
+│   │   │   └── users/
+│   │   │       ├── route.ts                  # ユーザー管理
+│   │   │       ├── me/route.ts               # 現在のユーザー情報
+│   │   │       ├── password/route.ts         # パスワード変更
+│   │   │       └── csv/route.ts              # ユーザーCSV登録
+│   │   │
+│   │   ├── auth/             # 認証ページ
+│   │   │   ├── page.tsx      # ログイン
+│   │   │   └── error/page.tsx
+│   │   │
+│   │   ├── register/         # 新規登録
+│   │   │   └── page.tsx
+│   │   │
+│   │   ├── reset-password/   # パスワード再設定
+│   │   │   └── page.tsx
+│   │   │
+│   │   ├── consultation/     # 相談機能
+│   │   │   ├── new/page.tsx           # 新規相談
+│   │   │   └── [id]/page.tsx          # 相談詳細
+│   │   │
+│   │   ├── history/          # 相談履歴
+│   │   │   └── page.tsx
+│   │   │
+│   │   ├── mypage/           # マイページ
+│   │   │   └── page.tsx
+│   │   │
+│   │   ├── company/          # 運営者情報
+│   │   │   └── page.tsx
+│   │   │
+│   │   ├── privacy/          # プライバシーポリシー
+│   │   │   └── page.tsx
+│   │   │
+│   │   ├── components/       # ページ固有コンポーネント
+│   │   │   └── AdminTable.tsx
+│   │   │
+│   │   ├── layout.tsx        # ルートレイアウト
+│   │   ├── page.tsx          # ホーム（リダイレクト）
+│   │   ├── globals.css       # グローバルスタイル
+│   │   ├── providers.tsx     # プロバイダー設定
+│   │   └── types.ts          # 型定義
+│   │
+│   ├── components/           # 共通コンポーネント
+│   │   ├── AuthenticatedLayout.tsx  # 認証済みレイアウト
+│   │   ├── FullScreenLoading.tsx    # ローディング画面
+│   │   ├── MenuHeader.tsx           # メニューヘッダー
+│   │   ├── NewTroubleChat.tsx       # 新規相談チャット
+│   │   ├── TroubleChat.tsx          # 相談チャット
+│   │   └── Providers.tsx            # プロバイダーラッパー
+│   │
+│   ├── lib/                  # ライブラリ・ユーティリティ
+│   │   ├── auth.ts           # NextAuth設定
+│   │   └── prisma.ts         # Prismaクライアント
+│   │
+│   ├── types/                # 型定義
+│   │   ├── chat.ts           # チャット関連型
+│   │   ├── index.ts          # 共通型
+│   │   └── next-auth.d.ts    # NextAuth型拡張
+│   │
+│   └── middleware.ts         # ルート保護ミドルウェア
+│
+├── .gitignore                # Git除外設定
+├── apprunner.yaml            # AWS App Runner設定
+├── dbdiagram.txt             # データベース設計図
+├── eslint.config.mjs         # ESLint設定
+├── next.config.js            # Next.js設定
+├── package.json              # 依存パッケージ
+├── postcss.config.js         # PostCSS設定
+├── tailwind.config.js        # Tailwind CSS設定
+├── tsconfig.json             # TypeScript設定
+├── PROJECT_OVERVIEW.txt      # プロジェクト概要（このファイル）
+└── PROJECT_STRUCTURE.txt     # プロジェクト構成（このファイル）
+
+================================================================================
+主要ファイルの説明
+================================================================================
+
+【設定ファイル】
+  - prisma/schema.prisma      : データベーススキーマ定義
+  - src/lib/auth.ts           : NextAuth認証設定
+  - src/middleware.ts         : ルート保護・認証チェック
+  - apprunner.yaml            : AWS App Runnerデプロイ設定
+  - next.config.js            : Next.js設定（画像最適化等）
+  - tailwind.config.js        : カラー・スタイル設定
+
+【レイアウト・共通UI】
+  - src/app/layout.tsx                : ルートレイアウト
+  - src/components/AuthenticatedLayout.tsx : 認証済みページレイアウト
+  - src/components/MenuHeader.tsx     : ヘッダーメニュー
+
+【チャット機能】
+  - src/components/NewTroubleChat.tsx : 新規相談チャットUI
+  - src/components/TroubleChat.tsx    : 相談継続チャットUI
+  - src/app/api/chat/route.ts         : チャットAPI（AI応答）
+
+【認証・ユーザー管理】
+  - src/lib/auth.ts                   : 認証ロジック
+  - src/app/api/auth/[...nextauth]/route.ts : NextAuthエンドポイント
+  - src/app/api/users/route.ts        : ユーザー管理API
+
+【管理機能】
+  - src/app/admin/page.tsx            : 管理画面メイン
+  - src/app/admin/components/UserList.tsx : ユーザー管理UI
+  - src/app/admin/components/TokenManagement.tsx : トークン管理UI
+
+================================================================================
+環境変数（.env）
+================================================================================
+
+必須の環境変数:
+  - DATABASE_URL          : PostgreSQL接続文字列
+  - NEXTAUTH_SECRET       : NextAuth秘密鍵（ランダム文字列）
+  - NEXTAUTH_URL          : アプリケーションURL
+  - ANTHROPIC_API_KEY     : Claude API キー
+
+================================================================================
+開発コマンド
+================================================================================
+
+# 開発サーバー起動
+npm run dev
+
+# 本番ビルド
+npm run build
+
+# 本番サーバー起動
+npm start
+
+# Prisma Studio（データベースGUI）
+npx prisma studio
+
+# データベースマイグレーション
+npx prisma migrate dev
+
+# Prismaクライアント再生成
+npx prisma generate
+
+================================================================================
+
