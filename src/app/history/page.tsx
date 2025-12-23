@@ -15,6 +15,8 @@ export default function HistoryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentView, setCurrentView] = useState<"summary" | "list">("summary");
   const [selectedFilter, setSelectedFilter] = useState<FilterType>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 15;
 
     const fetchChatRooms = async () => {
       if (!session?.user) return;
@@ -69,6 +71,17 @@ export default function HistoryPage() {
     if (selectedFilter === "escalated") return room.status === "ESCALATED";
     return true;
   });
+
+  // ページネーション計算
+  const totalPages = Math.ceil(filteredChatRooms.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedChatRooms = filteredChatRooms.slice(startIndex, endIndex);
+
+  // フィルター変更時にページをリセット
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedFilter]);
 
   const filterConfig = {
     all: {
@@ -186,7 +199,7 @@ export default function HistoryPage() {
                     該当する相談はありません
                   </p>
           ) : (
-                  filteredChatRooms.map((chatRoom) => {
+                  paginatedChatRooms.map((chatRoom) => {
                     const status = chatRoom.status || "IN_PROGRESS";
                     const statusConfig = statusBadgeConfig[status];
 
@@ -225,11 +238,36 @@ export default function HistoryPage() {
                 )}
               </div>
 
-              {/* ページネーション（仮） */}
-              {filteredChatRooms.length > 0 && (
-                <div className="mt-6 flex items-center justify-center gap-2 text-[#1888CF]">
-                  <span className="font-bold">1/5</span>
-                  <button className="text-2xl">&gt;</button>
+              {/* ページネーション */}
+              {totalPages > 1 && (
+                <div className="mt-6 flex items-center justify-center gap-4">
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className={`text-2xl font-bold ${
+                      currentPage === 1
+                        ? "text-gray-300 cursor-not-allowed"
+                        : "text-[#1888CF] hover:opacity-70"
+                    }`}
+                  >
+                    &lt;
+                  </button>
+                  <span className="font-bold text-[#1888CF] text-lg">
+                    {currentPage}/{totalPages}
+                  </span>
+                  <button
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                    className={`text-2xl font-bold ${
+                      currentPage === totalPages
+                        ? "text-gray-300 cursor-not-allowed"
+                        : "text-[#1888CF] hover:opacity-70"
+                    }`}
+                  >
+                    &gt;
+                  </button>
                 </div>
               )}
             </>
