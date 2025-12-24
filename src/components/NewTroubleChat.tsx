@@ -25,6 +25,7 @@ export default function NewTroubleChat({
   >("IN_PROGRESS");
   const [chatTitle, setChatTitle] = useState<string>("");
   const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [originalTitle, setOriginalTitle] = useState<string>("");
   const [mounted, setMounted] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -233,6 +234,16 @@ export default function NewTroubleChat({
     setIsEditingTitle(false);
   };
 
+  const handleStartEditTitle = () => {
+    setOriginalTitle(chatTitle);
+    setIsEditingTitle(true);
+  };
+
+  const handleCancelEditTitle = () => {
+    setChatTitle(originalTitle);
+    setIsEditingTitle(false);
+  };
+
   const handleUpdateTitle = async () => {
     if (!chatRoomId) {
       setIsEditingTitle(false);
@@ -255,10 +266,12 @@ export default function NewTroubleChat({
         setIsEditingTitle(false);
       } else {
         alert("タイトルの更新に失敗しました");
+        setIsEditingTitle(false);
       }
     } catch (error) {
       console.error("Error updating title:", error);
       alert("タイトルの更新に失敗しました");
+      setIsEditingTitle(false);
     }
   };
 
@@ -270,7 +283,7 @@ export default function NewTroubleChat({
           {/* 左側：タイトル */}
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <h2 className="text-lg font-bold text-gray-800 flex-shrink-0">相談する</h2>
-            {chatTitle && Array.isArray(messages) && messages.length > 0 && (
+            {(chatTitle || isEditingTitle) && Array.isArray(messages) && messages.length > 0 && (
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 {isEditingTitle ? (
                   <input
@@ -280,9 +293,11 @@ export default function NewTroubleChat({
                     onBlur={handleUpdateTitle}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
+                        e.preventDefault();
                         handleUpdateTitle();
                       } else if (e.key === "Escape") {
-                        setIsEditingTitle(false);
+                        e.preventDefault();
+                        handleCancelEditTitle();
                       }
                     }}
                     className="flex-1 text-sm text-gray-500 border-b border-gray-300 focus:outline-none focus:border-[#1888CF] px-1 py-0.5 min-w-0"
@@ -291,7 +306,7 @@ export default function NewTroubleChat({
                   />
                 ) : (
                   <button
-                    onClick={() => setIsEditingTitle(true)}
+                    onClick={handleStartEditTitle}
                     className="text-sm text-gray-500 hover:text-gray-700 transition-colors truncate min-w-0"
                     title={chatTitle}
                   >
