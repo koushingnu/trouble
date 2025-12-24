@@ -234,21 +234,24 @@ export default function NewTroubleChat({
   };
 
   const handleUpdateTitle = async () => {
-    if (!chatRoomId || !chatTitle.trim()) {
+    if (!chatRoomId) {
       setIsEditingTitle(false);
       return;
     }
+
+    // タイトルが空の場合はnullを送信
+    const updatedTitle = chatTitle.trim() || null;
 
     try {
       const response = await fetch(`/api/chat/rooms/${chatRoomId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: chatTitle.trim() }),
+        body: JSON.stringify({ title: updatedTitle }),
       });
 
       const data = await response.json();
       if (data.success) {
-        setChatTitle(chatTitle.trim());
+        setChatTitle(updatedTitle || "");
         setIsEditingTitle(false);
       } else {
         alert("タイトルの更新に失敗しました");

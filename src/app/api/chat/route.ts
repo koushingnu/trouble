@@ -181,12 +181,25 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        // タイトル自動生成（タイトルがない場合、かつユーザーメッセージが2件目以降）
-        if (
-          !chatRoom.title &&
-          history.filter((m) => m.sender === "user").length >= 2
-        ) {
+        // タイトル自動生成（タイトルがない場合、かつ具体的な相談内容が含まれる場合）
+        const userMessages = history.filter((m) => m.sender === "user");
+        const shouldGenerateTitle = !chatRoom.title && userMessages.length >= 1;
+        
+        // 挨拶だけの場合はタイトル生成しない
+        const greetingPatterns = /^(こんにちは|こんばんは|おはよう|はじめまして|よろしく|お願いします|お願い致します|よろしくお願いします|よろしくお願い致します)$/;
+        const isGreetingOnly = userMessages.length === 1 && greetingPatterns.test(message.trim());
+
+        if (shouldGenerateTitle && !isGreetingOnly) {
           try {
+            // 1件目の場合は現在のメッセージ、2件目以降は1件目と2件目を組み合わせる
+            let contentForTitle = message;
+            if (userMessages.length >= 2) {
+              // 1件目と2件目のメッセージを結合（より正確なタイトルを生成）
+              const firstMessage = userMessages[0].body;
+              const secondMessage = userMessages[1].body;
+              contentForTitle = `${firstMessage}\n${secondMessage}`;
+            }
+
             const titleCompletion = await openai.chat.completions.create({
               model: GPT_MODEL,
               messages: [
@@ -197,7 +210,7 @@ export async function POST(request: NextRequest) {
                 },
                 {
                   role: "user",
-                  content: message,
+                  content: contentForTitle,
                 },
               ],
               temperature: 0.3,
