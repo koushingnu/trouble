@@ -9,6 +9,9 @@ interface UserDetails {
   email: string;
   is_admin: boolean;
   created_at: string;
+  last_name?: string | null;
+  first_name?: string | null;
+  phone_number?: string | null;
   chat_rooms_count: number;
   resolved_count: number;
   in_progress_count: number;
@@ -76,10 +79,30 @@ export default function MyPage() {
             <div className="space-y-3">
               <div className="border-b border-gray-200 pb-2">
                 <dt className="text-sm font-medium text-gray-500 mb-1">
+                  お名前
+                </dt>
+                <dd className="text-base text-gray-800">
+                  {userDetails?.last_name && userDetails?.first_name
+                    ? `${userDetails.last_name} ${userDetails.first_name}`
+                    : "-"}
+                </dd>
+              </div>
+
+              <div className="border-b border-gray-200 pb-2">
+                <dt className="text-sm font-medium text-gray-500 mb-1">
                   メールアドレス
                 </dt>
                 <dd className="text-base text-gray-800">
                   {userDetails?.email || session?.user?.email}
+                </dd>
+              </div>
+
+              <div className="border-b border-gray-200 pb-2">
+                <dt className="text-sm font-medium text-gray-500 mb-1">
+                  電話番号
+                </dt>
+                <dd className="text-base text-gray-800">
+                  {userDetails?.phone_number || "-"}
                 </dd>
               </div>
 

@@ -26,6 +26,9 @@ export async function GET(request: NextRequest) {
         email: true,
         is_admin: true,
         created_at: true,
+        last_name: true,
+        first_name: true,
+        phone_number: true,
       },
     });
 
@@ -74,6 +77,9 @@ export async function GET(request: NextRequest) {
         email: user.email,
         is_admin: user.is_admin,
         created_at: user.created_at.toISOString(),
+        last_name: user.last_name,
+        first_name: user.first_name,
+        phone_number: user.phone_number,
         chat_rooms_count: chatRoomsCount,
         resolved_count: resolvedCount,
         in_progress_count: inProgressCount,

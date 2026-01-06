@@ -10,6 +10,9 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [token, setToken] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -33,13 +36,34 @@ export default function Register() {
       return;
     }
 
+    if (!lastName || !firstName || !phoneNumber) {
+      setError("すべての項目を入力してください");
+      setLoading(false);
+      return;
+    }
+
+    // 電話番号の形式チェック（ハイフンなし、10桁または11桁）
+    const phoneRegex = /^(0[5-9]0\d{8}|0[1-9]\d{8})$/;
+    if (!phoneRegex.test(phoneNumber)) {
+      setError("電話番号は10桁または11桁の数字で入力してください（例: 08012345678）");
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch("/api/users", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password, token }),
+        body: JSON.stringify({
+          email,
+          password,
+          token,
+          lastName,
+          firstName,
+          phoneNumber,
+        }),
       });
 
       const data = await res.json();
@@ -54,6 +78,9 @@ export default function Register() {
       setPassword("");
       setConfirmPassword("");
       setToken("");
+      setLastName("");
+      setFirstName("");
+      setPhoneNumber("");
 
       // 3秒後にログインページへリダイレクト
       setTimeout(() => {
@@ -120,6 +147,69 @@ export default function Register() {
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full pl-12 pr-4 py-3 rounded-full border-2 border-gray-300 focus:outline-none focus:border-[#1888CF] bg-[#FDFDFD] text-gray-800 placeholder-gray-400"
                     placeholder="メールアドレス"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="relative">
+                  <Image
+                    src="/icon/user.svg"
+                    alt="姓"
+                    width={20}
+                    height={20}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2"
+                  />
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 rounded-full border-2 border-gray-300 focus:outline-none focus:border-[#1888CF] bg-[#FDFDFD] text-gray-800 placeholder-gray-400"
+                    placeholder="姓（例: 山田）"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="relative">
+                  <Image
+                    src="/icon/user.svg"
+                    alt="名"
+                    width={20}
+                    height={20}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2"
+                  />
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 rounded-full border-2 border-gray-300 focus:outline-none focus:border-[#1888CF] bg-[#FDFDFD] text-gray-800 placeholder-gray-400"
+                    placeholder="名（例: 太郎）"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="relative">
+                  <Image
+                    src="/icon/phone.svg"
+                    alt="電話番号"
+                    width={20}
+                    height={20}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2"
+                  />
+                  <input
+                    type="tel"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 rounded-full border-2 border-gray-300 focus:outline-none focus:border-[#1888CF] bg-[#FDFDFD] text-gray-800 placeholder-gray-400"
+                    placeholder="電話番号（例: 090-1234-5678）"
                     required
                     disabled={loading}
                   />

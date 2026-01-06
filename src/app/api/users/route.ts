@@ -54,7 +54,8 @@ export async function GET(request: NextRequest) {
 // ユーザー登録
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, token } = await request.json();
+    const { email, password, token, phoneNumber, lastName, firstName } =
+      await request.json();
 
     // 入力値の検証
     if (!email || !password) {
@@ -67,6 +68,24 @@ export async function POST(request: NextRequest) {
     if (password.length < 5) {
       return NextResponse.json(
         { error: "パスワードは5文字以上で設定してください" },
+        { status: 400 }
+      );
+    }
+
+    // 電話番号・姓名のバリデーション
+    if (!phoneNumber || !lastName || !firstName) {
+      return NextResponse.json(
+        { error: "電話番号、姓、名は必須です" },
+        { status: 400 }
+      );
+    }
+
+    // 電話番号の形式チェック（ハイフンなし）
+    // 携帯: 0X0-XXXX-XXXX (11桁) または 固定: 0X-XXXX-XXXX (10桁)
+    const phoneRegex = /^(0[5-9]0\d{8}|0[1-9]\d{8})$/;
+    if (!phoneRegex.test(phoneNumber)) {
+      return NextResponse.json(
+        { error: "電話番号は10桁または11桁の数字で入力してください（例: 08012345678）" },
         { status: 400 }
       );
     }
@@ -112,6 +131,9 @@ export async function POST(request: NextRequest) {
           email,
           password: hashedPassword,
           token_id: tokenRecord?.id,
+          phone_number: phoneNumber,
+          last_name: lastName,
+          first_name: firstName,
         },
       });
 
