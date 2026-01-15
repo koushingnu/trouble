@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { withAuth } from "next-auth/middleware";
 
 const PUBLIC_PATHS = ["/auth", "/auth/error", "/register", "/reset-password", "/company", "/privacy"];
+const AUTH_PAGES = ["/auth", "/login"]; // ログイン済みユーザーはリダイレクトすべきページ
 const ADMIN_PATHS = ["/admin"];
 const PROTECTED_PATHS = ["/consultation", "/history", "/mypage"];
 
@@ -61,9 +62,9 @@ export default withAuth(
       return NextResponse.next();
     }
 
-    // 認証済みユーザーが/authにアクセスした場合はホームにリダイレクト
-    if (req.nextauth?.token && pathname.startsWith("/auth")) {
-      console.log("→ Authenticated user at /auth, redirecting to root");
+    // 認証済みユーザーが/authや/loginにアクセスした場合はホームにリダイレクト
+    if (req.nextauth?.token && AUTH_PAGES.some((path) => pathname.startsWith(path))) {
+      console.log("→ Authenticated user at auth page, redirecting to root");
       return NextResponse.redirect(new URL("/", req.url));
     }
 
