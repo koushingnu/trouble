@@ -209,7 +209,7 @@ export default function Register() {
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
                     className="w-full pl-12 pr-4 py-3 rounded-full border-2 border-gray-300 focus:outline-none focus:border-[#1888CF] bg-[#FDFDFD] text-gray-800 placeholder-gray-400"
-                    placeholder="電話番号（例: 090-1234-5678）"
+                    placeholder="電話番号（例: 09012345678）"
                     required
                     disabled={loading}
                   />

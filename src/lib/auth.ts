@@ -81,6 +81,30 @@ export const authOptions: AuthOptions = {
         token.name = user.name;
         token.is_admin = user.is_admin;
       }
+      
+      // JWTトークンが存在する場合、ユーザーがまだデータベースに存在するか確認
+      if (token.id) {
+        try {
+          const existingUser = await prisma.user.findUnique({
+            where: { id: Number(token.id) },
+            select: { id: true, email: true, is_admin: true },
+          });
+          
+          // ユーザーが削除されている場合、トークンを無効化
+          if (!existingUser) {
+            console.log("[AUTH] User no longer exists in database:", token.id);
+            return null as any; // トークンを無効化
+          }
+          
+          // ユーザー情報を最新の状態に更新
+          token.email = existingUser.email;
+          token.is_admin = existingUser.is_admin;
+        } catch (error) {
+          console.error("[AUTH] Error checking user existence:", error);
+          return null as any; // エラー時もトークンを無効化
+        }
+      }
+      
       return token;
     },
     async session({ session, token }) {
