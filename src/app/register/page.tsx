@@ -119,6 +119,21 @@ export default function Register() {
               新規登録
             </h1>
 
+            {/* 認証キーに関する注意ボックス */}
+            <div className="mb-6 p-4 bg-red-50 border-2 border-red-300 rounded-lg">
+              <p className="text-sm text-gray-800 leading-relaxed">
+                新規会員登録には、認証キーの入力が必要です。認証キーは、「月額PAY」での決済登録完了後に発行されます。まだ決済登録がお済みでない方は下記より「月額PAY」の決済登録を行ってください。
+              </p>
+              <a
+                href="https://neoglyph.co.jp/apply/?shop_id=ODMz"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block mt-3 text-sm text-[#1888CF] hover:text-[#1565A0] font-medium underline"
+              >
+                「月額PAY」での決済登録はこちら 
+              </a>
+            </div>
+
             {error && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
                 {error}
