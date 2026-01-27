@@ -303,7 +303,7 @@ export default function Privacy() {
             プライバシーポリシー
           </Link>
           <a
-            href="https://jp01-troublesoudan.site-test02.com/"
+            href="https://troublesolution-lab.com/"
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-[#1888CF]"
