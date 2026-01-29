@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
   try {
     console.log("\n=== Chat Prisma API Start ===");
     const token = await getToken({ req: request });
-    if (!token) {
+    if (!token) {　
       console.log("Unauthorized access attempt");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
