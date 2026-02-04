@@ -62,7 +62,6 @@ export async function POST(req: NextRequest) {
     // 抽出結果のリスト
     const extractedData: Array<{
       rowNumber: number;
-      customerName: string;
       productName: string;
       authKey: string;
       customerId: string;
@@ -120,30 +119,9 @@ export async function POST(req: NextRequest) {
           stats.filtered++;
         }
 
-        // DBから顧客名を取得
-        let customerName = "";
-        if (keyToUse) {
-          const user = await prisma.user.findFirst({
-            where: {
-              token: {
-                token_value: keyToUse,
-              },
-            },
-            select: {
-              last_name: true,
-              first_name: true,
-            },
-          });
-
-          if (user && user.last_name && user.first_name) {
-            customerName = `${user.last_name} ${user.first_name}`;
-          }
-        }
-
         // 抽出データに追加
         extractedData.push({
           rowNumber: i + 2, // ヘッダー行を考慮
-          customerName,
           productName,
           authKey,
           customerId,
@@ -157,7 +135,6 @@ export async function POST(req: NextRequest) {
       } catch (error: any) {
         extractedData.push({
           rowNumber: i + 2,
-          customerName: "",
           productName: "",
           authKey: "",
           customerId: "",
