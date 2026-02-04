@@ -27,6 +27,8 @@ export default function NewTroubleChat({
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [originalTitle, setOriginalTitle] = useState<string>("");
   const [mounted, setMounted] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [hasLoadedInitialRoom, setHasLoadedInitialRoom] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -39,12 +41,42 @@ export default function NewTroubleChat({
     }
   }, [chatRoomId]);
 
+  // 最新のチャットルームを自動的にロード
   useEffect(() => {
-    setChatRoomId(initialChatRoomId);
-    if (initialChatRoomId === null) {
-      setMessages([]);
+    if (!mounted || typeof window === "undefined" || hasLoadedInitialRoom) {
+      return;
     }
-  }, [initialChatRoomId]);
+
+    const loadLatestChatRoom = async () => {
+      if (!session?.user) {
+        setHasLoadedInitialRoom(true);
+        return;
+      }
+
+      try {
+        console.log("[NewTroubleChat] Fetching latest chat room");
+        const response = await fetch("/api/chat/rooms", {
+          headers: { "Cache-Control": "no-cache" },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.data && data.data.length > 0) {
+            console.log("[NewTroubleChat] Found latest room:", data.data[0].id);
+            setChatRoomId(data.data[0].id);
+          } else {
+            console.log("[NewTroubleChat] No chat rooms found, starting new");
+          }
+        }
+      } catch (error) {
+        console.error("[NewTroubleChat] Error loading latest room:", error);
+      } finally {
+        setHasLoadedInitialRoom(true);
+      }
+    };
+
+    loadLatestChatRoom();
+  }, [session?.user, mounted, hasLoadedInitialRoom]);
 
   const scrollToBottom = () => {
     if (typeof window === "undefined") return;
@@ -70,18 +102,20 @@ export default function NewTroubleChat({
 
   // チャット履歴をロード
   useEffect(() => {
-    if (!mounted || typeof window === "undefined") {
-      console.log("[NewTroubleChat] Waiting for mount or window...", { mounted, hasWindow: typeof window !== "undefined" });
+    if (!mounted || typeof window === "undefined" || !hasLoadedInitialRoom) {
+      console.log("[NewTroubleChat] Waiting for mount/window/initial room...", { mounted, hasWindow: typeof window !== "undefined", hasLoadedInitialRoom });
       return;
     }
     
     const loadChatHistory = async () => {
       if (!chatRoomId || !session?.user) {
         console.log("[NewTroubleChat] No chatRoomId or session, skipping history load", { chatRoomId, hasSession: !!session?.user });
+        setIsLoadingHistory(false);
         return;
       }
 
       console.log("[NewTroubleChat] Loading chat history for room:", chatRoomId);
+      setIsLoadingHistory(true);
       
       try {
         const [historyResponse, roomResponse] = await Promise.all([
@@ -119,11 +153,13 @@ export default function NewTroubleChat({
         }
       } catch (error) {
         console.error("[NewTroubleChat] Error loading chat history:", error);
+      } finally {
+        setIsLoadingHistory(false);
       }
     };
 
     loadChatHistory();
-  }, [chatRoomId, session?.user, mounted]);
+  }, [chatRoomId, session?.user, mounted, hasLoadedInitialRoom]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -232,6 +268,7 @@ export default function NewTroubleChat({
     setChatStatus("IN_PROGRESS");
     setChatTitle("");
     setIsEditingTitle(false);
+    setIsLoadingHistory(false);
   };
 
   const handleStartEditTitle = () => {
@@ -366,7 +403,13 @@ export default function NewTroubleChat({
 
       {/* メッセージエリア - 背景に直接表示 */}
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 scrollbar-hide">
-        {(!Array.isArray(messages) || messages.length === 0) && (
+        {isLoadingHistory && (
+          <div className="flex flex-col items-center justify-center h-full text-white">
+            <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+            <p className="mt-4 text-base">履歴を読み込み中...</p>
+          </div>
+        )}
+        {!isLoadingHistory && (!Array.isArray(messages) || messages.length === 0) && (
           <div className="flex flex-col items-center justify-center h-full text-white">
             <p className="text-base mb-3">お困りのトラブルについて、</p>
             <p className="text-base mb-3">以下の入力欄からお気軽に</p>
@@ -374,7 +417,7 @@ export default function NewTroubleChat({
           </div>
         )}
 
-        {Array.isArray(messages) && messages.map((message, index) => {
+        {!isLoadingHistory && Array.isArray(messages) && messages.map((message, index) => {
           const isUser = message.sender === "user";
           const showDate =
             index === 0 ||
