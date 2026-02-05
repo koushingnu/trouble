@@ -6,6 +6,9 @@ export interface User {
   token_id: number | null;
   created_at: string;
   is_admin: boolean;
+  phone_number: string | null;
+  last_name: string | null;
+  first_name: string | null;
   token?: {
     status: TokenStatus | null;
     token_value: string | null;

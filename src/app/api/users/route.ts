@@ -24,6 +24,9 @@ export async function GET(request: NextRequest) {
         email: true,
         created_at: true,
         is_admin: true,
+        phone_number: true,
+        last_name: true,
+        first_name: true,
         token: {
           select: {
             token_value: true,

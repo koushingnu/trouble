@@ -81,16 +81,33 @@ export default function UserList() {
   };
 
   const columns: Column<User>[] = [
-    { key: "id", label: "ID", width: 80 },
+    { key: "id", label: "ID", width: 60 },
     {
       key: "email",
       label: "メールアドレス",
-      width: 300,
+      width: 220,
+    },
+    {
+      key: "id", // ダミーのキーを使用
+      label: "名前",
+      width: 150,
+      format: (_, row) => {
+        if (row.last_name && row.first_name) {
+          return `${row.last_name} ${row.first_name}`;
+        }
+        return "-";
+      },
+    },
+    {
+      key: "phone_number",
+      label: "電話番号",
+      width: 130,
+      format: (value) => value || "-",
     },
     {
       key: "id", // ダミーのキーを使用
       label: "ステータス",
-      width: 120,
+      width: 100,
       align: "center",
       format: (_, row) => (
         <span
@@ -105,13 +122,25 @@ export default function UserList() {
     {
       key: "id", // ダミーのキーを使用
       label: "認証キー",
-      width: 300,
-      format: (_, row) => row.token?.token_value || "未割り当て",
+      width: 250,
+      format: (_, row) => {
+        const tokenValue = row.token?.token_value;
+        if (!tokenValue) return "未割り当て";
+        // 長い認証キーは省略表示
+        if (tokenValue.length > 30) {
+          return (
+            <span title={tokenValue} className="cursor-help">
+              {tokenValue.substring(0, 30)}...
+            </span>
+          );
+        }
+        return tokenValue;
+      },
     },
     {
       key: "created_at",
       label: "登録日時",
-      width: 180,
+      width: 150,
       format: (value) =>
         new Date(value as string).toLocaleString("ja-JP", {
           year: "numeric",
