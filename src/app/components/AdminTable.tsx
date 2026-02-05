@@ -72,7 +72,7 @@ export default function AdminTable<T>({
                 <th
                   key={column.key.toString()}
                   scope="col"
-                  className={`px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase ${
+                  className={`px-6 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase whitespace-nowrap ${
                     column.align ? `text-${column.align}` : "text-left"
                   }`}
                   style={{ width: column.width }}
@@ -107,7 +107,7 @@ export default function AdminTable<T>({
                   {columns.map((column) => (
                     <td
                       key={column.key.toString()}
-                      className={`px-6 py-4 text-sm text-gray-900 ${
+                      className={`px-6 py-4 text-sm text-gray-900 whitespace-nowrap ${
                         column.align ? `text-${column.align}` : ""
                       }`}
                     >

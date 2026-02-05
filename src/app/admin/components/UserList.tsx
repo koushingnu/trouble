@@ -107,11 +107,11 @@ export default function UserList() {
     {
       key: "id", // ダミーのキーを使用
       label: "ステータス",
-      width: 100,
+      width: 110,
       align: "center",
       format: (_, row) => (
         <span
-          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(
             row.token?.status || null
           )}`}
         >
