@@ -102,7 +102,7 @@ export default function UserList() {
       key: "phone_number",
       label: "電話番号",
       width: 130,
-      format: (value) => value || "-",
+      format: (value) => (value as string) || "-",
     },
     {
       key: "id", // ダミーのキーを使用
