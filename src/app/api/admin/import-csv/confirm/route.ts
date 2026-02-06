@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
       failed: 0,
       created: 0,
       updated: 0,
+      skipped: 0,
       phoneUpdated: 0,
       errors: [] as Array<{ authKey: string; error: string }>,
     };
@@ -82,13 +83,19 @@ export async function POST(req: NextRequest) {
         });
 
         if (existingToken) {
-          // 既存トークンの更新
-          await prisma.token.update({
-            where: { token_value: authKey },
-            data: { status },
-          });
-          results.updated++;
-          console.log(`✅ 更新: ${authKey} → ${status}`);
+          // 既存トークンの処理
+          // ステータスが変更された場合のみ更新
+          if (existingToken.status !== status) {
+            await prisma.token.update({
+              where: { token_value: authKey },
+              data: { status },
+            });
+            results.updated++;
+            console.log(`✅ 更新: ${authKey} → ${existingToken.status} から ${status} に変更`);
+          } else {
+            results.skipped++;
+            console.log(`⏭️  スキップ: ${authKey} → ステータス変更なし (${status})`);
+          }
 
           // 電話番号の更新（ユーザーが存在し、電話番号が未設定の場合のみ）
           if (

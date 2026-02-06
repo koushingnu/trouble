@@ -34,6 +34,7 @@ interface ConfirmResult {
     failed: number;
     created: number;
     updated: number;
+    skipped: number;
     phoneUpdated: number;
     errors: Array<{ authKey: string; error: string }>;
   };
@@ -494,7 +495,7 @@ export default function CsvImport() {
             </div>
             <div className="p-6">
               {/* 統計サマリー */}
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+              <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
                 <div className="bg-blue-50 rounded-lg p-4 text-center">
                   <div className="text-2xl font-bold text-blue-600">
                     {confirmResult.results.total}
@@ -519,6 +520,12 @@ export default function CsvImport() {
                   </div>
                   <div className="text-sm text-gray-600">更新</div>
                 </div>
+                <div className="bg-gray-50 rounded-lg p-4 text-center">
+                  <div className="text-2xl font-bold text-gray-600">
+                    {confirmResult.results.skipped}
+                  </div>
+                  <div className="text-sm text-gray-600">スキップ</div>
+                </div>
                 <div className="bg-red-50 rounded-lg p-4 text-center">
                   <div className="text-2xl font-bold text-red-600">
                     {confirmResult.results.failed}
@@ -529,6 +536,14 @@ export default function CsvImport() {
 
               {/* 詳細情報 */}
               <div className="space-y-4">
+                {confirmResult.results.skipped > 0 && (
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <p className="text-sm text-gray-800">
+                      ⏭️  {confirmResult.results.skipped}
+                      件のレコードはステータスに変更がなかったためスキップされました
+                    </p>
+                  </div>
+                )}
                 {confirmResult.results.phoneUpdated > 0 && (
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <p className="text-sm text-blue-800">
