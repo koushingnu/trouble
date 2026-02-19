@@ -19,7 +19,7 @@ export default function MenuHeader() {
       icon: "/icon/history.svg",
     },
     {
-      name: "マイページ",
+      name: "test",
       path: "/mypage",
       icon: "/icon/mypage.svg",
     },
