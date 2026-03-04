@@ -77,18 +77,24 @@
 
 ```prisma
 model User {
-  id            Int          @id @default(autoincrement())
-  email         String       @unique
-  password      String
-  last_name     String?
-  first_name    String?
-  phone_number  String?
-  token_id      Int?         @unique
-  token         Token?       @relation(fields: [token_id], references: [id])
-  is_admin      Boolean      @default(false)
-  created_at    DateTime     @default(now())
-  updated_at    DateTime     @updatedAt
-  chat_rooms    ChatRoom[]
+  id                     Int          @id @default(autoincrement())
+  email                  String       @unique
+  password               String
+  last_name              String?
+  first_name             String?
+  phone_number           String?
+  company_serial_number  String?      @unique  // 自社通番 (mm0000000形式)
+  acquisition_source     String?               // 獲得施策
+  last_name_kana         String?               // 姓（フリガナ）
+  first_name_kana        String?               // 名（フリガナ）
+  postal_code            String?               // 郵便番号（ハイフンなし）
+  address                String?               // 住所
+  token_id               Int?         @unique
+  token                  Token?       @relation(fields: [token_id], references: [id])
+  is_admin               Boolean      @default(false)
+  created_at             DateTime     @default(now())
+  updated_at             DateTime     @updatedAt
+  chat_rooms             ChatRoom[]
 }
 ```
 

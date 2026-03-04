@@ -9,19 +9,25 @@ datasource db {
 }
 
 model User {
-  id              Int         @id @default(autoincrement())
-  email           String      @unique
-  token_id        Int?        @unique
-  created_at      DateTime    @default(now())
-  password        String
-  is_admin        Boolean     @default(false)
-  phone_number    String?     @db.VarChar(20)
-  last_name       String?     @db.VarChar(50)
-  first_name      String?     @db.VarChar(50)
-  access_logs     AccessLog[]
-  chat_rooms      ChatRoom[]
-  tokens_assigned Token[]     @relation("AssignedTokens")
-  token           Token?      @relation("UserToken", fields: [token_id], references: [id])
+  id                     Int         @id @default(autoincrement())
+  email                  String      @unique
+  token_id               Int?        @unique
+  created_at             DateTime    @default(now())
+  password               String
+  is_admin               Boolean     @default(false)
+  phone_number           String?     @db.VarChar(20)
+  last_name              String?     @db.VarChar(50)
+  first_name             String?     @db.VarChar(50)
+  company_serial_number  String?     @unique @db.VarChar(10)
+  acquisition_source     String?     @db.VarChar(50)
+  last_name_kana         String?     @db.VarChar(50)
+  first_name_kana        String?     @db.VarChar(50)
+  postal_code            String?     @db.VarChar(7)
+  address                String?     @db.VarChar(255)
+  access_logs            AccessLog[]
+  chat_rooms             ChatRoom[]
+  tokens_assigned        Token[]     @relation("AssignedTokens")
+  token                  Token?      @relation("UserToken", fields: [token_id], references: [id])
 }
 
 model Token {

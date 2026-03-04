@@ -81,7 +81,18 @@ export default function UserList() {
   };
 
   const columns: Column<User>[] = [
-    { key: "id", label: "ID", width: 60 },
+    {
+      key: "company_serial_number",
+      label: "自社通番",
+      width: 120,
+      format: (value) => (value as string) || "-",
+    },
+    {
+      key: "acquisition_source",
+      label: "獲得施策",
+      width: 150,
+      format: (value) => (value as string) || "-",
+    },
     {
       key: "email",
       label: "メールアドレス",
@@ -99,9 +110,32 @@ export default function UserList() {
       },
     },
     {
+      key: "id", // ダミーのキーを使用
+      label: "名前（フリガナ）",
+      width: 150,
+      format: (_, row) => {
+        if (row.last_name_kana && row.first_name_kana) {
+          return `${row.last_name_kana} ${row.first_name_kana}`;
+        }
+        return "-";
+      },
+    },
+    {
       key: "phone_number",
       label: "電話番号",
       width: 130,
+      format: (value) => (value as string) || "-",
+    },
+    {
+      key: "postal_code",
+      label: "郵便番号",
+      width: 100,
+      format: (value) => (value as string) || "-",
+    },
+    {
+      key: "address",
+      label: "住所",
+      width: 250,
       format: (value) => (value as string) || "-",
     },
     {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import prisma from "@/lib/prisma";
 import { hash } from "bcryptjs";
+import { generateCompanySerialNumber } from "@/utils/serialNumber";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,12 @@ export async function GET(request: NextRequest) {
         phone_number: true,
         last_name: true,
         first_name: true,
+        company_serial_number: true,
+        acquisition_source: true,
+        last_name_kana: true,
+        first_name_kana: true,
+        postal_code: true,
+        address: true,
         token: {
           select: {
             token_value: true,
@@ -57,8 +64,18 @@ export async function GET(request: NextRequest) {
 // ユーザー登録
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, token, phoneNumber, lastName, firstName } =
-      await request.json();
+    const { 
+      email, 
+      password, 
+      token, 
+      phoneNumber, 
+      lastName, 
+      firstName,
+      lastNameKana,
+      firstNameKana,
+      postalCode,
+      address
+    } = await request.json();
 
     // 入力値の検証
     if (!email || !password) {
@@ -75,10 +92,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 電話番号・姓名のバリデーション
-    if (!phoneNumber || !lastName || !firstName) {
+    // 必須項目のバリデーション
+    if (!phoneNumber || !lastName || !firstName || !lastNameKana || !firstNameKana || !postalCode || !address) {
       return NextResponse.json(
-        { error: "電話番号、姓、名は必須です" },
+        { error: "電話番号、姓、名、フリガナ、郵便番号、住所は必須です" },
         { status: 400 }
       );
     }
@@ -89,6 +106,24 @@ export async function POST(request: NextRequest) {
     if (!phoneRegex.test(phoneNumber)) {
       return NextResponse.json(
         { error: "電話番号は10桁または11桁の数字で入力してください（例: 08012345678）" },
+        { status: 400 }
+      );
+    }
+
+    // 郵便番号の形式チェック（ハイフンなし、7桁）
+    const postalCodeRegex = /^\d{7}$/;
+    if (!postalCodeRegex.test(postalCode)) {
+      return NextResponse.json(
+        { error: "郵便番号は7桁の数字で入力してください（例: 1234567）" },
+        { status: 400 }
+      );
+    }
+
+    // フリガナの形式チェック（カタカナのみ）
+    const kanaRegex = /^[ァ-ヶー]+$/;
+    if (!kanaRegex.test(lastNameKana) || !kanaRegex.test(firstNameKana)) {
+      return NextResponse.json(
+        { error: "フリガナはカタカナで入力してください" },
         { status: 400 }
       );
     }
@@ -128,7 +163,7 @@ export async function POST(request: NextRequest) {
 
     // トランザクションでユーザー作成とトークン更新を実行
     const user = await prisma.$transaction(async (tx) => {
-      // ユーザーの作成
+      // ユーザーの作成（自社通番は後で設定）
       const newUser = await tx.user.create({
         data: {
           email,
@@ -137,6 +172,20 @@ export async function POST(request: NextRequest) {
           phone_number: phoneNumber,
           last_name: lastName,
           first_name: firstName,
+          last_name_kana: lastNameKana,
+          first_name_kana: firstNameKana,
+          postal_code: postalCode,
+          address: address,
+          acquisition_source: "トラブル解決ラボ",
+        },
+      });
+
+      // 自社通番を生成して更新（IDが必要なため、作成後に更新）
+      const serialNumber = generateCompanySerialNumber(newUser.id);
+      const updatedUser = await tx.user.update({
+        where: { id: newUser.id },
+        data: {
+          company_serial_number: serialNumber,
         },
       });
 
@@ -159,7 +208,7 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      return newUser;
+      return updatedUser;
     });
 
     return NextResponse.json({

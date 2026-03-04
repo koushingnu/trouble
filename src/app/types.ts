@@ -9,6 +9,12 @@ export interface User {
   phone_number: string | null;
   last_name: string | null;
   first_name: string | null;
+  company_serial_number: string | null;
+  acquisition_source: string | null;
+  last_name_kana: string | null;
+  first_name_kana: string | null;
+  postal_code: string | null;
+  address: string | null;
   token?: {
     status: TokenStatus | null;
     token_value: string | null;
