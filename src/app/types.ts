@@ -18,6 +18,8 @@ export interface User {
   token?: {
     status: TokenStatus | null;
     token_value: string | null;
+    registered_at: string | null;
+    cancelled_at: string | null;
   } | null;
 }
 
@@ -26,5 +28,7 @@ export interface Token {
   status: TokenStatus;
   token_value: string;
   created_at: string;
+  registered_at?: string | null;
+  cancelled_at?: string | null;
   user_email?: string | null;
 }

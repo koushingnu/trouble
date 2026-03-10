@@ -140,8 +140,8 @@ export default function UserList() {
     },
     {
       key: "id", // ダミーのキーを使用
-      label: "ステータス",
-      width: 110,
+      label: "会員ステータス",
+      width: 120,
       align: "center",
       format: (_, row) => (
         <span
@@ -152,6 +152,31 @@ export default function UserList() {
           {getStatusLabel(row.token?.status || null)}
         </span>
       ),
+    },
+    {
+      key: "id", // ダミーのキーを使用
+      label: "登録日",
+      width: 120,
+      format: (_, row) => {
+        if (!row.token?.registered_at) return "-";
+        return new Date(row.token.registered_at).toLocaleDateString("ja-JP", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        });
+      },
+    },
+    {
+      key: "id", // ダミーのキーを使用
+      label: "退会日",
+      width: 100,
+      format: (_, row) => {
+        if (!row.token?.cancelled_at) return "-";
+        return new Date(row.token.cancelled_at).toLocaleDateString("ja-JP", {
+          year: "numeric",
+          month: "2-digit",
+        });
+      },
     },
     {
       key: "id", // ダミーのキーを使用

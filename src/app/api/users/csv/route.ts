@@ -36,6 +36,8 @@ export async function GET(request: NextRequest) {
           select: {
             token_value: true,
             status: true,
+            registered_at: true,
+            cancelled_at: true,
           },
         },
       },
@@ -44,7 +46,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // CSVヘッダー（画像の順番に合わせる）
+    // CSVヘッダー（画像の順番に合わせる + 登録日・退会日・会員ステータス）
     const headers = [
       "自社通番",
       "獲得施策",
@@ -54,6 +56,9 @@ export async function GET(request: NextRequest) {
       "連絡先",
       "郵便番号",
       "ご住所（都道府県東部等、建物名部屋番号等）",
+      "登録日",
+      "退会日",
+      "会員ステータス",
     ];
 
     // CSVデータ行
@@ -68,6 +73,33 @@ export async function GET(request: NextRequest) {
         .filter(Boolean)
         .join(" ") || "";
 
+      // 登録日（YYYY/MM/DD形式）
+      const registeredAt = user.token?.registered_at
+        ? new Date(user.token.registered_at).toLocaleDateString("ja-JP", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          }).replace(/\//g, "/")
+        : "";
+
+      // 退会日（YYYY/MM形式）
+      const cancelledAt = user.token?.cancelled_at
+        ? new Date(user.token.cancelled_at).toLocaleDateString("ja-JP", {
+            year: "numeric",
+            month: "2-digit",
+          }).replace(/\//g, "/")
+        : "";
+
+      // 会員ステータス（日本語表記）
+      let memberStatus = "";
+      if (user.token?.status === "ACTIVE") {
+        memberStatus = "契約";
+      } else if (user.token?.status === "REVOKED") {
+        memberStatus = "退会";
+      } else if (user.token?.status === "UNUSED") {
+        memberStatus = "未使用";
+      }
+
       return [
         user.company_serial_number || "",
         user.acquisition_source || "",
@@ -77,6 +109,9 @@ export async function GET(request: NextRequest) {
         user.phone_number || "",
         user.postal_code || "",
         user.address || "",
+        registeredAt,
+        cancelledAt,
+        memberStatus,
       ];
     });
 

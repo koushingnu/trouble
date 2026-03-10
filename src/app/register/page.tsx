@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import Footer from "@/components/Footer";
 
 export default function Register() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -18,6 +19,7 @@ export default function Register() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [address, setAddress] = useState("");
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -122,6 +124,12 @@ export default function Register() {
     const postalCodeRegex = /^\d{7}$/;
     if (!postalCodeRegex.test(postalCode)) {
       setError("郵便番号は7桁の数字で入力してください（例: 1234567）");
+      return false;
+    }
+
+    // 利用規約への同意チェック
+    if (!agreedToTerms) {
+      setError("プライバシーポリシーと利用規約に同意してください");
       return false;
     }
 
@@ -553,6 +561,41 @@ export default function Register() {
                       />
                     </div>
                   </div>
+
+                  {/* 利用規約同意チェックボックス */}
+                  <div className="mt-6 p-4 bg-red-50 border-2 border-red-300 rounded-lg">
+                    <p className="text-sm text-gray-800 leading-relaxed mb-3">
+                      <Link
+                        href="/privacy"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#1888CF] hover:text-[#1565A0] font-medium underline"
+                      >
+                        プライバシーポリシー
+                      </Link>
+                      、
+                      <Link
+                        href="/terms"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#1888CF] hover:text-[#1565A0] font-medium underline"
+                      >
+                        利用規約
+                      </Link>
+                      をご確認・ご同意の上登録ボタンを押してください。
+                    </p>
+                    <label className="flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={agreedToTerms}
+                        onChange={(e) => setAgreedToTerms(e.target.checked)}
+                        className="w-5 h-5 text-[#1888CF] border-gray-300 rounded focus:ring-[#1888CF] cursor-pointer"
+                      />
+                      <span className="ml-3 text-sm text-gray-800 font-medium">
+                        同意する
+                      </span>
+                    </label>
+                  </div>
                 </>
               )}
 
@@ -582,8 +625,8 @@ export default function Register() {
                 ) : (
                   <button
                     type="submit"
-                    disabled={loading}
-                    className="flex-1 bg-[#1888CF] text-white py-3 px-6 rounded-full font-bold hover:bg-[#1568a8] disabled:opacity-50 transition-colors duration-200"
+                    disabled={loading || !agreedToTerms}
+                    className="flex-1 bg-[#1888CF] text-white py-3 px-6 rounded-full font-bold hover:bg-[#1568a8] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                   >
                     {loading ? "登録中..." : "登録する"}
                   </button>
@@ -603,28 +646,7 @@ export default function Register() {
         </div>
       </main>
 
-      {/* フッター */}
-      <footer className="w-full bg-[#FDFDFD] py-4 px-4 border-t border-gray-200">
-        <div className="max-w-md mx-auto flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-6 text-sm text-gray-600">
-          <Link href="/company" className="hover:text-[#1888CF]">
-            運営者情報
-          </Link>
-          <Link href="/privacy" className="hover:text-[#1888CF]">
-            プライバシーポリシー
-          </Link>
-          <a
-            href="https://troublesolution-lab.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-[#1888CF]"
-          >
-            お問い合わせ
-          </a>
-        </div>
-        <p className="text-center text-xs text-gray-500 mt-3">
-          © 2025 トラブルまるごとレスキュー隊
-        </p>
-      </footer>
+      <Footer />
     </div>
   );
 }

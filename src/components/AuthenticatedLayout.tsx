@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import MenuHeader from "./MenuHeader";
+import Footer from "./Footer";
 
 export default function AuthenticatedLayout({
   children,
@@ -32,28 +33,9 @@ export default function AuthenticatedLayout({
         {children}
       </main>
 
-      {/* フッター */}
-      <footer className="w-full bg-[#FDFDFD] py-4 px-4 border-t border-gray-200 mt-auto">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-6 text-sm text-gray-600">
-          <a href="/company" className="hover:text-[#1888CF]">
-            運営者情報
-          </a>
-          <a href="/privacy" className="hover:text-[#1888CF]">
-            プライバシーポリシー
-          </a>
-          <a
-            href="https://troublesolution-lab.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-[#1888CF]"
-          >
-            お問い合わせ
-          </a>
-        </div>
-        <p className="text-center text-xs text-gray-500 mt-3">
-          © 2025 トラブルまるごとレスキュー隊
-        </p>
-      </footer>
+      <div className="mt-auto">
+        <Footer maxWidth="7xl" />
+      </div>
     </div>
   );
 }

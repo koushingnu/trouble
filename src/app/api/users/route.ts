@@ -38,6 +38,8 @@ export async function GET(request: NextRequest) {
           select: {
             token_value: true,
             status: true,
+            registered_at: true,
+            cancelled_at: true,
           },
         },
       },
@@ -196,6 +198,7 @@ export async function POST(request: NextRequest) {
           data: {
             status: "ACTIVE",
             assigned_to: newUser.id,
+            registered_at: new Date(),
           },
         });
       }

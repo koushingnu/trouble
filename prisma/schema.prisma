@@ -36,6 +36,8 @@ model Token {
   created_at    DateTime    @default(now())
   assigned_to   Int?
   token_value   String      @unique
+  registered_at DateTime?
+  cancelled_at  DateTime?
   assigned_user User?       @relation("AssignedTokens", fields: [assigned_to], references: [id])
   user_token    User?       @relation("UserToken")
 
