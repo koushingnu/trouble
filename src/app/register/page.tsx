@@ -66,8 +66,8 @@ export default function Register() {
     }
   };
 
-  // ステップ2のバリデーション
-  const validateStep2 = () => {
+  // ステップ2のバリデーション（非同期でメールアドレスチェック）
+  const validateStep2 = async () => {
     if (!lastName || !firstName || !lastNameKana || !firstNameKana) {
       setError("すべての項目を入力してください");
       return false;
@@ -80,7 +80,28 @@ export default function Register() {
       return false;
     }
 
-    return true;
+    // メールアドレスの重複チェック
+    try {
+      const emailCheckRes = await fetch("/api/users/check-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const emailData = await emailCheckRes.json();
+
+      if (emailData.exists) {
+        setError("このメールアドレスは既に登録されています");
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      setError("メールアドレスの確認中にエラーが発生しました");
+      return false;
+    }
   };
 
   // ステップ3のバリデーション
@@ -120,9 +141,12 @@ export default function Register() {
         }
       }
 
-      if (currentStep === 2 && !validateStep2()) {
-        setLoading(false);
-        return;
+      if (currentStep === 2) {
+        const isValid = await validateStep2();
+        if (!isValid) {
+          setLoading(false);
+          return;
+        }
       }
 
       if (currentStep < totalSteps) {
@@ -553,7 +577,7 @@ export default function Register() {
                       currentStep === 1 ? "w-full" : "flex-1"
                     } bg-[#1888CF] text-white py-3 px-6 rounded-full font-bold hover:bg-[#1568a8] disabled:opacity-50 transition-colors duration-200`}
                   >
-                    {loading && currentStep === 1 ? "確認中..." : "次へ"}
+                    {loading && (currentStep === 1 || currentStep === 2) ? "確認中..." : "次へ"}
                   </button>
                 ) : (
                   <button
