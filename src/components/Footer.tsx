@@ -15,17 +15,27 @@ export default function Footer({ maxWidth = "md" }: FooterProps) {
   return (
     <footer className="w-full bg-[#FDFDFD] py-4 px-4 border-t border-gray-200">
       <div
-        className={`${maxWidthClass} mx-auto flex flex-col sm:flex-row flex-wrap justify-center items-center gap-3 sm:gap-4 md:gap-6 text-sm text-gray-600 whitespace-nowrap`}
+        className={`${maxWidthClass} mx-auto flex flex-col sm:flex-row sm:flex-wrap lg:flex-nowrap justify-center items-center gap-3 sm:gap-4 md:gap-6 text-sm text-gray-600 whitespace-nowrap`}
       >
         <Link href="/company" className="hover:text-[#1888CF]">
           運営者情報
         </Link>
-        <Link href="/terms" className="hover:text-[#1888CF]">
+        <a
+          href="https://troublesolution-lab.com/terms.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-[#1888CF]"
+        >
           利用規約
-        </Link>
-        <Link href="/tokutei" className="hover:text-[#1888CF]">
+        </a>
+        <a
+          href="https://troublesolution-lab.com/ordercontract.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-[#1888CF]"
+        >
           特定商取引法
-        </Link>
+        </a>
         <Link href="/privacy" className="hover:text-[#1888CF]">
           プライバシーポリシー
         </Link>

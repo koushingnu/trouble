@@ -574,14 +574,14 @@ export default function Register() {
                         プライバシーポリシー
                       </Link>
                       、
-                      <Link
-                        href="/terms"
+                      <a
+                        href="https://troublesolution-lab.com/terms.html"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-[#1888CF] hover:text-[#1565A0] font-medium underline"
                       >
                         利用規約
-                      </Link>
+                      </a>
                       をご確認・ご同意の上登録ボタンを押してください。
                     </p>
                     <label className="flex items-center cursor-pointer">

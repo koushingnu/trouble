@@ -11,7 +11,7 @@ const zenKakuGothicNew = Zen_Kaku_Gothic_New({
 });
 
 export const metadata: Metadata = {
-  title: "トラブルまるごとレスキュー隊",
+  title: "トラブル解決ラボ",
   description: "生活トラブル相談サービス",
   viewport: "width=device-width, initial-scale=1, maximum-scale=1",
 };
