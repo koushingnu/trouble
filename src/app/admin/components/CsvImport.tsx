@@ -19,6 +19,7 @@ interface ExtractedData {
   phoneNumber: string;
   status: string;
   statusMapped: "ACTIVE" | "REVOKED" | "UNUSED";
+  cancelledDate: string;
   keyToUse: string;
   isFiltered: boolean;
   skipReason?: string;
@@ -123,6 +124,7 @@ export default function CsvImport() {
         authKey: data.keyToUse,
         phoneNumber: data.phoneNumber,
         status: data.statusMapped,
+        cancelledDate: data.cancelledDate,
       }));
 
     if (filteredRecords.length === 0) {
@@ -422,6 +424,9 @@ export default function CsvImport() {
                           ステータス
                         </th>
                         <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          退会日
+                        </th>
+                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           判定
                         </th>
                       </tr>
@@ -463,6 +468,9 @@ export default function CsvImport() {
                             <div className="text-xs text-gray-500 mt-1">
                               ({data.status || "未設定"})
                             </div>
+                          </td>
+                          <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {data.cancelledDate || "-"}
                           </td>
                           <td className="px-3 py-4 text-sm">
                             {data.isFiltered ? (

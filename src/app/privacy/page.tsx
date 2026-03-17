@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import Footer from "@/components/Footer";
 
 export default function Privacy() {
   return (
@@ -293,28 +294,7 @@ export default function Privacy() {
         </div>
       </main>
 
-      {/* フッター */}
-      <footer className="w-full bg-[#FDFDFD] py-4 px-4 border-t border-gray-200">
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-6 text-sm text-gray-600">
-          <Link href="/company" className="hover:text-[#1888CF]">
-            運営者情報
-          </Link>
-          <Link href="/privacy" className="hover:text-[#1888CF]">
-            プライバシーポリシー
-          </Link>
-          <a
-            href="https://troublesolution-lab.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-[#1888CF]"
-          >
-            お問い合わせ
-          </a>
-        </div>
-        <p className="text-center text-xs text-gray-500 mt-3">
-          © 2025 トラブルまるごとレスキュー隊
-        </p>
-      </footer>
+      <Footer maxWidth="4xl" />
     </div>
   );
 }

@@ -10,6 +10,7 @@ interface ImportRecord {
   authKey: string;
   phoneNumber: string;
   status: "ACTIVE" | "REVOKED" | "UNUSED";
+  cancelledDate?: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
     // 各レコードを個別に処理（エラーが発生しても他のレコードを処理）
     for (const record of records as ImportRecord[]) {
       try {
-        const { authKey, phoneNumber, status } = record;
+        const { authKey, phoneNumber, status, cancelledDate } = record;
 
         if (!authKey) {
           results.failed++;
@@ -84,17 +85,41 @@ export async function POST(req: NextRequest) {
 
         if (existingToken) {
           // 既存トークンの処理
-          // ステータスが変更された場合のみ更新
-          if (existingToken.status !== status) {
+          // 退会日をDateオブジェクトに変換（年月形式 YYYY/MM または YYYY-MM）
+          let cancelledAtDate: Date | null = null;
+          if (cancelledDate && status === "REVOKED") {
+            try {
+              // YYYY/MM または YYYY-MM 形式を想定
+              const dateStr = cancelledDate.replace(/\//g, "-");
+              const [year, month] = dateStr.split("-");
+              if (year && month) {
+                // 月の最終日を設定
+                cancelledAtDate = new Date(parseInt(year), parseInt(month), 0);
+              }
+            } catch (error) {
+              console.warn(`⚠️  退会日の解析失敗: ${cancelledDate}`);
+            }
+          }
+
+          // ステータスまたは退会日が変更された場合のみ更新
+          const needsUpdate = 
+            existingToken.status !== status || 
+            (cancelledAtDate && (!existingToken.cancelled_at || 
+              existingToken.cancelled_at.getTime() !== cancelledAtDate.getTime()));
+
+          if (needsUpdate) {
             await prisma.token.update({
               where: { token_value: authKey },
-              data: { status },
+              data: { 
+                status,
+                cancelled_at: cancelledAtDate,
+              },
             });
             results.updated++;
-            console.log(`✅ 更新: ${authKey} → ${existingToken.status} から ${status} に変更`);
+            console.log(`✅ 更新: ${authKey} → ステータス: ${status}${cancelledAtDate ? `, 退会日: ${cancelledAtDate.toISOString().split('T')[0]}` : ''}`);
           } else {
             results.skipped++;
-            console.log(`⏭️  スキップ: ${authKey} → ステータス変更なし (${status})`);
+            console.log(`⏭️  スキップ: ${authKey} → 変更なし (${status})`);
           }
 
           // 電話番号の更新（ユーザーが存在し、電話番号が未設定の場合のみ）

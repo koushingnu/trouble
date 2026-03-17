@@ -24,12 +24,20 @@ export async function GET(request: NextRequest) {
         phone_number: true,
         last_name: true,
         first_name: true,
+        company_serial_number: true,
+        acquisition_source: true,
+        last_name_kana: true,
+        first_name_kana: true,
+        postal_code: true,
+        address: true,
         is_admin: true,
         created_at: true,
         token: {
           select: {
             token_value: true,
             status: true,
+            registered_at: true,
+            cancelled_at: true,
           },
         },
       },
@@ -38,45 +46,72 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // CSVヘッダー
+    // CSVヘッダー（画像の順番に合わせる + 登録日・退会日・会員ステータス）
     const headers = [
-      "ID",
+      "自社通番",
+      "獲得施策",
+      "お客様名前",
+      "お客様名前フリガナ",
       "メールアドレス",
-      "姓",
-      "名",
-      "電話番号",
-      "認証キー",
-      "ステータス",
-      "管理者",
-      "登録日時",
+      "連絡先",
+      "郵便番号",
+      "ご住所（都道府県東部等、建物名部屋番号等）",
+      "登録日",
+      "退会日",
+      "会員ステータス",
     ];
 
     // CSVデータ行
     const rows = users.map((user) => {
-      const statusLabel = user.token?.status
-        ? user.token.status === "ACTIVE"
-          ? "使用中"
-          : user.token.status === "REVOKED"
-          ? "無効"
-          : "未使用"
-        : "未設定";
+      // 姓名を結合
+      const fullName = [user.last_name, user.first_name]
+        .filter(Boolean)
+        .join(" ") || "";
+      
+      // フリガナを結合
+      const fullNameKana = [user.last_name_kana, user.first_name_kana]
+        .filter(Boolean)
+        .join(" ") || "";
+
+      // 登録日（YYYY/MM/DD形式）
+      const registeredAt = user.token?.registered_at
+        ? new Date(user.token.registered_at).toLocaleDateString("ja-JP", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          }).replace(/\//g, "/")
+        : "";
+
+      // 退会日（YYYY/MM形式）
+      const cancelledAt = user.token?.cancelled_at
+        ? new Date(user.token.cancelled_at).toLocaleDateString("ja-JP", {
+            year: "numeric",
+            month: "2-digit",
+          }).replace(/\//g, "/")
+        : "";
+
+      // 会員ステータス（日本語表記）
+      let memberStatus = "";
+      if (user.token?.status === "ACTIVE") {
+        memberStatus = "契約";
+      } else if (user.token?.status === "REVOKED") {
+        memberStatus = "退会";
+      } else if (user.token?.status === "UNUSED") {
+        memberStatus = "未使用";
+      }
 
       return [
-        user.id,
+        user.company_serial_number || "",
+        user.acquisition_source || "",
+        fullName,
+        fullNameKana,
         user.email,
-        user.last_name || "",
-        user.first_name || "",
         user.phone_number || "",
-        user.token?.token_value || "",
-        statusLabel,
-        user.is_admin ? "はい" : "いいえ",
-        new Date(user.created_at).toLocaleString("ja-JP", {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
+        user.postal_code || "",
+        user.address || "",
+        registeredAt,
+        cancelledAt,
+        memberStatus,
       ];
     });
 

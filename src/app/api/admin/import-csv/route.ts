@@ -68,6 +68,7 @@ export async function POST(req: NextRequest) {
       phoneNumber: string;
       status: string;
       statusMapped: "ACTIVE" | "REVOKED" | "UNUSED";
+      cancelledDate: string;
       keyToUse: string;
       isFiltered: boolean;
       skipReason?: string;
@@ -92,15 +93,16 @@ export async function POST(req: NextRequest) {
         const phoneNumber = record["電話番号"]?.trim() || "";
         const status = record["ステータス"]?.trim() || "";
         const customerId = record["顧客ID"]?.trim() || "";
+        const cancelledDate = record["退会日"]?.trim() || record["解約日"]?.trim() || "";
 
         // 認証キーまたは顧客IDのどちらかが必須
         const keyToUse = authKey || customerId;
 
         // ステータスを判定
         let tokenStatus: "ACTIVE" | "REVOKED" | "UNUSED" = "UNUSED";
-        if (status === "承認" || status === "契約") {
+        if (status === "承認" || status === "契約" || status === "契約中") {
           tokenStatus = "ACTIVE";
-        } else if (status === "退会" || status === "解約") {
+        } else if (status === "退会" || status === "解約" || status === "解約済") {
           tokenStatus = "REVOKED";
         }
 
@@ -128,6 +130,7 @@ export async function POST(req: NextRequest) {
           phoneNumber,
           status,
           statusMapped: tokenStatus,
+          cancelledDate,
           keyToUse,
           isFiltered: isTargetProduct && !!keyToUse,
           skipReason,
@@ -141,6 +144,7 @@ export async function POST(req: NextRequest) {
           phoneNumber: "",
           status: "",
           statusMapped: "UNUSED",
+          cancelledDate: "",
           keyToUse: "",
           isFiltered: false,
           skipReason: `エラー: ${error.message || "不明なエラー"}`,

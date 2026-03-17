@@ -81,7 +81,18 @@ export default function UserList() {
   };
 
   const columns: Column<User>[] = [
-    { key: "id", label: "ID", width: 60 },
+    {
+      key: "company_serial_number",
+      label: "自社通番",
+      width: 120,
+      format: (value) => (value as string) || "-",
+    },
+    {
+      key: "acquisition_source",
+      label: "獲得施策",
+      width: 150,
+      format: (value) => (value as string) || "-",
+    },
     {
       key: "email",
       label: "メールアドレス",
@@ -99,15 +110,38 @@ export default function UserList() {
       },
     },
     {
+      key: "id", // ダミーのキーを使用
+      label: "名前（フリガナ）",
+      width: 150,
+      format: (_, row) => {
+        if (row.last_name_kana && row.first_name_kana) {
+          return `${row.last_name_kana} ${row.first_name_kana}`;
+        }
+        return "-";
+      },
+    },
+    {
       key: "phone_number",
       label: "電話番号",
       width: 130,
       format: (value) => (value as string) || "-",
     },
     {
+      key: "postal_code",
+      label: "郵便番号",
+      width: 100,
+      format: (value) => (value as string) || "-",
+    },
+    {
+      key: "address",
+      label: "住所",
+      width: 250,
+      format: (value) => (value as string) || "-",
+    },
+    {
       key: "id", // ダミーのキーを使用
-      label: "ステータス",
-      width: 110,
+      label: "会員ステータス",
+      width: 120,
       align: "center",
       format: (_, row) => (
         <span
@@ -118,6 +152,31 @@ export default function UserList() {
           {getStatusLabel(row.token?.status || null)}
         </span>
       ),
+    },
+    {
+      key: "id", // ダミーのキーを使用
+      label: "登録日",
+      width: 120,
+      format: (_, row) => {
+        if (!row.token?.registered_at) return "-";
+        return new Date(row.token.registered_at).toLocaleDateString("ja-JP", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        });
+      },
+    },
+    {
+      key: "id", // ダミーのキーを使用
+      label: "退会日",
+      width: 100,
+      format: (_, row) => {
+        if (!row.token?.cancelled_at) return "-";
+        return new Date(row.token.cancelled_at).toLocaleDateString("ja-JP", {
+          year: "numeric",
+          month: "2-digit",
+        });
+      },
     },
     {
       key: "id", // ダミーのキーを使用
