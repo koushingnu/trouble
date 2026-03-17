@@ -53,9 +53,9 @@ export default function Company() {
 
               <div className="pb-4">
                 <dt className="text-sm font-medium text-gray-500 mb-2">
-                  電話番号
+                  お問い合わせ窓口
                 </dt>
-                <dd className="text-lg text-gray-800">0120-542-179</dd>
+                <dd className="text-lg text-gray-800">contactcenter-trouble@troublesolution-lab.com</dd>
               </div>
             </div>
 
