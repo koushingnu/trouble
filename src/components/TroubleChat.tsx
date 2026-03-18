@@ -10,6 +10,7 @@ import {
   CheckCircleIcon,
 } from "@heroicons/react/24/outline";
 import { Message } from "@/types/chat";
+import { linkifyTextWithLineBreaks } from "@/utils/linkify";
 
 // メッセージを日付でグループ化する関数
 function groupMessagesByDate(messages: Message[]) {
@@ -501,7 +502,7 @@ export default function TroubleChat({
                                   isFullScreen ? "text-base" : "text-[15px]"
                                 }`}
                               >
-                                {message.body}
+                                {linkifyTextWithLineBreaks(message.body)}
                               </p>
                             </div>
                             {/* Time */}
