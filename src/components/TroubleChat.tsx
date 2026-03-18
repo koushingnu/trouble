@@ -502,7 +502,12 @@ export default function TroubleChat({
                                   isFullScreen ? "text-base" : "text-[15px]"
                                 }`}
                               >
-                                {linkifyTextWithLineBreaks(message.body)}
+                                {linkifyTextWithLineBreaks(
+                                  message.body,
+                                  message.sender === "user"
+                                    ? "text-white hover:text-gray-200 underline font-bold"
+                                    : "text-blue-600 hover:text-blue-800 underline font-medium"
+                                )}
                               </p>
                             </div>
                             {/* Time */}

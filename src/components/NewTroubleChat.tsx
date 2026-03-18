@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { PaperAirplaneIcon } from "@heroicons/react/24/solid";
 import { HeartIcon } from "@heroicons/react/24/outline";
 import { Message } from "@/types/chat";
+import { linkifyTextWithLineBreaks } from "@/utils/linkify";
 
 interface TroubleChatProps {
   initialChatRoomId?: number | null;
@@ -417,7 +418,12 @@ export default function NewTroubleChat({
                   }`}
                 >
                   <p className="text-base whitespace-pre-wrap break-words leading-relaxed">
-                    {message.body}
+                    {linkifyTextWithLineBreaks(
+                      message.body,
+                      isUser
+                        ? "text-white hover:text-gray-200 underline font-bold"
+                        : "text-blue-600 hover:text-blue-800 underline font-medium"
+                    )}
                   </p>
                 </div>
               </div>
