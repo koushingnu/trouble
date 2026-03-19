@@ -20,7 +20,7 @@ export default function AuthenticatedLayout({
             width={450}
             height={98}
             priority
-            className="mx-auto w-full max-w-[145px] md:max-w-[200px] h-auto"
+            className="mx-auto w-full max-w-[130px] md:max-w-[200px] h-auto"
           />
         </div>
       </header>
