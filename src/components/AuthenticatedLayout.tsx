@@ -1,29 +1,19 @@
 "use client";
 
-import Image from "next/image";
 import MenuHeader from "./MenuHeader";
 import Footer from "./Footer";
+import LogoHeader from "./LogoHeader";
 
 export default function AuthenticatedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
+  return (    
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-[#ACE0F9] to-[#64B3F4]">
-      {/* メインヘッダー */}
-      <header className="w-full bg-[#FDFDFD] py-3 px-4 border-b border-gray-200">
-        <div className="max-w-7xl mx-auto text-center">
-          <Image
-            src="/logo/logo.svg"
-            alt="トラブルまるごとレスキュー隊"
-            width={450}
-            height={98}
-            priority
-            className="mx-auto w-full max-w-[130px] md:max-w-[200px] h-auto"
-          />
-        </div>
-      </header>
+    {/* メインヘッダー */}
+    <LogoHeader />
+
 
       {/* メニューヘッダー */}
       <MenuHeader />
