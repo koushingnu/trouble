@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import Footer from "@/components/Footer";
+import LogoHeader from "@/components/LogoHeader";
 
 export default function Register() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -239,18 +240,7 @@ export default function Register() {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-[#ACE0F9] to-[#64B3F4]">
       {/* ヘッダー */}
-      <header className="w-full bg-[#FDFDFD] py-4 px-4">
-        <div className="max-w-md mx-auto text-center px-6">
-          <Image
-            src="/logo/logo.svg"
-            alt="トラブルまるごとレスキュー隊"
-            width={450}
-            height={98}
-            priority
-            className="mx-auto w-full max-w-[200px] h-auto"
-          />
-        </div>
-      </header>
+      <LogoHeader />
 
       {/* メインコンテンツ */}
       <main className="flex-1 flex items-center justify-center px-4 py-8">
@@ -646,7 +636,7 @@ export default function Register() {
         </div>
       </main>
 
-      <Footer />
+      <Footer maxWidth="7xl" />
     </div>
   );
 }
