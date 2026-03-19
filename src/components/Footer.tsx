@@ -52,7 +52,7 @@ export default function Footer({ maxWidth = "md" }: FooterProps) {
         </a>
       </div>
       <p className="text-center text-xs text-gray-500 mt-3">
-        © 2025 トラブルまるごとレスキュー隊
+        © 2026 トラブルまるごとレスキュー隊
       </p>
     </footer>
   );
