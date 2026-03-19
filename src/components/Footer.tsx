@@ -15,7 +15,10 @@ export default function Footer({ maxWidth = "md" }: FooterProps) {
   return (
     <footer className="w-full bg-[#FDFDFD] py-4 px-4 border-t border-gray-200">
       <div
-        className={`${maxWidthClass} mx-auto flex flex-col sm:flex-row sm:flex-wrap lg:flex-nowrap justify-center items-center gap-3 sm:gap-4 md:gap-6 text-sm text-gray-600 whitespace-nowrap`}
+        className={`${maxWidthClass} mx-auto
+      grid grid-cols-2 gap-y-2 gap-x-4 text-center
+      sm:flex sm:flex-wrap lg:flex-nowrap sm:justify-center sm:items-center sm:gap-4 md:gap-6
+      text-sm text-gray-600 whitespace-nowrap`}
       >
         <Link href="/company" className="hover:text-[#1888CF]">
           運営者情報

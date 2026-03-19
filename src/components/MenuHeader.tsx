@@ -28,7 +28,7 @@ export default function MenuHeader() {
   return (
     <div className="w-full bg-[#FDFDFD] border-b border-gray-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex justify-around items-center py-3">
+        <div className="flex justify-around items-center py-2 md:py-3">
           {menuItems.map((item) => {
             const isActive = pathname === item.path;
             const iconColor = isActive ? "#FF7BAC" : "#1888CF";
@@ -37,9 +37,9 @@ export default function MenuHeader() {
               <Link
                 key={item.path}
                 href={item.path}
-                className="flex flex-col items-center gap-1 py-2 px-4 transition-all"
+                className="flex flex-col items-center gap-0.5 md:gap-1 py-1.5 md:py-2 px-3 md:px-4 transition-all"
               >
-                <div className="relative w-8 h-8">
+                <div className="relative w-6 h-6 md:w-8 md:h-8">
                   <Image
                     src={item.icon}
                     alt={item.name}
@@ -54,7 +54,7 @@ export default function MenuHeader() {
                   />
                 </div>
                 <span
-                  className={`text-sm font-medium ${
+                  className={`text-xs md:text-sm leading-tight font-medium ${
                     isActive ? "text-[#FF7BAC]" : "text-[#1888CF]"
                   }`}
                 >
