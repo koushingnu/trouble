@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // CSVヘッダー（画像の順番に合わせる + 登録日・退会日・会員ステータス）
+    // CSVヘッダー（画像の順番に合わせる + 登録日・退会月・会員ステータス）
     const headers = [
       "自社通番",
       "獲得施策",
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
       "郵便番号",
       "ご住所（都道府県東部等、建物名部屋番号等）",
       "登録日",
-      "退会日",
+      "退会月",
       "会員ステータス",
     ];
 
@@ -73,21 +73,14 @@ export async function GET(request: NextRequest) {
         .filter(Boolean)
         .join(" ") || "";
 
-      // 登録日（YYYY/MM/DD形式）
+      // 登録日（YYYY-MM-DD形式）
       const registeredAt = user.token?.registered_at
-        ? new Date(user.token.registered_at).toLocaleDateString("ja-JP", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-          }).replace(/\//g, "/")
+        ? new Date(user.token.registered_at).toISOString().split('T')[0]
         : "";
 
-      // 退会日（YYYY/MM形式）
+      // 退会日（YYYY-MM形式）
       const cancelledAt = user.token?.cancelled_at
-        ? new Date(user.token.cancelled_at).toLocaleDateString("ja-JP", {
-            year: "numeric",
-            month: "2-digit",
-          }).replace(/\//g, "/")
+        ? new Date(user.token.cancelled_at).toISOString().slice(0, 7)
         : "";
 
       // 会員ステータス（日本語表記）

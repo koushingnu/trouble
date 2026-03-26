@@ -11,6 +11,7 @@ interface ImportRecord {
   phoneNumber: string;
   status: "ACTIVE" | "REVOKED" | "UNUSED";
   cancelledDate?: string;
+  registeredDate?: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
     // 各レコードを個別に処理（エラーが発生しても他のレコードを処理）
     for (const record of records as ImportRecord[]) {
       try {
-        const { authKey, phoneNumber, status, cancelledDate } = record;
+        const { authKey, phoneNumber, status, cancelledDate, registeredDate } = record;
 
         if (!authKey) {
           results.failed++;
@@ -85,6 +86,16 @@ export async function POST(req: NextRequest) {
 
         if (existingToken) {
           // 既存トークンの処理
+          // 登録日をDateオブジェクトに変換（YYYY-MM-DD形式）
+          let registeredAtDate: Date | null = null;
+          if (registeredDate) {
+            try {
+              registeredAtDate = new Date(registeredDate);
+            } catch (error) {
+              console.warn(`⚠️  登録日の解析失敗: ${registeredDate}`);
+            }
+          }
+
           // 退会日をDateオブジェクトに変換（年月形式 YYYY/MM または YYYY-MM）
           let cancelledAtDate: Date | null = null;
           if (cancelledDate && status === "REVOKED") {
@@ -101,9 +112,11 @@ export async function POST(req: NextRequest) {
             }
           }
 
-          // ステータスまたは退会日が変更された場合のみ更新
+          // ステータス、登録日、または退会日が変更された場合のみ更新
           const needsUpdate = 
             existingToken.status !== status || 
+            (registeredAtDate && (!existingToken.registered_at || 
+              existingToken.registered_at.getTime() !== registeredAtDate.getTime())) ||
             (cancelledAtDate && (!existingToken.cancelled_at || 
               existingToken.cancelled_at.getTime() !== cancelledAtDate.getTime()));
 
@@ -112,11 +125,12 @@ export async function POST(req: NextRequest) {
               where: { token_value: authKey },
               data: { 
                 status,
+                registered_at: registeredAtDate,
                 cancelled_at: cancelledAtDate,
               },
             });
             results.updated++;
-            console.log(`✅ 更新: ${authKey} → ステータス: ${status}${cancelledAtDate ? `, 退会日: ${cancelledAtDate.toISOString().split('T')[0]}` : ''}`);
+            console.log(`✅ 更新: ${authKey} → ステータス: ${status}${registeredAtDate ? `, 登録日: ${registeredAtDate.toISOString().split('T')[0]}` : ''}${cancelledAtDate ? `, 退会日: ${cancelledAtDate.toISOString().split('T')[0]}` : ''}`);
           } else {
             results.skipped++;
             console.log(`⏭️  スキップ: ${authKey} → 変更なし (${status})`);

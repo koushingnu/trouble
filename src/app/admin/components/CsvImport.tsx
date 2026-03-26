@@ -20,6 +20,7 @@ interface ExtractedData {
   status: string;
   statusMapped: "ACTIVE" | "REVOKED" | "UNUSED";
   cancelledDate: string;
+  registeredDate: string;
   keyToUse: string;
   isFiltered: boolean;
   skipReason?: string;
@@ -125,6 +126,7 @@ export default function CsvImport() {
         phoneNumber: data.phoneNumber,
         status: data.statusMapped,
         cancelledDate: data.cancelledDate,
+        registeredDate: data.registeredDate,
       }));
 
     if (filteredRecords.length === 0) {

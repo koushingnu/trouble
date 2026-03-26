@@ -69,6 +69,7 @@ export async function POST(req: NextRequest) {
       status: string;
       statusMapped: "ACTIVE" | "REVOKED" | "UNUSED";
       cancelledDate: string;
+      registeredDate: string;
       keyToUse: string;
       isFiltered: boolean;
       skipReason?: string;
@@ -94,6 +95,7 @@ export async function POST(req: NextRequest) {
         const status = record["ステータス"]?.trim() || "";
         const customerId = record["顧客ID"]?.trim() || "";
         const cancelledDate = record["退会日"]?.trim() || record["解約日"]?.trim() || "";
+        const registeredDate = record["契約日"]?.trim() || "";
 
         // 認証キーまたは顧客IDのどちらかが必須
         const keyToUse = authKey || customerId;
@@ -131,6 +133,7 @@ export async function POST(req: NextRequest) {
           status,
           statusMapped: tokenStatus,
           cancelledDate,
+          registeredDate,
           keyToUse,
           isFiltered: isTargetProduct && !!keyToUse,
           skipReason,
@@ -145,6 +148,7 @@ export async function POST(req: NextRequest) {
           status: "",
           statusMapped: "UNUSED",
           cancelledDate: "",
+          registeredDate: "",
           keyToUse: "",
           isFiltered: false,
           skipReason: `エラー: ${error.message || "不明なエラー"}`,
