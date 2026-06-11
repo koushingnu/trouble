@@ -141,7 +141,7 @@ export async function POST(req: NextRequest) {
       } catch (error: any) {
         extractedData.push({
           rowNumber: i + 2,
-          productName: "",
+          productName: "",　
           authKey: "",
           customerId: "",
           phoneNumber: "",
