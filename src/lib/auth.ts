@@ -1,7 +1,7 @@
 import { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
-import prisma from "./prisma";
+import prisma, { withRetry } from "./prisma";
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -20,11 +20,13 @@ export const authOptions: AuthOptions = {
             return null;
           }
 
-          const user = await prisma.user.findUnique({
-            where: {
-              email: credentials.email,
-            },
-          });
+          const user = await withRetry(() =>
+            prisma.user.findUnique({
+              where: {
+                email: credentials.email,
+              },
+            })
+          );
 
           if (!user) {
             console.log("[AUTH] User not found:", credentials.email);
@@ -85,10 +87,12 @@ export const authOptions: AuthOptions = {
       // JWTトークンが存在する場合、ユーザーがまだデータベースに存在するか確認
       if (token.id) {
         try {
-          const existingUser = await prisma.user.findUnique({
-            where: { id: Number(token.id) },
-            select: { id: true, email: true, is_admin: true },
-          });
+          const existingUser = await withRetry(() =>
+            prisma.user.findUnique({
+              where: { id: Number(token.id) },
+              select: { id: true, email: true, is_admin: true },
+            })
+          );
           
           // ユーザーが削除されている場合、トークンを無効化
           if (!existingUser) {

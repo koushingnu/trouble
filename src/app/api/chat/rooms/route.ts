@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { NextRequest } from "next/server";
-import prisma from "@/lib/prisma";
+import prisma, { withRetry } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -76,22 +76,24 @@ export async function GET(request: NextRequest) {
     console.log("User ID:", userId);
 
     // ユーザーのチャットルーム一覧を最新メッセージと一緒に取得（N+1解消）
-    const chatRooms = await prisma.chatRoom.findMany({
-      where: {
-        user_id: userId,
-      },
-      include: {
-        messages: {
-          orderBy: {
-            created_at: "desc",
-          },
-          take: 1, // 最新メッセージのみ
+    const chatRooms = await withRetry(() =>
+      prisma.chatRoom.findMany({
+        where: {
+          user_id: userId,
         },
-      },
-      orderBy: {
-        created_at: "desc",
-      },
-    });
+        include: {
+          messages: {
+            orderBy: {
+              created_at: "desc",
+            },
+            take: 1, // 最新メッセージのみ
+          },
+        },
+        orderBy: {
+          created_at: "desc",
+        },
+      })
+    );
 
     console.log("Found chat rooms:", chatRooms.length);
 
