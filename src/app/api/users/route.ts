@@ -58,8 +58,6 @@ export async function GET(request: NextRequest) {
       { error: "ユーザー一覧の取得に失敗しました" },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
@@ -229,7 +227,5 @@ export async function POST(request: NextRequest) {
       { error: "ユーザー登録に失敗しました" },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

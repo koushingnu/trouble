@@ -86,8 +86,6 @@ export async function POST(request: NextRequest) {
       { error: "パスワードのリセットに失敗しました" },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
 

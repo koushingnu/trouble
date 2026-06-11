@@ -86,8 +86,6 @@ export async function GET(request: NextRequest) {
       { error: "CSVのエクスポートに失敗しました" },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
 

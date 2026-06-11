@@ -40,7 +40,5 @@ export async function POST(request: NextRequest) {
       { valid: false, error: "トークンの検証に失敗しました" },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
