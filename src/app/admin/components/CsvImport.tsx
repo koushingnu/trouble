@@ -7,6 +7,7 @@ import { ArrowUpTrayIcon, DocumentTextIcon } from "@heroicons/react/24/outline";
 interface ImportStats {
   total: number;
   filtered: number;
+  leanBodyCount: number;
   skipped: number;
   details: string[];
 }
@@ -15,6 +16,7 @@ interface ExtractedData {
   rowNumber: number;
   productName: string;
   authKey: string;
+  pass: string;
   customerId: string;
   phoneNumber: string;
   status: string;
@@ -110,6 +112,34 @@ export default function CsvImport() {
     setImportResult(null);
     setExtractedData([]);
     setConfirmResult(null);
+  };
+
+  const handleDownloadLeanBodyCsv = () => {
+    const leanBodyData = extractedData.filter(
+      (d) => d.productName === "リーンボディ"
+    );
+    if (leanBodyData.length === 0) {
+      toast.error("リーンボディのレコードがありません");
+      return;
+    }
+
+    // BOM付きUTF-8でCSV生成（Excelで文字化けしないよう）
+    const header = "PASS,認証キー";
+    const rows = leanBodyData.map((d) => {
+      const pass = `"${(d.pass || "").replace(/"/g, '""')}"`;
+      const authKey = `"${(d.authKey || "").replace(/"/g, '""')}"`;
+      return `${pass},${authKey}`;
+    });
+    const csvContent = "\uFEFF" + [header, ...rows].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `leanbody_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success(`リーンボディ ${leanBodyData.length}件をダウンロードしました`);
   };
 
   const handleConfirmImport = async () => {
@@ -327,7 +357,7 @@ export default function CsvImport() {
             </div>
             <div className="p-6">
               {/* 統計サマリー */}
-              <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-4 gap-4 mb-6">
                 <div className="bg-gray-50 rounded-lg p-4 text-center">
                   <div className="text-2xl font-bold text-gray-900">
                     {importResult.total}
@@ -341,9 +371,17 @@ export default function CsvImport() {
                   <div className="text-sm text-gray-600">
                     対象レコード数
                     <br />
-                    <span className="text-xs">
-                      （トラブル解決ラボ）
-                    </span>
+                    <span className="text-xs">（トラブル解決ラボ）</span>
+                  </div>
+                </div>
+                <div className="bg-blue-50 rounded-lg p-4 text-center">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {importResult.leanBodyCount ?? 0}
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    リーンボディ
+                    <br />
+                    <span className="text-xs">（別途出力）</span>
                   </div>
                 </div>
                 <div className="bg-yellow-50 rounded-lg p-4 text-center">
@@ -353,6 +391,26 @@ export default function CsvImport() {
                   <div className="text-sm text-gray-600">スキップ</div>
                 </div>
               </div>
+
+              {/* リーンボディCSVダウンロード */}
+              {(importResult.leanBodyCount ?? 0) > 0 && (
+                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-blue-900">
+                      リーンボディ: {importResult.leanBodyCount}件
+                    </p>
+                    <p className="text-xs text-blue-700 mt-1">
+                      PASS・認証キーの2列でCSV出力できます
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleDownloadLeanBodyCsv}
+                    className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    リーンボディCSVダウンロード
+                  </button>
+                </div>
+              )}
 
               {/* 登録ボタンとフィルター切り替え */}
               <div className="mb-4 space-y-4">

@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     // CSV解析
     const records = parse(decoded, {
       columns: true,
-      skip_empty_lines: true,
+      skip_empty_lines: true,　
       trim: true,
       bom: true, // BOM対応
     }) as Record<string, string>[];
@@ -64,6 +64,7 @@ export async function POST(req: NextRequest) {
       rowNumber: number;
       productName: string;
       authKey: string;
+      pass: string;
       customerId: string;
       phoneNumber: string;
       status: string;
@@ -79,6 +80,7 @@ export async function POST(req: NextRequest) {
     const stats = {
       total: records.length,
       filtered: 0, // 「トラブル解決ラボ」のレコード数
+      leanBodyCount: 0, // 「リーンボディ」のレコード数
       skipped: 0,
       details: [] as string[],
     };
@@ -91,6 +93,7 @@ export async function POST(req: NextRequest) {
         // 必要なフィールドを抽出
         const productName = record["商品名"]?.trim() || "";
         const authKey = record["認証キー"]?.trim() || "";
+        const pass = record["PASS"]?.trim() || "";
         const phoneNumber = record["電話番号"]?.trim() || "";
         const status = record["ステータス"]?.trim() || "";
         const customerId = record["顧客ID"]?.trim() || "";
@@ -108,17 +111,20 @@ export async function POST(req: NextRequest) {
           tokenStatus = "REVOKED";
         }
 
-        // 商品名が「トラブル解決ラボ」かチェック
+        // 商品名が「トラブル解決ラボ」または「リーンボディ」かチェック
         const isTargetProduct = productName === "トラブル解決ラボ";
+        const isLeanBody = productName === "リーンボディ";
 
         // スキップ理由の判定
         let skipReason: string | undefined;
-        if (!keyToUse) {
+        if (!keyToUse && !isLeanBody) {
           skipReason = "認証キーと顧客IDが両方とも空";
           stats.skipped++;
-        } else if (!isTargetProduct) {
-          skipReason = `商品名が「トラブル解決ラボ」ではない（${productName}）`;
+        } else if (!isTargetProduct && !isLeanBody) {
+          skipReason = `商品名が対象外（${productName}）`;
           stats.skipped++;
+        } else if (isLeanBody) {
+          stats.leanBodyCount++;
         } else {
           stats.filtered++;
         }
@@ -128,6 +134,7 @@ export async function POST(req: NextRequest) {
           rowNumber: i + 2, // ヘッダー行を考慮
           productName,
           authKey,
+          pass,
           customerId,
           phoneNumber,
           status,
@@ -141,8 +148,9 @@ export async function POST(req: NextRequest) {
       } catch (error: any) {
         extractedData.push({
           rowNumber: i + 2,
-          productName: "",　
+          productName: "",
           authKey: "",
+          pass: "",
           customerId: "",
           phoneNumber: "",
           status: "",
