@@ -8,8 +8,14 @@ import { ChatCompletionMessageParam } from "openai/resources/chat";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-// システムプロンプトを定数として定義
-const SYSTEM_PROMPT = `あなたは「トラブル相談AIサポート」の専門アドバイザーです。
+// システムプロンプト（チャットルームIDをフォームURLに付加）
+function buildSystemPrompt(chatRoomId: number): string {
+  const formUrl = `https://troublesolution-lab.com/form/toiawase.html?chat_id=${chatRoomId}`;
+  return buildSystemPromptWithUrl(formUrl);
+}
+
+function buildSystemPromptWithUrl(formUrl: string): string {
+  return `あなたは「トラブル相談AIサポート」の専門アドバイザーです。
 ユーザーの生活上のトラブルに対して、親身になって相談に乗り、適切な解決策を提案してください。
 
 【対応するトラブルの種類】
@@ -53,7 +59,7 @@ const SYSTEM_PROMPT = `あなたは「トラブル相談AIサポート」の専�
 【案内の文言】
 ＜ユーザーからの要望があった場合＞
 「専門スタッフと直接相談をご希望の場合は、こちらのフォームからご依頼ください。
-https://troublesolution-lab.com/form/toiawase.html
+${formUrl}
 
 チャットでも引き続きサポートいたしますので、お気軽にご相談ください。」
 
@@ -61,7 +67,7 @@ https://troublesolution-lab.com/form/toiawase.html
 「この状況は大変危険です。まず110番（警察）または119番（消防）へ通報してください。
 
 その上で、専門スタッフと直接相談をご希望の場合は、こちらのフォームからご依頼ください。
-https://troublesolution-lab.com/form/toiawase.html」
+${formUrl}」
 
 【重要】電話番号・電話での連絡先の案内は一切行わないでください。上記フォームURLのみを案内してください。
 【重要】ユーザーへの案内・提案の中で「電話で相談」「電話で詳しく」などの電話に関する表現を一切使用しないでください。相談方法の案内はフォームのみです。
@@ -72,6 +78,7 @@ https://troublesolution-lab.com/form/toiawase.html」
 
 【会話のトーン】
 丁寧で親しみやすく、共感と理解を示し、焦らせず安心させる。具体的で分かりやすく、簡潔に要点を押さえる。`;
+}
 
 const INITIAL_PROMPT = `これは新しい相談の開始です。
 以下のような温かみのある挨拶から始めてください：
@@ -178,11 +185,11 @@ export async function POST(request: NextRequest) {
           content: msg.body,
         }));
 
-        // システムメッセージを追加
+        // システムメッセージを追加（チャットルームIDをフォームURLに付加）
         messages.unshift(
           {
             role: "system",
-            content: SYSTEM_PROMPT,
+            content: buildSystemPrompt(chatRoom.id),
           },
           {
             role: "system",
