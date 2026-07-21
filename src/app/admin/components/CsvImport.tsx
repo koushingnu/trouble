@@ -4,6 +4,57 @@ import { useState, useRef } from "react";
 import { toast } from "react-hot-toast";
 import { ArrowUpTrayIcon, DocumentTextIcon } from "@heroicons/react/24/outline";
 
+// ブラウザ側CSVパーサー（Shift-JIS対応）
+function parseCSV(text: string): string[][] {
+  const rows: string[][] = [];
+  let currentRow: string[] = [];
+  let currentField = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const nextChar = text[i + 1];
+
+    if (inQuotes) {
+      if (char === '"' && nextChar === '"') {
+        currentField += '"';
+        i++;
+      } else if (char === '"') {
+        inQuotes = false;
+      } else {
+        currentField += char;
+      }
+    } else {
+      if (char === '"') {
+        inQuotes = true;
+      } else if (char === ",") {
+        currentRow.push(currentField.trim());
+        currentField = "";
+      } else if (char === "\r" && nextChar === "\n") {
+        currentRow.push(currentField.trim());
+        if (currentRow.some((f) => f !== "")) rows.push(currentRow);
+        currentRow = [];
+        currentField = "";
+        i++;
+      } else if (char === "\n" || char === "\r") {
+        currentRow.push(currentField.trim());
+        if (currentRow.some((f) => f !== "")) rows.push(currentRow);
+        currentRow = [];
+        currentField = "";
+      } else {
+        currentField += char;
+      }
+    }
+  }
+
+  if (currentField || currentRow.length > 0) {
+    currentRow.push(currentField.trim());
+    if (currentRow.some((f) => f !== "")) rows.push(currentRow);
+  }
+
+  return rows;
+}
+
 interface ImportStats {
   total: number;
   filtered: number;
@@ -73,34 +124,103 @@ export default function CsvImport() {
 
     setIsUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("file", selectedFile);
+      // ブラウザ側でCSVを解析（大容量ファイルのアップロード上限を回避）
+      const arrayBuffer = await selectedFile.arrayBuffer();
 
-      const response = await fetch("/api/admin/import-csv", {
-        method: "POST",
-        body: formData,
+      // Shift-JIS → UTF-8 デコード（失敗時はUTF-8として試みる）
+      let text: string;
+      try {
+        const decoder = new TextDecoder("shift_jis");
+        text = decoder.decode(arrayBuffer);
+      } catch {
+        text = new TextDecoder("utf-8").decode(arrayBuffer);
+      }
+
+      // BOM除去
+      if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
+
+      const rows = parseCSV(text);
+      if (rows.length < 2) {
+        toast.error("CSVデータが空です");
+        return;
+      }
+
+      const headers = rows[0];
+      const get = (values: string[], key: string) => {
+        const idx = headers.indexOf(key);
+        return idx >= 0 ? (values[idx] || "").trim() : "";
+      };
+
+      const extracted: ExtractedData[] = [];
+      let filteredCount = 0;
+      let skippedCount = 0;
+
+      for (let i = 1; i < rows.length; i++) {
+        const values = rows[i];
+        if (values.length <= 1 && values[0] === "") continue;
+
+        const productName = get(values, "商品名");
+        const authKey = get(values, "認証キー");
+        const customerId = get(values, "顧客ID");
+        const phoneNumber = get(values, "電話番号");
+        const status = get(values, "ステータス");
+        const cancelledDate =
+          get(values, "退会日") || get(values, "解約日");
+        const registeredDate = get(values, "契約日");
+        const keyToUse = authKey || customerId;
+
+        let statusMapped: "ACTIVE" | "REVOKED" | "UNUSED" = "UNUSED";
+        if (["承認", "契約", "契約中"].includes(status))
+          statusMapped = "ACTIVE";
+        else if (["退会", "解約", "解約済"].includes(status))
+          statusMapped = "REVOKED";
+
+        const isTargetProduct = productName === "トラブル解決ラボ";
+
+        let skipReason: string | undefined;
+        if (!keyToUse) {
+          skipReason = "認証キーと顧客IDが両方とも空";
+          skippedCount++;
+        } else if (!isTargetProduct) {
+          skipReason = `商品名が対象外（${productName}）`;
+          skippedCount++;
+        } else {
+          filteredCount++;
+        }
+
+        extracted.push({
+          rowNumber: i + 1,
+          productName,
+          authKey,
+          customerId,
+          phoneNumber,
+          status,
+          statusMapped,
+          cancelledDate,
+          registeredDate,
+          keyToUse,
+          isFiltered: isTargetProduct && !!keyToUse,
+          skipReason,
+        });
+      }
+
+      setExtractedData(extracted);
+      setImportResult({
+        total: rows.length - 1,
+        filtered: filteredCount,
+        skipped: skippedCount,
+        details: [],
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "アップロードに失敗しました");
-      }
-
-      setImportResult(result.stats);
-      setExtractedData(result.extractedData || []);
-      toast.success(
-        `✅ 抽出完了: 対象レコード ${result.stats.filtered}件 / スキップ ${result.stats.skipped}件`
-      );
-
-      // ファイル選択をリセット
       setSelectedFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+      if (fileInputRef.current) fileInputRef.current.value = "";
+
+      toast.success(
+        `✅ 抽出完了: 対象レコード ${filteredCount}件 / スキップ ${skippedCount}件`
+      );
     } catch (error: any) {
       console.error("Upload error:", error);
-      toast.error(error.message || "アップロードに失敗しました");
+      toast.error(error.message || "CSV解析に失敗しました");
     } finally {
       setIsUploading(false);
     }
