@@ -76,6 +76,7 @@ interface ExtractedData {
   isFiltered: boolean;
   skipReason?: string;
   customerName?: string;
+  dbAction?: "create" | "update" | "skip" | "checking";
 }
 
 interface ConfirmResult {
@@ -204,7 +205,11 @@ export default function CsvImport() {
         });
       }
 
-      setExtractedData(extracted);
+      // 対象レコードを「照合中」状態で先に表示
+      const withChecking = extracted.map((d) =>
+        d.isFiltered ? { ...d, dbAction: "checking" as const } : d
+      );
+      setExtractedData(withChecking);
       setImportResult({
         total: rows.length - 1,
         filtered: filteredCount,
@@ -218,6 +223,42 @@ export default function CsvImport() {
       toast.success(
         `✅ 抽出完了: 対象レコード ${filteredCount}件 / スキップ ${skippedCount}件`
       );
+
+      // DBと照合して各行のアクションを確定
+      const filteredForCheck = extracted
+        .filter((d) => d.isFiltered)
+        .map((d) => ({
+          authKey: d.keyToUse,
+          status: d.statusMapped,
+          registeredDate: d.registeredDate,
+          cancelledDate: d.cancelledDate,
+        }));
+
+      if (filteredForCheck.length > 0) {
+        try {
+          const checkRes = await fetch("/api/admin/import-csv/check", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ records: filteredForCheck }),
+          });
+          if (checkRes.ok) {
+            const { results } = await checkRes.json();
+            const actionMap = new Map<string, "create" | "update" | "skip">(
+              results.map((r: { authKey: string; action: "create" | "update" | "skip" }) => [r.authKey, r.action])
+            );
+            setExtractedData((prev) =>
+              prev.map((d) =>
+                d.isFiltered
+                  ? { ...d, dbAction: actionMap.get(d.keyToUse) ?? "create" }
+                  : d
+              )
+            );
+          }
+        } catch (e) {
+          // 照合失敗しても表示はそのまま続行
+          setExtractedData(extracted);
+        }
+      }
     } catch (error: any) {
       console.error("Upload error:", error);
       toast.error(error.message || "CSV解析に失敗しました");
@@ -447,7 +488,7 @@ export default function CsvImport() {
             </div>
             <div className="p-6">
               {/* 統計サマリー */}
-              <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-3 gap-4 mb-4">
                 <div className="bg-gray-50 rounded-lg p-4 text-center">
                   <div className="text-2xl font-bold text-gray-900">
                     {importResult.total}
@@ -461,18 +502,47 @@ export default function CsvImport() {
                   <div className="text-sm text-gray-600">
                     対象レコード数
                     <br />
-                    <span className="text-xs">
-                      （トラブル解決ラボ）
-                    </span>
+                    <span className="text-xs">（トラブル解決ラボ）</span>
                   </div>
                 </div>
                 <div className="bg-yellow-50 rounded-lg p-4 text-center">
                   <div className="text-2xl font-bold text-yellow-600">
                     {importResult.skipped}
                   </div>
-                  <div className="text-sm text-gray-600">スキップ</div>
+                  <div className="text-sm text-gray-600">対象外</div>
                 </div>
               </div>
+
+              {/* DB照合結果サマリー */}
+              {(() => {
+                const filtered = extractedData.filter((d) => d.isFiltered);
+                const checking = filtered.some((d) => d.dbAction === "checking");
+                const createCount = filtered.filter((d) => d.dbAction === "create").length;
+                const updateCount = filtered.filter((d) => d.dbAction === "update").length;
+                const skipCount = filtered.filter((d) => d.dbAction === "skip").length;
+                return (
+                  <div className="grid grid-cols-3 gap-3 mb-6">
+                    <div className="bg-purple-50 rounded-lg p-3 text-center">
+                      <div className="text-xl font-bold text-purple-600">
+                        {checking ? "…" : createCount}
+                      </div>
+                      <div className="text-xs text-gray-600">🆕 新規作成</div>
+                    </div>
+                    <div className="bg-blue-50 rounded-lg p-3 text-center">
+                      <div className="text-xl font-bold text-blue-600">
+                        {checking ? "…" : updateCount}
+                      </div>
+                      <div className="text-xs text-gray-600">✏️ 更新</div>
+                    </div>
+                    <div className="bg-gray-100 rounded-lg p-3 text-center">
+                      <div className="text-xl font-bold text-gray-500">
+                        {checking ? "…" : skipCount}
+                      </div>
+                      <div className="text-xs text-gray-600">⏭️ 変更なし</div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* 登録ボタンとフィルター切り替え */}
               <div className="mb-4 space-y-4">
@@ -596,12 +666,20 @@ export default function CsvImport() {
                           </td>
                           <td className="px-3 py-4 text-sm">
                             {data.isFiltered ? (
-                              <span className="text-green-600 font-semibold">
-                                ✓ 対象
-                              </span>
+                              data.dbAction === "checking" ? (
+                                <span className="text-gray-400 text-xs">照合中…</span>
+                              ) : data.dbAction === "create" ? (
+                                <span className="text-purple-600 font-semibold">🆕 新規作成</span>
+                              ) : data.dbAction === "update" ? (
+                                <span className="text-blue-600 font-semibold">✏️ 更新</span>
+                              ) : data.dbAction === "skip" ? (
+                                <span className="text-gray-400">⏭️ 変更なし</span>
+                              ) : (
+                                <span className="text-green-600 font-semibold">✓ 対象</span>
+                              )
                             ) : (
                               <span className="text-yellow-600 text-xs">
-                                {data.skipReason || "スキップ"}
+                                {data.skipReason || "対象外"}
                               </span>
                             )}
                           </td>
