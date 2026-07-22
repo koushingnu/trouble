@@ -167,7 +167,9 @@ export default function MyPage() {
             {/* 解約リンク */}
             <div className="pt-2 text-center">
               <a
-                href="#"
+                href="https://neoglyph.co.jp/mypage/login.php"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-sm text-gray-500 hover:text-gray-700 underline transition-colors"
               >
                 解約はこちらから
