@@ -42,7 +42,7 @@
          │
          ↓
 ┌─────────────────────────────────┐
-│   MySQL (AWS Lightsail)         │
+│   MySQL (GCP Cloud SQL)         │
 │  - User                         │
 │  - Token                        │
 │  - ChatRoom                     │

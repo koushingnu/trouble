@@ -374,11 +374,14 @@ https://your-domain.com/admin
 
 | 項目 | 内容 |
 |------|------|
-| プロバイダー | AWS Lightsail Database |
-| データベース | MySQL 8.0.43 |
-| リージョン | ap-northeast-1 (東京) |
+| プロバイダー | GCP Cloud SQL for MySQL |
+| データベース | MySQL 8.0 |
+| リージョン | asia-northeast1 (東京) |
+| GCPプロジェクト | trouble-db |
+| インスタンス名 | trouble-mysql |
 | データベース名 | trouble |
-| 接続方式 | SSL必須 |
+| 可用性構成 | ゾーナル（単一インスタンス） |
+| 接続方式 | Public IP + SSL必須（`?sslaccept=accept_invalid_certs`） |
 
 ### データ容量の確認
 
@@ -405,7 +408,7 @@ https://your-domain.com/admin
 
 #### 自動バックアップ
 
-- AWS Lightsail Databaseは自動バックアップ機能あり
+- Cloud SQLの自動バックアップ機能を利用
 - 推奨設定: 日次自動バックアップ、7日間保持
 
 #### 手動バックアップ
@@ -413,8 +416,11 @@ https://your-domain.com/admin
 重要な操作（大量データのインポート、スキーマ変更など）の前に、手動でバックアップを取得してください。
 
 ```bash
-# MySQLダンプを取得
-mysqldump -h [HOST] -u [USER] -p [DATABASE] > backup_$(date +%Y%m%d).sql
+# gcloudでオンデマンドバックアップを取得
+gcloud sql backups create --instance=trouble-mysql --project=trouble-db
+
+# または mysqldumpでダンプを取得（--ssl-mode=REQUIRED を指定）
+mysqldump -h [HOST] -u [USER] -p --ssl-mode=REQUIRED [DATABASE] > backup_$(date +%Y%m%d).sql
 ```
 
 ### データのアーカイブ

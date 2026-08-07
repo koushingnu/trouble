@@ -86,14 +86,14 @@
 - **bcrypt** (パスワードハッシュ化)
 
 ### データベース
-- **MySQL 8.0** (AWS Lightsail Database)
+- **MySQL 8.0** (GCP Cloud SQL for MySQL)
 
 ### AI
 - **OpenAI GPT-4.1-nano** (gpt-4.1-nano-2025-04-14)
 
 ### デプロイ
 - **Vercel** (フロントエンド・API)
-- **AWS Lightsail Database** (データベース)
+- **GCP Cloud SQL for MySQL** (データベース)
 
 ---
 
@@ -134,8 +134,8 @@ npm run dev
 `.env` ファイルに以下の環境変数を設定してください：
 
 ```bash
-# データベース
-DATABASE_URL="mysql://user:password@host:3306/database"
+# データベース（Cloud SQL for MySQL、SSL必須のため sslaccept パラメータが必要）
+DATABASE_URL="mysql://user:password@host:3306/database?sslaccept=accept_invalid_certs"
 
 # NextAuth
 NEXTAUTH_URL="http://localhost:3000"
@@ -149,7 +149,7 @@ OPENAI_API_KEY="sk-..."
 
 | 変数名 | 説明 | 必須 |
 |--------|------|------|
-| `DATABASE_URL` | MySQL接続文字列 | ✅ |
+| `DATABASE_URL` | MySQL接続文字列（Cloud SQLは`?sslaccept=accept_invalid_certs`が必要） | ✅ |
 | `NEXTAUTH_URL` | アプリケーションのURL | ✅ |
 | `NEXTAUTH_SECRET` | NextAuth秘密鍵（32文字以上推奨） | ✅ |
 | `OPENAI_API_KEY` | OpenAI APIキー | ✅ |
