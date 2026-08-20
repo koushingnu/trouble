@@ -38,10 +38,22 @@ model Token {
   token_value   String      @unique
   registered_at DateTime?
   cancelled_at  DateTime?
+  company_id    Int?
   assigned_user User?       @relation("AssignedTokens", fields: [assigned_to], references: [id])
   user_token    User?       @relation("UserToken")
+  company       Company?    @relation(fields: [company_id], references: [id])
 
   @@index([assigned_to], map: "Token_assigned_to_fkey")
+  @@index([company_id], map: "Token_company_id_fkey")
+}
+
+model Company {
+  id               Int      @id @default(autoincrement())
+  code             String   @unique @db.VarChar(20)
+  name             String   @db.VarChar(100)
+  cancellation_url String   @db.VarChar(500)
+  created_at       DateTime @default(now())
+  tokens           Token[]
 }
 
 model AccessLog {

@@ -16,7 +16,10 @@ interface UserDetails {
   resolved_count: number;
   in_progress_count: number;
   escalated_count: number;
+  cancellation_url: string;
 }
+
+const DEFAULT_CANCELLATION_URL = "https://neoglyph.co.jp/mypage/login.php";
 
 export default function MyPage() {
   const router = useRouter();
@@ -167,7 +170,7 @@ export default function MyPage() {
             {/* 解約リンク */}
             <div className="pt-2 text-center">
               <a
-                href="https://neoglyph.co.jp/mypage/login.php"
+                href={userDetails?.cancellation_url || DEFAULT_CANCELLATION_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-gray-500 hover:text-gray-700 underline transition-colors"

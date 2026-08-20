@@ -31,4 +31,14 @@ export interface Token {
   registered_at?: string | null;
   cancelled_at?: string | null;
   user_email?: string | null;
+  company_name?: string | null;
+}
+
+export interface Company {
+  id: number;
+  code: string;
+  name: string;
+  cancellation_url: string;
+  created_at: string;
+  token_count?: number;
 }

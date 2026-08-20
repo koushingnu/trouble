@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import AdminTable from "../../components/AdminTable";
-import { Token } from "../../types";
+import { Token, Company } from "../../types";
 import { Column } from "../../components/AdminTable";
 import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 
@@ -12,6 +12,8 @@ export default function TokenManagement() {
   const [loading, setLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingCount, setGeneratingCount] = useState<number>(1);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
 
   const fetchTokens = async () => {
     setLoading(true);
@@ -37,8 +39,20 @@ export default function TokenManagement() {
     }
   };
 
+  const fetchCompanies = async () => {
+    try {
+      const response = await fetch("/api/companies", { cache: "no-store" });
+      if (!response.ok) return;
+      const data = await response.json();
+      setCompanies(data.data || []);
+    } catch (error) {
+      console.error("Error fetching companies:", error);
+    }
+  };
+
   useEffect(() => {
     fetchTokens();
+    fetchCompanies();
   }, []); // コンポーネントマウント時に1回だけ実行
 
   const getStatusColor = (status: Token["status"]) => {
@@ -82,7 +96,10 @@ export default function TokenManagement() {
           "Cache-Control": "no-cache",
           Pragma: "no-cache",
         },
-        body: JSON.stringify({ count: generatingCount }),
+        body: JSON.stringify({
+          count: generatingCount,
+          company_id: selectedCompanyId ? Number(selectedCompanyId) : null,
+        }),
       });
 
       if (!response.ok) {
@@ -158,6 +175,12 @@ export default function TokenManagement() {
       format: (value) => (value as string | null) || "未割り当て",
     },
     {
+      key: "company_name",
+      label: "卸先",
+      width: 150,
+      format: (value) => (value as string | null) || "自社（直販）",
+    },
+    {
       key: "created_at",
       label: "生成日時",
       width: 180,
@@ -193,6 +216,20 @@ export default function TokenManagement() {
               <option value={100}>100個</option>
               <option value={500}>500個</option>
               <option value={1000}>1,000個</option>
+            </select>
+          </div>
+          <div className="relative">
+            <select
+              value={selectedCompanyId}
+              onChange={(e) => setSelectedCompanyId(e.target.value)}
+              className="block w-56 rounded-lg border-gray-300 shadow-sm focus:border-[#1888CF] focus:ring-[#1888CF] text-sm py-2"
+            >
+              <option value="">自社（直販・月額PAY）</option>
+              {companies.map((company) => (
+                <option key={company.id} value={company.id}>
+                  {company.name}（{company.code}）
+                </option>
+              ))}
             </select>
           </div>
           <button

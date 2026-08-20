@@ -6,6 +6,7 @@ import AuthenticatedLayout from "@/components/AuthenticatedLayout";
 import UserList from "./components/UserList";
 import TokenManagement from "./components/TokenManagement";
 import CsvImport from "./components/CsvImport";
+import CompanyManagement from "./components/CompanyManagement";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -58,7 +59,7 @@ export default function AdminPage() {
               <nav className="-mb-px flex" aria-label="管理画面タブ">
                 <button
                   onClick={() => handleChange(0)}
-                  className={`w-1/3 py-4 px-1 text-center border-b-2 font-medium text-base ${
+                  className={`w-1/4 py-4 px-1 text-center border-b-2 font-medium text-base ${
                     value === 0
                       ? "border-[#1888CF] text-[#1888CF]"
                       : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
@@ -71,7 +72,7 @@ export default function AdminPage() {
                 </button>
                 <button
                   onClick={() => handleChange(1)}
-                  className={`w-1/3 py-4 px-1 text-center border-b-2 font-medium text-base ${
+                  className={`w-1/4 py-4 px-1 text-center border-b-2 font-medium text-base ${
                     value === 1
                       ? "border-[#1888CF] text-[#1888CF]"
                       : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
@@ -84,7 +85,7 @@ export default function AdminPage() {
                 </button>
                 <button
                   onClick={() => handleChange(2)}
-                  className={`w-1/3 py-4 px-1 text-center border-b-2 font-medium text-base ${
+                  className={`w-1/4 py-4 px-1 text-center border-b-2 font-medium text-base ${
                     value === 2
                       ? "border-[#1888CF] text-[#1888CF]"
                       : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
@@ -94,6 +95,19 @@ export default function AdminPage() {
                   aria-controls={`admin-tabpanel-2`}
                 >
                   CSVインポート
+                </button>
+                <button
+                  onClick={() => handleChange(3)}
+                  className={`w-1/4 py-4 px-1 text-center border-b-2 font-medium text-base ${
+                    value === 3
+                      ? "border-[#1888CF] text-[#1888CF]"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                  role="tab"
+                  aria-selected={value === 3}
+                  aria-controls={`admin-tabpanel-3`}
+                >
+                  卸先会社管理
                 </button>
               </nav>
             </div>
@@ -106,6 +120,9 @@ export default function AdminPage() {
             </TabPanel>
             <TabPanel value={value} index={2}>
               <CsvImport />
+            </TabPanel>
+            <TabPanel value={value} index={3}>
+              <CompanyManagement />
             </TabPanel>
           </div>
         </div>

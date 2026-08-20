@@ -6,6 +6,9 @@ import prisma from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+// 卸先未設定（自社直販・月額PAY）ユーザー向けの既定解約URL
+const DEFAULT_CANCELLATION_URL = "https://neoglyph.co.jp/mypage/login.php";
+
 export async function GET(request: NextRequest) {
   try {
     console.log("\n=== User Details API Start ===");
@@ -29,6 +32,15 @@ export async function GET(request: NextRequest) {
         last_name: true,
         first_name: true,
         phone_number: true,
+        token: {
+          select: {
+            company: {
+              select: {
+                cancellation_url: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -84,6 +96,8 @@ export async function GET(request: NextRequest) {
         resolved_count: resolvedCount,
         in_progress_count: inProgressCount,
         escalated_count: escalatedCount,
+        cancellation_url:
+          user.token?.company?.cancellation_url || DEFAULT_CANCELLATION_URL,
       },
     };
 

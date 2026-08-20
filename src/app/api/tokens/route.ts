@@ -26,6 +26,12 @@ export async function GET(request: NextRequest) {
             email: true,
           },
         },
+        company: {
+          select: {
+            code: true,
+            name: true,
+          },
+        },
       },
       orderBy: {
         created_at: "desc",
@@ -51,6 +57,7 @@ export async function GET(request: NextRequest) {
       status: token.status,
       user_email: token.assigned_user?.email || null,
       created_at: token.created_at,
+      company_name: token.company?.name || null,
     }));
 
     console.log("=== Token List Fetch End ===\n");
@@ -86,8 +93,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { count = 1 } = await request.json();
-    console.log("Requested token count:", count);
+    const { count = 1, company_id = null } = await request.json();
+    console.log("Requested token count:", count, "company_id:", company_id);
 
     if (count < 1 || count > 10000) {
       console.log("Invalid count requested:", count);
@@ -97,14 +104,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 卸先指定時は認証キーの語尾にその卸先のコードを付与する（表示用。紐付けの正はcompany_id）
+    let companyCode: string | null = null;
+    if (company_id !== null) {
+      const company = await prisma.company.findUnique({
+        where: { id: company_id },
+      });
+      if (!company) {
+        return NextResponse.json(
+          { error: "指定された卸先会社が見つかりません" },
+          { status: 400 }
+        );
+      }
+      companyCode = company.code;
+    }
+
     // トランザクションでトークンを一括生成
     console.log("Starting token generation transaction");
     const tokens = await prisma.$transaction(
       Array.from({ length: count }, () => {
         return prisma.token.create({
           data: {
-            token_value: crypto.randomUUID(),
+            token_value: companyCode
+              ? `${crypto.randomUUID()}-${companyCode}`
+              : crypto.randomUUID(),
             status: "UNUSED",
+            company_id: company_id,
           },
         });
       })
