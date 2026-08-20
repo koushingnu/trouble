@@ -1,15 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "react-hot-toast";
 import AdminTable from "../../components/AdminTable";
-import { User } from "../../types";
+import { User, Company } from "../../types";
 import { Column } from "../../components/AdminTable";
 import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 
 export default function UserList() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [filterCompanyName, setFilterCompanyName] = useState<string>("");
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -28,9 +30,29 @@ export default function UserList() {
     }
   };
 
+  const fetchCompanies = async () => {
+    try {
+      const response = await fetch("/api/companies", { cache: "no-store" });
+      if (!response.ok) return;
+      const data = await response.json();
+      setCompanies(data.data || []);
+    } catch (error) {
+      console.error("Error fetching companies:", error);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
+    fetchCompanies();
   }, []);
+
+  const filteredUsers = useMemo(() => {
+    if (!filterCompanyName) return users;
+    if (filterCompanyName === "__direct__") {
+      return users.filter((u) => !u.token?.company?.name);
+    }
+    return users.filter((u) => u.token?.company?.name === filterCompanyName);
+  }, [users, filterCompanyName]);
 
   const getStatusColor = (status: string | null) => {
     switch (status) {
@@ -86,17 +108,28 @@ export default function UserList() {
       label: "自社通番",
       width: 120,
       format: (value) => (value as string) || "-",
+      sortable: true,
     },
     {
       key: "acquisition_source",
       label: "獲得施策",
       width: 150,
       format: (value) => (value as string) || "-",
+      sortable: true,
+    },
+    {
+      key: "id", // ダミーのキーを使用
+      label: "卸先",
+      width: 150,
+      format: (_, row) => row.token?.company?.name || "自社（直販）",
+      sortable: true,
+      sortValue: (row) => row.token?.company?.name || "自社（直販）",
     },
     {
       key: "email",
       label: "メールアドレス",
       width: 220,
+      sortable: true,
     },
     {
       key: "id", // ダミーのキーを使用
@@ -152,6 +185,8 @@ export default function UserList() {
           {getStatusLabel(row.token?.status || null)}
         </span>
       ),
+      sortable: true,
+      sortValue: (row) => row.token?.status || null,
     },
     {
       key: "id", // ダミーのキーを使用
@@ -165,6 +200,11 @@ export default function UserList() {
           day: "2-digit",
         });
       },
+      sortable: true,
+      sortValue: (row) =>
+        row.token?.registered_at
+          ? new Date(row.token.registered_at).getTime()
+          : null,
     },
     {
       key: "id", // ダミーのキーを使用
@@ -208,18 +248,40 @@ export default function UserList() {
           hour: "2-digit",
           minute: "2-digit",
         }),
+      sortable: true,
+      sortValue: (row) => new Date(row.created_at).getTime(),
     },
   ];
 
   return (
     <div className="px-6 py-6">
+      {/* 卸先での絞り込み */}
+      <div className="flex items-center gap-3 mb-4">
+        <label className="text-sm font-medium text-gray-700">
+          卸先で絞り込み
+        </label>
+        <select
+          value={filterCompanyName}
+          onChange={(e) => setFilterCompanyName(e.target.value)}
+          className="block w-56 rounded-lg border-gray-300 shadow-sm focus:border-[#1888CF] focus:ring-[#1888CF] text-sm py-2"
+        >
+          <option value="">すべて</option>
+          <option value="__direct__">自社（直販）</option>
+          {companies.map((company) => (
+            <option key={company.id} value={company.name}>
+              {company.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div className="overflow-x-auto">
         <AdminTable
           title="ユーザー一覧"
           isLoading={isLoading}
           onRefresh={fetchUsers}
           columns={columns}
-          data={users}
+          data={filteredUsers}
           emptyMessage="ユーザーが登録されていません"
           actionButton={
             <button

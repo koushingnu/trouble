@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "react-hot-toast";
 import AdminTable from "../../components/AdminTable";
 import { Token, Company } from "../../types";
@@ -14,6 +14,7 @@ export default function TokenManagement() {
   const [generatingCount, setGeneratingCount] = useState<number>(1);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
+  const [filterCompanyName, setFilterCompanyName] = useState<string>("");
 
   const fetchTokens = async () => {
     setLoading(true);
@@ -54,6 +55,14 @@ export default function TokenManagement() {
     fetchTokens();
     fetchCompanies();
   }, []); // コンポーネントマウント時に1回だけ実行
+
+  const filteredTokens = useMemo(() => {
+    if (!filterCompanyName) return tokens;
+    if (filterCompanyName === "__direct__") {
+      return tokens.filter((t) => !t.company_name);
+    }
+    return tokens.filter((t) => t.company_name === filterCompanyName);
+  }, [tokens, filterCompanyName]);
 
   const getStatusColor = (status: Token["status"]) => {
     switch (status) {
@@ -146,12 +155,13 @@ export default function TokenManagement() {
   };
 
   const columns: Column<Token>[] = [
-    { key: "id", label: "ID", width: 80 },
+    { key: "id", label: "ID", width: 80, sortable: true },
     {
       key: "token_value",
       label: "認証キー",
       width: 300,
       format: (value) => String(value),
+      sortable: true,
     },
     {
       key: "status",
@@ -167,18 +177,22 @@ export default function TokenManagement() {
           {getStatusLabel(value as Token["status"])}
         </span>
       ),
+      sortable: true,
     },
     {
       key: "user_email",
       label: "使用ユーザー",
       width: 250,
       format: (value) => (value as string | null) || "未割り当て",
+      sortable: true,
     },
     {
       key: "company_name",
       label: "卸先",
       width: 150,
       format: (value) => (value as string | null) || "自社（直販）",
+      sortable: true,
+      sortValue: (row) => row.company_name || "自社（直販）",
     },
     {
       key: "created_at",
@@ -192,6 +206,8 @@ export default function TokenManagement() {
           hour: "2-digit",
           minute: "2-digit",
         }),
+      sortable: true,
+      sortValue: (row) => new Date(row.created_at).getTime(),
     },
   ];
 
@@ -268,12 +284,32 @@ export default function TokenManagement() {
         </div>
       </div>
 
+      {/* 卸先での絞り込み */}
+      <div className="flex items-center gap-3 mb-4">
+        <label className="text-sm font-medium text-gray-700">
+          卸先で絞り込み
+        </label>
+        <select
+          value={filterCompanyName}
+          onChange={(e) => setFilterCompanyName(e.target.value)}
+          className="block w-56 rounded-lg border-gray-300 shadow-sm focus:border-[#1888CF] focus:ring-[#1888CF] text-sm py-2"
+        >
+          <option value="">すべて</option>
+          <option value="__direct__">自社（直販）</option>
+          {companies.map((company) => (
+            <option key={company.id} value={company.name}>
+              {company.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <AdminTable
         title="認証キー一覧"
         isLoading={loading}
         onRefresh={fetchTokens}
         columns={columns}
-        data={tokens}
+        data={filteredTokens}
         emptyMessage="認証キーが登録されていません"
         actionButton={
           <button
