@@ -11,7 +11,7 @@ export default function UserList() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [companies, setCompanies] = useState<Company[]>([]);
-  const [filterCompanyName, setFilterCompanyName] = useState<string>("");
+  const [filterCompanyId, setFilterCompanyId] = useState<string>("");
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -47,12 +47,14 @@ export default function UserList() {
   }, []);
 
   const filteredUsers = useMemo(() => {
-    if (!filterCompanyName) return users;
-    if (filterCompanyName === "__direct__") {
-      return users.filter((u) => !u.token?.company?.name);
+    if (!filterCompanyId) return users;
+    if (filterCompanyId === "__direct__") {
+      return users.filter((u) => !u.token?.company_id);
     }
-    return users.filter((u) => u.token?.company?.name === filterCompanyName);
-  }, [users, filterCompanyName]);
+    return users.filter(
+      (u) => String(u.token?.company_id) === filterCompanyId
+    );
+  }, [users, filterCompanyId]);
 
   const getStatusColor = (status: string | null) => {
     switch (status) {
@@ -82,7 +84,10 @@ export default function UserList() {
 
   const handleCSVDownload = async () => {
     try {
-      const response = await fetch("/api/users/csv");
+      const query = filterCompanyId
+        ? `?company=${encodeURIComponent(filterCompanyId)}`
+        : "";
+      const response = await fetch(`/api/users/csv${query}`);
       if (!response.ok) {
         throw new Error("CSVのダウンロードに失敗しました");
       }
@@ -261,14 +266,14 @@ export default function UserList() {
           卸先で絞り込み
         </label>
         <select
-          value={filterCompanyName}
-          onChange={(e) => setFilterCompanyName(e.target.value)}
+          value={filterCompanyId}
+          onChange={(e) => setFilterCompanyId(e.target.value)}
           className="block w-56 rounded-lg border-gray-300 shadow-sm focus:border-[#1888CF] focus:ring-[#1888CF] text-sm py-2"
         >
           <option value="">すべて</option>
           <option value="__direct__">自社（直販）</option>
           {companies.map((company) => (
-            <option key={company.id} value={company.name}>
+            <option key={company.id} value={company.id}>
               {company.name}
             </option>
           ))}

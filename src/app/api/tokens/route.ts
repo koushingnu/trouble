@@ -57,6 +57,7 @@ export async function GET(request: NextRequest) {
       status: token.status,
       user_email: token.assigned_user?.email || null,
       created_at: token.created_at,
+      company_id: token.company_id,
       company_name: token.company?.name || null,
     }));
 

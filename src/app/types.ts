@@ -20,6 +20,7 @@ export interface User {
     token_value: string | null;
     registered_at: string | null;
     cancelled_at: string | null;
+    company_id?: number | null;
     company?: { name: string } | null;
   } | null;
 }
@@ -32,6 +33,7 @@ export interface Token {
   registered_at?: string | null;
   cancelled_at?: string | null;
   user_email?: string | null;
+  company_id?: number | null;
   company_name?: string | null;
 }
 

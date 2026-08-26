@@ -40,6 +40,7 @@ export async function GET(request: NextRequest) {
             status: true,
             registered_at: true,
             cancelled_at: true,
+            company_id: true,
             company: {
               select: {
                 name: true,

@@ -49,8 +49,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // 卸先での絞り込み（画面の「卸先で絞り込み」と同じ条件）
+    const companyParam = request.nextUrl.searchParams.get("company");
+    const companyFilter =
+      companyParam === "__direct__"
+        ? { company_id: null }
+        : companyParam
+          ? { company_id: Number(companyParam) }
+          : {};
+
     // トークン一覧を取得
     const tokens = await prisma.token.findMany({
+      where: companyFilter,
       include: {
         assigned_user: {
           select: {

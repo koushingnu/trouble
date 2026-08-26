@@ -14,7 +14,7 @@ export default function TokenManagement() {
   const [generatingCount, setGeneratingCount] = useState<number>(1);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
-  const [filterCompanyName, setFilterCompanyName] = useState<string>("");
+  const [filterCompanyId, setFilterCompanyId] = useState<string>("");
 
   const fetchTokens = async () => {
     setLoading(true);
@@ -57,12 +57,12 @@ export default function TokenManagement() {
   }, []); // コンポーネントマウント時に1回だけ実行
 
   const filteredTokens = useMemo(() => {
-    if (!filterCompanyName) return tokens;
-    if (filterCompanyName === "__direct__") {
-      return tokens.filter((t) => !t.company_name);
+    if (!filterCompanyId) return tokens;
+    if (filterCompanyId === "__direct__") {
+      return tokens.filter((t) => !t.company_id);
     }
-    return tokens.filter((t) => t.company_name === filterCompanyName);
-  }, [tokens, filterCompanyName]);
+    return tokens.filter((t) => String(t.company_id) === filterCompanyId);
+  }, [tokens, filterCompanyId]);
 
   const getStatusColor = (status: Token["status"]) => {
     switch (status) {
@@ -133,7 +133,10 @@ export default function TokenManagement() {
 
   const handleCSVDownload = async () => {
     try {
-      const response = await fetch("/api/tokens/csv");
+      const query = filterCompanyId
+        ? `?company=${encodeURIComponent(filterCompanyId)}`
+        : "";
+      const response = await fetch(`/api/tokens/csv${query}`);
       if (!response.ok) {
         throw new Error("CSVのダウンロードに失敗しました");
       }
@@ -290,14 +293,14 @@ export default function TokenManagement() {
           卸先で絞り込み
         </label>
         <select
-          value={filterCompanyName}
-          onChange={(e) => setFilterCompanyName(e.target.value)}
+          value={filterCompanyId}
+          onChange={(e) => setFilterCompanyId(e.target.value)}
           className="block w-56 rounded-lg border-gray-300 shadow-sm focus:border-[#1888CF] focus:ring-[#1888CF] text-sm py-2"
         >
           <option value="">すべて</option>
           <option value="__direct__">自社（直販）</option>
           {companies.map((company) => (
-            <option key={company.id} value={company.name}>
+            <option key={company.id} value={company.id}>
               {company.name}
             </option>
           ))}
