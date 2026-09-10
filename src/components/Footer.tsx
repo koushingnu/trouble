@@ -42,14 +42,6 @@ export default function Footer({ maxWidth = "md" }: FooterProps) {
         <Link href="/privacy" className="hover:text-[#1888CF]">
           プライバシーポリシー
         </Link>
-        <a
-          href="https://troublesolution-lab.com/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hover:text-[#1888CF]"
-        >
-          お問い合わせ
-        </a>
       </div>
       <p className="text-center text-xs text-gray-500 mt-3">
         © 2026 トラブル解決ラボ
