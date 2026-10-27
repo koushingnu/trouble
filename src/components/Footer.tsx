@@ -23,22 +23,12 @@ export default function Footer({ maxWidth = "md" }: FooterProps) {
         <Link href="/company" className="hover:text-[#1888CF]">
           運営者情報
         </Link>
-        <a
-          href="https://troublesolution-lab.com/terms.html"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hover:text-[#1888CF]"
-        >
+        <Link href="/terms" className="hover:text-[#1888CF]">
           利用規約
-        </a>
-        <a
-          href="https://troublesolution-lab.com/ordercontract.html"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hover:text-[#1888CF]"
-        >
+        </Link>
+        <Link href="/tokutei" className="hover:text-[#1888CF]">
           特定商取引法
-        </a>
+        </Link>
         <Link href="/privacy" className="hover:text-[#1888CF]">
           プライバシーポリシー
         </Link>
