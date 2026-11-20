@@ -35,7 +35,10 @@ export default function UserList() {
       const response = await fetch("/api/companies", { cache: "no-store" });
       if (!response.ok) return;
       const data = await response.json();
-      setCompanies(data.data || []);
+      // 自社（直販）は専用の選択肢があるため、卸先の一覧からは除外
+      setCompanies(
+        (data.data || []).filter((c: Company) => !c.is_default)
+      );
     } catch (error) {
       console.error("Error fetching companies:", error);
     }

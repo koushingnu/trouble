@@ -6,8 +6,8 @@ import prisma from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-// 卸先未設定（自社直販・月額PAY）ユーザー向けの既定解約URL
-const DEFAULT_CANCELLATION_URL = "https://neoglyph.co.jp/mypage/login.php";
+// 自社（直販）の行が見つからない場合の最終フォールバック
+const FALLBACK_CANCELLATION_URL = "https://neoglyph.co.jp/mypage/login.php";
 
 export async function GET(request: NextRequest) {
   try {
@@ -82,6 +82,18 @@ export async function GET(request: NextRequest) {
       escalated: escalatedCount,
     });
 
+    // 卸先がある場合はその卸先の解約URL、ない場合（自社直販）は
+    // 管理画面で編集できる自社（is_default）の行の解約URLを使う
+    let cancellationUrl = user.token?.company?.cancellation_url;
+    if (!cancellationUrl) {
+      const directCompany = await prisma.company.findFirst({
+        where: { is_default: true },
+        select: { cancellation_url: true },
+      });
+      cancellationUrl =
+        directCompany?.cancellation_url || FALLBACK_CANCELLATION_URL;
+    }
+
     const response = {
       success: true,
       data: {
@@ -96,8 +108,7 @@ export async function GET(request: NextRequest) {
         resolved_count: resolvedCount,
         in_progress_count: inProgressCount,
         escalated_count: escalatedCount,
-        cancellation_url:
-          user.token?.company?.cancellation_url || DEFAULT_CANCELLATION_URL,
+        cancellation_url: cancellationUrl,
       },
     };
 

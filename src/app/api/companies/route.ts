@@ -19,9 +19,13 @@ export async function GET(request: NextRequest) {
           select: { tokens: true },
         },
       },
-      orderBy: {
-        created_at: "desc",
-      },
+      // 自社（直販）を先頭に表示
+      orderBy: [{ is_default: "desc" }, { created_at: "desc" }],
+    });
+
+    // 自社のキーは company_id が NULL のトークンとして数える
+    const directTokenCount = await prisma.token.count({
+      where: { company_id: null },
     });
 
     const formattedCompanies = companies.map((company) => ({
@@ -29,8 +33,11 @@ export async function GET(request: NextRequest) {
       code: company.code,
       name: company.name,
       cancellation_url: company.cancellation_url,
+      is_default: company.is_default,
       created_at: company.created_at,
-      token_count: company._count.tokens,
+      token_count: company.is_default
+        ? directTokenCount
+        : company._count.tokens,
     }));
 
     return NextResponse.json({

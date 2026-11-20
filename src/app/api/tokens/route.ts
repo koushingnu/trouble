@@ -94,7 +94,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { count = 1, company_id = null } = await request.json();
+    const body = await request.json();
+    const count = body.count ?? 1;
+    let company_id: number | null = body.company_id ?? null;
     console.log("Requested token count:", count, "company_id:", company_id);
 
     if (count < 1 || count > 10000) {
@@ -117,7 +119,12 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-      companyCode = company.code;
+      if (company.is_default) {
+        // 自社（直販）は従来通り卸先なし（company_id NULL・サフィックスなし）で発行する
+        company_id = null;
+      } else {
+        companyCode = company.code;
+      }
     }
 
     // トランザクションでトークンを一括生成

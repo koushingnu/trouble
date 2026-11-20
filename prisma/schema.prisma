@@ -52,6 +52,9 @@ model Company {
   code             String   @unique @db.VarChar(20)
   name             String   @db.VarChar(100)
   cancellation_url String   @db.VarChar(500)
+  // 自社（直販）用の行。トークンには紐付けず（company_id は NULL のまま）、
+  // 卸先未設定ユーザーの解約URLなどの既定値を管理画面から編集するために使う
+  is_default       Boolean  @default(false)
   created_at       DateTime @default(now())
   tokens           Token[]
 }

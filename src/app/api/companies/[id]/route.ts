@@ -76,6 +76,17 @@ export async function DELETE(
       );
     }
 
+    const target = await prisma.company.findUnique({
+      where: { id },
+      select: { is_default: true },
+    });
+    if (target?.is_default) {
+      return NextResponse.json(
+        { success: false, error: "自社（直販）は削除できません" },
+        { status: 400 }
+      );
+    }
+
     const tokenCount = await prisma.token.count({
       where: { company_id: id },
     });

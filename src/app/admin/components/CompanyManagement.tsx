@@ -113,8 +113,28 @@ export default function CompanyManagement() {
 
   const columns: Column<Company>[] = [
     { key: "id", label: "ID", width: 60 },
-    { key: "code", label: "コード", width: 120 },
-    { key: "name", label: "会社名", width: 200 },
+    {
+      key: "code",
+      label: "コード",
+      width: 120,
+      // 自社はキーにサフィックスを付けないため、コードは表示しない
+      format: (value, row) => (row.is_default ? "-" : String(value)),
+    },
+    {
+      key: "name",
+      label: "会社名",
+      width: 200,
+      format: (value, row) => (
+        <span className="inline-flex items-center gap-2">
+          {String(value)}
+          {row.is_default && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-sky-100 text-sky-800">
+              デフォルト
+            </span>
+          )}
+        </span>
+      ),
+    },
     {
       key: "cancellation_url",
       label: "解約URL",
@@ -144,12 +164,14 @@ export default function CompanyManagement() {
           >
             編集
           </button>
-          <button
-            onClick={() => handleDelete(row)}
-            className="text-xs text-red-600 hover:underline"
-          >
-            削除
-          </button>
+          {!row.is_default && (
+            <button
+              onClick={() => handleDelete(row)}
+              className="text-xs text-red-600 hover:underline"
+            >
+              削除
+            </button>
+          )}
         </div>
       ),
     },
