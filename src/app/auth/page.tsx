@@ -31,7 +31,15 @@ function LoginForm() {
       });
 
       if (result?.error) {
-        setError("メールアドレスまたはパスワードが正しくありません");
+        if (result.error === "CONTRACT_INACTIVE") {
+          setError("ご契約が終了しているため、ログインできません");
+        } else if (result.error === "LOCKED") {
+          setError(
+            "ログインの失敗が続いたため、一時的にロックしています。15分ほど時間をおいて再度お試しください"
+          );
+        } else {
+          setError("メールアドレスまたはパスワードが正しくありません");
+        }
         setLoading(false);
         return;
       }

@@ -184,8 +184,23 @@ export async function POST(request: NextRequest) {
     }
     console.log("User ID:", token.id);
 
+    // 退会済み（認証キー無効）のユーザーはチャットを利用できない
+    const currentUser = await prisma.user.findUnique({
+      where: { id: parseInt(token.id, 10) },
+      select: { is_admin: true, token: { select: { status: true } } },
+    });
+    if (
+      !currentUser ||
+      (!currentUser.is_admin && currentUser.token?.status !== "ACTIVE")
+    ) {
+      return NextResponse.json(
+        { success: false, error: "ご契約が終了しているため、ご利用いただけません" },
+        { status: 403 }
+      );
+    }
+
     const { message, chatRoomId } = await request.json();
-    console.log("Request data:", { message, chatRoomId });
+    console.log("Request data:", { chatRoomId, messageLength: message?.length });
 
     if (!message) {
       console.log("Missing message");

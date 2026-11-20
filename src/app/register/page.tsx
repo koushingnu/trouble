@@ -90,7 +90,7 @@ export default function Register() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, token }),
       });
 
       const emailData = await emailCheckRes.json();

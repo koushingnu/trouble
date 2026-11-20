@@ -146,22 +146,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // トークンの検証（トークンが提供された場合）
-    let tokenRecord = null;
-    if (token) {
-      tokenRecord = await prisma.token.findFirst({
-        where: {
-          token_value: token,
-          status: "UNUSED",
-        },
-      });
+    // 認証キーの検証（必須。未使用のキーのみ登録可能）
+    if (!token) {
+      return NextResponse.json(
+        { error: "認証キーは必須です" },
+        { status: 400 }
+      );
+    }
+    const tokenRecord = await prisma.token.findFirst({
+      where: {
+        token_value: token,
+        status: "UNUSED",
+      },
+    });
 
-      if (!tokenRecord) {
-        return NextResponse.json(
-          { error: "無効なトークンです" },
-          { status: 400 }
-        );
-      }
+    if (!tokenRecord) {
+      return NextResponse.json(
+        { error: "無効なトークンです" },
+        { status: 400 }
+      );
     }
 
     // パスワードのハッシュ化
