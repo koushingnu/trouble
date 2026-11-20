@@ -91,13 +91,78 @@ const INITIAL_PROMPT = `これは新しい相談の開始です。
 
 // OpenAIクライアントの設定
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const GPT_MODEL = "gpt-4.1-nano-2025-04-14";
+
+// 優先順のモデル候補。先頭のモデルが廃止・利用不可の場合は自動で次へ切り替える。
+// 環境変数 OPENAI_MODEL を設定すると、コード変更なしで先頭のモデルを差し替えられる。
+const MODEL_CANDIDATES = Array.from(
+  new Set(
+    [process.env.OPENAI_MODEL, "gpt-4.1-mini", "gpt-4o-mini", "gpt-4.1"].filter(
+      (m): m is string => !!m
+    )
+  )
+);
+
+// 直近で成功したモデル（サーバー起動中は記憶し、毎回失敗を待たないようにする）
+let activeModel: string = MODEL_CANDIDATES[0];
 
 let openai: OpenAI | null = null;
 if (OPENAI_API_KEY) {
   openai = new OpenAI({
     apiKey: OPENAI_API_KEY,
   });
+}
+
+// モデルが存在しない・廃止された場合のエラーかどうか
+function isModelUnavailableError(error: unknown): boolean {
+  const e = error as { status?: number; code?: string; message?: string };
+  return (
+    e?.code === "model_not_found" ||
+    e?.status === 404 ||
+    /model.*(deprecated|does not exist|not found)/i.test(e?.message ?? "")
+  );
+}
+
+// モデルが使えない場合に候補を順に試してチャット補完を作成する
+async function createChatCompletionWithFallback(
+  params: Omit<OpenAI.Chat.ChatCompletionCreateParamsNonStreaming, "model">
+): Promise<OpenAI.Chat.ChatCompletion> {
+  if (!openai) {
+    throw new Error("OpenAI client is not configured");
+  }
+
+  const ordered = [
+    activeModel,
+    ...MODEL_CANDIDATES.filter((m) => m !== activeModel),
+  ];
+
+  let lastError: unknown;
+  for (const model of ordered) {
+    try {
+      const completion = await openai.chat.completions.create({
+        ...params,
+        model,
+      });
+      if (model !== activeModel) {
+        console.error(
+          `[OpenAI] モデルを自動切り替えしました: ${activeModel} → ${model}（${activeModel} が利用不可）。候補リストの更新を検討してください。`
+        );
+        activeModel = model;
+      }
+      return completion;
+    } catch (error) {
+      if (!isModelUnavailableError(error)) {
+        throw error;
+      }
+      console.error(
+        `[OpenAI] モデル ${model} が利用できません。次の候補を試します。`,
+        (error as Error)?.message
+      );
+      lastError = error;
+    }
+  }
+
+  console.error("[OpenAI] すべてのモデル候補が利用できません:", ordered);
+  throw lastError;
 }
 
 // 応答テキストを整形する関数
@@ -197,8 +262,7 @@ export async function POST(request: NextRequest) {
           }
         );
 
-        const completion = await openai.chat.completions.create({
-          model: GPT_MODEL,
+        const completion = await createChatCompletionWithFallback({
           messages,
           temperature: 0.3,
           max_tokens: 1000,
@@ -241,8 +305,7 @@ export async function POST(request: NextRequest) {
               contentForTitle = `${firstMessage}\n${secondMessage}`;
             }
 
-            const titleCompletion = await openai.chat.completions.create({
-              model: GPT_MODEL,
+            const titleCompletion = await createChatCompletionWithFallback({
               messages: [
                 {
                   role: "system",
