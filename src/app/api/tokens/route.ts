@@ -127,22 +127,33 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // トランザクションでトークンを一括生成
-    console.log("Starting token generation transaction");
-    const tokens = await prisma.$transaction(
-      Array.from({ length: count }, () => {
-        return prisma.token.create({
-          data: {
-            token_value: companyCode
-              ? `${crypto.randomUUID()}-${companyCode}`
-              : crypto.randomUUID(),
-            status: "UNUSED",
-            company_id: company_id,
-          },
-        });
-      })
+    // 認証キーの値を先に作り、数回のINSERTにまとめて一括保存する
+    // （1件ずつ保存するとDBとの往復が件数分発生し、1000件でタイムアウトしていた）
+    const tokenValues = Array.from({ length: count }, () =>
+      companyCode
+        ? `${crypto.randomUUID()}-${companyCode}`
+        : crypto.randomUUID()
     );
-    console.log("Generated tokens count:", tokens.length);
+    const CHUNK_SIZE = 1000;
+    const chunks: string[][] = [];
+    for (let i = 0; i < tokenValues.length; i += CHUNK_SIZE) {
+      chunks.push(tokenValues.slice(i, i + CHUNK_SIZE));
+    }
+
+    console.log("Starting token generation transaction");
+    const results = await prisma.$transaction(
+      chunks.map((chunk) =>
+        prisma.token.createMany({
+          data: chunk.map((token_value) => ({
+            token_value,
+            status: "UNUSED" as const,
+            company_id,
+          })),
+        })
+      )
+    );
+    const generatedCount = results.reduce((sum, r) => sum + r.count, 0);
+    console.log("Generated tokens count:", generatedCount);
 
     // 生成後の総数を確認
     const totalCount = await prisma.token.count();
@@ -152,9 +163,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: `${count}個のトークンを生成しました`,
-      data: tokens,
       debug: {
-        generatedCount: tokens.length,
+        generatedCount,
         totalCount,
       },
     });
