@@ -10,7 +10,9 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "db:proxy": "node --env-file=.env scripts/db-proxy.mjs",
+    "db:studio": "node --env-file=.env scripts/db-studio.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-ssm": "^3.862.0",
