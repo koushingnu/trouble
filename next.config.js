@@ -37,6 +37,13 @@ const nextConfig = {
     ];
   },
   output: "standalone",
+  experimental: {
+    // Cloud SQL Connector（gRPC等を含む）はバンドルせずNode.jsからそのまま読み込む
+    serverComponentsExternalPackages: [
+      "@google-cloud/cloud-sql-connector",
+      "google-auth-library",
+    ],
+  },
 };
 
 module.exports = nextConfig;
